@@ -1,0 +1,207 @@
+name: fetch-states-matrix
+
+# 51 州批量编排 · 分档跑批
+# ============================================================================
+# 一次触发 → 按 roster 的 size_tier 展开成 N 个并行 job（每州一个 runner）。
+#   · 州清单唯一事实来源：rules/US/state_roster.yaml（由 scripts/matrix_plan.py 读）
+#   · 并发上限 max-parallel：防 NAD 按 IP 限流（默认 2，DE 那轮 runner 吃 400 就是前车之鉴）
+#   · fail-fast: false：单州挂了不连坐，其余州照跑
+#   · 每州独立 Release tag（raw-US-<州>-v1）→ 重跑天然命中断点续传，零重传
+#   · 末尾 summary job：回头读每个 Release 的 MANIFEST/STATUS，把"真正上架了什么"列成表
+# Batch 1 = tiny 12 州（AK DC DE HI ME MT ND NH RI SD VT WY）
+# ============================================================================
+
+on:
+  workflow_dispatch:
+    inputs:
+      tier:
+        description: 档位（tiny=A 批 12 州 / small / medium / large / all=51 州）
+        type: choice
+        options: [tiny, small, medium, large, all]
+        default: tiny
+      states:
+        description: 手工覆盖（逗号分隔，如 AK,WY；留空=按 tier）
+        default: ""
+      limit:
+        description: 只跑前 N 个州（调试用，0=不限）
+        default: "0"
+      max_parallel:
+        description: 并发上限（建议 2，大州降到 1）
+        default: "2"
+      tag_template:
+        description: 每州 Release tag 模板
+        default: "raw-US-{state}-v1"
+      nad_mode:
+        description: NAD 模式（ids=returnIdsOnly+POST 批取）
+        type: choice
+        options: [ids, cursor]
+        default: ids
+      nad_ids_slicing:
+        description: 主键分段（oid=OBJECTID 区间二分，通用）
+        type: choice
+        options: [oid, quadrant]
+        default: oid
+      nad_ids_batch:
+        description: 每批 objectIds 个数
+        default: "500"
+      nad_workers:
+        description: 分片批取并发
+        default: "2"
+      overture_format:
+        description: Overture 落地格式
+        type: choice
+        options: [parquet, geojson]
+        default: parquet
+      publish_release:
+        description: 是否建 Release 并上架（false=只抓取存 artifact）
+        type: choice
+        options: ["true", "false"]
+        default: "true"
+
+permissions:
+  contents: write
+
+jobs:
+  plan:
+    name: 批次计划（读 roster）
+    runs-on: ubuntu-latest
+    outputs:
+      states: ${{ steps.plan.outputs.states }}
+      count: ${{ steps.plan.outputs.count }}
+    steps:
+      - uses: actions/checkout@v4
+
+      - uses: actions/setup-python@v5
+        with:
+          python-version: "3.11"
+
+      - name: 装 pyyaml
+        run: pip install pyyaml
+
+      - name: 生成 matrix 计划
+        id: plan
+        run: |
+          python scripts/matrix_plan.py \
+            --tier "${{ inputs.tier }}" \
+            --states "${{ inputs.states }}" \
+            --limit "${{ inputs.limit }}" \
+            --tag-template "${{ inputs.tag_template }}" \
+            --github-output "$GITHUB_OUTPUT"
+
+      - name: 计划摘要写入运行页
+        run: |
+          {
+            echo "### 本批次计划"
+            echo ""
+            echo "- 档位：\`${{ inputs.tier }}\`"
+            echo "- 州数：**${{ steps.plan.outputs.count }}**"
+            echo "- 并发上限：\`${{ inputs.max_parallel }}\`"
+            echo "- tag 模板：\`${{ inputs.tag_template }}\`"
+            echo ""
+            echo '```json'
+            echo '${{ steps.plan.outputs.states }}'
+            echo '```'
+          } >> "$GITHUB_STEP_SUMMARY"
+
+  fetch:
+    name: 抓取 ${{ matrix.state }}
+    needs: plan
+    if: needs.plan.outputs.count != '0'
+    runs-on: ubuntu-latest
+    timeout-minutes: 350
+    strategy:
+      fail-fast: false
+      max-parallel: ${{ fromJSON(inputs.max_parallel) }}
+      matrix:
+        state: ${{ fromJSON(needs.plan.outputs.states) }}
+    # 同一州的旧任务没跑完时不并行开新的（防止两个 job 抢同一个 Release）
+    concurrency:
+      group: fetch-state-${{ matrix.state }}
+      cancel-in-progress: false
+    steps:
+      - uses: actions/checkout@v4
+
+      - uses: actions/setup-python@v5
+        with:
+          python-version: "3.11"
+          cache: pip
+
+      - name: 装依赖（overturemaps CLI + pyshp + pyyaml + duckdb）
+        run: pip install -r requirements.txt
+
+      - name: 打印本次参数
+        run: |
+          echo "state=${{ matrix.state }} tier=${{ inputs.tier }} tag=$(echo "${{ inputs.tag_template }}" | sed "s/{state}/${{ matrix.state }}/")"
+          echo "slicing=${{ inputs.nad_ids_slicing }} batch=${{ inputs.nad_ids_batch }} workers=${{ inputs.nad_workers }} fmt=${{ inputs.overture_format }}"
+
+      - name: 单州四源全量抓取（按县切片 + 即传即删 + 断点续传）
+        env:
+          GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+        run: |
+          set -u
+          TAG="$(echo "${{ inputs.tag_template }}" | sed "s/{state}/${{ matrix.state }}/")"
+          ARGS="--state ${{ matrix.state }} --overture-format ${{ inputs.overture_format }} --nad-mode ${{ inputs.nad_mode }} --nad-ids-batch ${{ inputs.nad_ids_batch }} --nad-workers ${{ inputs.nad_workers }} --nad-ids-slicing ${{ inputs.nad_ids_slicing }} --pack-mode county_shards --tag $TAG"
+          if [ "${{ inputs.publish_release }}" = "true" ]; then ARGS="$ARGS --publish-release"; fi
+          echo "python bots/fetch_state_raw.py $ARGS"
+          python bots/fetch_state_raw.py $ARGS
+
+      - name: 结果摘要（人工复核用）
+        if: always()
+        run: |
+          OUT="data/raw/US-${{ matrix.state }}"
+          find "$OUT" -type f -printf '%10s  %p\n' 2>/dev/null | sort -k2 || true
+          python - <<'PY'
+          import json, os, pathlib
+          p = pathlib.Path(f"data/raw/US-{os.environ['STATE']}/MANIFEST.json")
+          if not p.exists():
+              print("MANIFEST 未生成")
+              raise SystemExit(0)
+          m = json.loads(p.read_text(encoding="utf-8"))
+          nad = (m.get("completeness") or {}).get("nad") or {}
+          print("NAD:", json.dumps({k: nad.get(k) for k in
+                ("acquire_mode", "upstream_declared_rows", "local_rows", "coverage_pct")}, ensure_ascii=False))
+          print("shards:", [(s.get("county_key"), s.get("rows")) for s in (m.get("shards") or [])])
+          PY
+        env:
+          STATE: ${{ matrix.state }}
+
+      - name: 上传本地残留（已即传即删，通常为空 → 不报错）
+        if: always()
+        uses: actions/upload-artifact@v4
+        with:
+          name: raw-US-${{ matrix.state }}-${{ github.run_id }}
+          path: data/raw/US-${{ matrix.state }}
+          if-no-files-found: ignore
+          retention-days: 14
+
+  summary:
+    name: 批次汇总
+    needs: [plan, fetch]
+    if: always() && needs.plan.outputs.count != '0'
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+
+      - uses: actions/setup-python@v5
+        with:
+          python-version: "3.11"
+
+      - name: 回头读各州 Release，生成汇总表
+        env:
+          GH_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+          STATES: ${{ needs.plan.outputs.states }}
+        run: |
+          python scripts/matrix_summary.py \
+            --states-json "$STATES" \
+            --tag-template "${{ inputs.tag_template }}" \
+            --out BATCH_SUMMARY.md \
+            --step-summary
+
+      - name: 把汇总表也留在运行页（artifact）
+        if: always()
+        uses: actions/upload-artifact@v4
+        with:
+          name: batch-summary-${{ github.run_id }}
+          path: BATCH_SUMMARY.md
+          if-no-files-found: ignore
+          retention-days: 30
