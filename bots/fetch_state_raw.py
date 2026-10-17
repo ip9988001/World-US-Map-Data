@@ -450,25 +450,90 @@ def _nad_collect_ids_capped(fx: Fetcher, bbox, err_log: Path, label: str = "",
     return list(dict.fromkeys(out)), stats
 
 
+def _nad_oid_probe(fx: Fetcher, base: dict, err_log: Path, label: str, desc: bool):
+    """有序取一条 OBJECTID（stats 不可用时的 mn/mx 探针）。
+
+    2026-10-16 探针实证：`orderByFields=OBJECTID ASC + resultRecordCount=1/2` 走 GET 稳定 200，
+    而 `outStatistics` 聚合在 runner 出口会被连打 400（本机同参正常）→ 探针是可靠替补。
+    """
+    params = {**base, "where": base.get("where") or "1=1",
+              "outFields": "OBJECTID", "returnGeometry": "false",
+              "orderByFields": f"OBJECTID {'DESC' if desc else 'ASC'}",
+              "resultRecordCount": "1", "f": "json"}
+    payload = _esri_post_query(fx, params, err_log,
+                               f"{label}:probe{'-max' if desc else '-min'}", tries=2)
+    if payload.get("error"):
+        return None
+    feats = payload.get("features") or []
+    if feats:
+        at = feats[0].get("attributes") or {}
+        for k, v in at.items():
+            if str(k).upper().replace("_", "") == "OBJECTID" and isinstance(v, (int, float)):
+                return int(v)
+        vals = [int(v) for v in at.values() if isinstance(v, (int, float))]
+        if vals:
+            return vals[0]
+    ids = payload.get("objectIds") or []
+    return int(ids[0]) if ids else None
+
+
 def _nad_oid_bounds(fx: Fetcher, base: dict, err_log: Path, label: str = ""):
-    """用聚合一次性拿 (min OBJECTID, max OBJECTID, count)，不拉全量 ids。"""
+    """用聚合一次性拿 (min OBJECTID, max OBJECTID, count)，不拉全量 ids。
+
+    ★ 分层回退（2026-10-17 runner 实证）：GitHub Actions 出口对 `outStatistics` 聚合查询
+      连吃 4 次 400 `Unable to perform query`（本地同参数 4.5s 正常返回 751,212），
+      而普通 ids/count/有序查询不受影响 → 聚合必须有降级，否则整州直接判死。
+        ① POST outStatistics（1 请求拿三数，最优）
+        ② GET  outStatistics（换通道，绕开 POST 侧限流）
+        ③ 有序单行探针 mn/mx + returnCountOnly 拿 count
+        ④ 仍不行 → (None, None, count|None)，上层改走「单次清单」不做区间切分
+    ★ 熔断：①② 一旦连败，本进程内标记 `_nad_stats_down`，后续每段不再白等重试
+      （否则每段 4×56s，一个州上百段 = 跑到 job 超时）。
+    """
     stats = json.dumps([
         {"statisticType": "min", "onStatisticField": "OBJECTID", "outStatisticFieldName": "mn"},
         {"statisticType": "max", "onStatisticField": "OBJECTID", "outStatisticFieldName": "mx"},
         {"statisticType": "count", "onStatisticField": "OBJECTID", "outStatisticFieldName": "n"},
     ])
-    payload = _esri_post_query(fx, {**base, "outStatistics": stats, "f": "json"},
-                               err_log, f"{label}:stats")
-    if payload.get("error"):
-        return None, None, None
-    feats = payload.get("features") or []
-    if not feats:
+
+    def _read(payload: dict):
+        feats = payload.get("features") or []
+        if not feats:
+            return None, None, 0
+        at = feats[0].get("attributes") or {}
+        mn, mx, n = at.get("mn"), at.get("mx"), at.get("n")
+        return (int(mn) if mn is not None else None,
+                int(mx) if mx is not None else None,
+                int(n) if n is not None else None)
+
+    if not fx.cache.get("_nad_stats_down"):
+        payload = _esri_post_query(fx, {**base, "outStatistics": stats, "f": "json"},
+                                   err_log, f"{label}:stats", tries=2)
+        if not payload.get("error"):
+            return _read(payload)
+        log(f"⚠️ {label} 聚合查询(POST)被拒 → 换 GET 通道再试一次")
+        payload = _esri_query(f"{df.NAD_OFFICIAL}/query", {**base, "outStatistics": stats, "f": "json"},
+                              tries=2, label=f"{label}:stats-get", timeout=fx.args.nad_timeout)
+        if not payload.get("error"):
+            return _read(payload)
+        fx.cache["_nad_stats_down"] = True
+        log(f"⚠️ {label} 聚合查询两条通道全挂 → 本轮改用「有序单行探针」，后续段不再试聚合")
+
+    # ---- 降级：count 用普通查询拿（轻），mn/mx 用有序单行探针
+    cnt = None
+    p = _esri_post_query(fx, {**base, "where": base.get("where") or "1=1",
+                              "returnCountOnly": "true", "f": "json"},
+                         err_log, f"{label}:count", tries=2)
+    if not p.get("error"):
+        cnt = p.get("count")
+        cnt = int(cnt) if isinstance(cnt, int) else None
+    mn = _nad_oid_probe(fx, base, err_log, label, desc=False)
+    mx = _nad_oid_probe(fx, base, err_log, label, desc=True)
+    if cnt is not None and cnt == 0:
         return None, None, 0
-    at = feats[0].get("attributes") or {}
-    mn, mx, n = at.get("mn"), at.get("mx"), at.get("n")
-    return (int(mn) if mn is not None else None,
-            int(mx) if mx is not None else None,
-            int(n) if n is not None else None)
+    if mn is None or mx is None:
+        return None, None, cnt
+    return mn, mx, cnt
 
 
 def _nad_ids_by_oid_ranges(fx: Fetcher, base: dict, err_log: Path,
@@ -485,10 +550,24 @@ def _nad_ids_by_oid_ranges(fx: Fetcher, base: dict, err_log: Path,
     out: list = []
     stats = {"queries": 0, "splits": 0, "max_depth": 0, "truncated_leaves": 0}
     mn, mx, n = _nad_oid_bounds(fx, base, err_log, label)
-    stats["queries"] += 1
+    stats["queries"] += 3
     stats["count"] = n
-    if n == 0 or mn is None or mx is None:
+    if n == 0:
         return [], stats
+    if mn is None or mx is None:
+        # ★ 连有序探针都拿不到边界 → 放弃区间切分，退回单次清单（<400k 的县/州照样完整）
+        stats["bounds_unavailable"] = 1
+        payload = _esri_post_query(fx, {**base, "where": base.get("where") or "1=1",
+                                        "returnIdsOnly": "true", "f": "json"},
+                                   err_log, f"{label}:ids-nobounds", tries=3)
+        ids = [i for i in (payload.get("objectIds") or []) if isinstance(i, int)]
+        if len(ids) >= NAD_IDS_LIST_CAP:
+            stats["truncated_leaves"] += 1
+            log(f"⚠️ {label} 无边界可切且清单顶到 {NAD_IDS_LIST_CAP:,} 上限"
+                f"（{len(ids):,} 个）→ 已拿到的全交上层，由行数对账暴露缺口")
+        else:
+            log(f"ℹ️ {label} 无边界，改用单次清单：{len(ids):,} 个")
+        return ids, stats
     stack = [(mn, mx + 1, 0)]
     while stack:
         lo, hi, depth = stack.pop()
@@ -496,8 +575,11 @@ def _nad_ids_by_oid_ranges(fx: Fetcher, base: dict, err_log: Path,
         node = {**base, "where": where}
         # ★ 逐段先问 count：这样即使服务端上限不是 400k（或有其它隐式限制），
         #   也能用“拿到的手数 != count”当场发现被截断，不依赖任何魔法数字。
-        _, _, seg_n = _nad_oid_bounds(fx, node, err_log, f"{label}[{lo}-{hi})")
-        stats["queries"] += 1
+        #   聚合熔断后每段省掉 2~3 个必然失败的重试。
+        seg_n = None
+        if not fx.cache.get("_nad_stats_down"):
+            _, _, seg_n = _nad_oid_bounds(fx, node, err_log, f"{label}[{lo}-{hi})")
+            stats["queries"] += 1
         payload = _esri_post_query(fx, {**node, "returnIdsOnly": "true", "f": "json"},
                                    err_log, f"{label}[{lo}-{hi})")
         stats["queries"] += 1

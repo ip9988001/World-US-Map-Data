@@ -65,8 +65,13 @@ NAD_PAGE = int(os.environ.get("DOVER_NAD_PAGE", "1000"))
 NAD_MAX = int(os.environ.get("DOVER_NAD_MAX", "40000"))
 BACKOFF = (2.0, 5.0, 10.0)          # 指数退避：官方联邦视图偶发抽风/维护
 
-UA = {"User-Agent": "Mozilla/5.0 (compatible; dover-bot/1.0; +https://github.com/ip9988001/world-map-data-test)",
-      "Accept": "*/*"}
+# ★ runner 出口实证（2026-10-17）：Census/Esri 前置网关对脚本类 UA 更容易拦出"200 + 空 body"，
+#   换成常规桌面 UA；同时显式声明 gzip（Tiger/Esri 会 gzip 编码，不解压 → JSONDecodeError char 0）。
+UA = {"User-Agent": ("Mozilla/5.0 (X11; Linux x86_64) AppleWebKit/537.36 (KHTML, like Gecko) "
+                     "Chrome/124.0.0.0 Safari/537.36"),
+      "Accept": "*/*",
+      "Accept-Encoding": "gzip, deflate",
+      "Accept-Language": "en-US,en;q=0.9"}
 
 ROOT = Path(__file__).resolve().parents[1]
 OUT = ROOT / "data" / "dover"
@@ -134,7 +139,18 @@ def http_get(url: str, *, timeout: int = 60, retries: int = 3, headers: dict | N
         try:
             req = urllib.request.Request(url, headers={**UA, **(headers or {})})
             with urllib.request.urlopen(req, timeout=timeout) as resp:
-                return resp.read()
+                body = resp.read()
+                enc = (resp.headers.get("Content-Encoding") or "").lower()
+            if enc == "gzip" or body[:2] == b"\x1f\x8b":
+                try:
+                    body = gzip.decompress(body)
+                except Exception:  # noqa: BLE001  非 gzip 流（如截断）→ 原样返回交给上层判错
+                    pass
+            if not body.strip():
+                # ★ 2026-10-17 runner 实证：TIGERweb 偶发 200 + 空 body，直接 json.loads 会
+                #   抛 JSONDecodeError(char 0)，看起来像参数错，实际是上游抖动 → 必须当失败重试。
+                raise RuntimeError("空响应体（HTTP 200 但 body 为空）")
+            return body
         except urllib.error.HTTPError as exc:
             body = ""
             try:
