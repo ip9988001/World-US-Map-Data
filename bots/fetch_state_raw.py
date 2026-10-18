@@ -1166,20 +1166,31 @@ def harvest_openaddresses(fx: Fetcher) -> None:
             if len(blob) > fx.args.oa_max_mb * 1024 * 1024:
                 detail.append({"src": name, "run": run, "skipped": f"{len(blob) / 1e6:.1f}MB 超过 {fx.args.oa_max_mb}MB 上限"})
                 continue
+            rows = _count_zip_rows(blob)
+            if rows == 0:
+                # ★ 2026-10-18 AK 实测：OA 对"无门牌县"只吐 ~891B 的空 zip 头，
+                #   没有任何数据文件。它是**合法的空上游**，不是传输截断：
+                #   记 empty_upstream、不上架该 zip、不阻断发布（否则一县拖死全州）。
+                detail.append({"src": name, "run": run, "url": url, "bytes": len(blob),
+                               "native_rows": 0, "status": "empty_upstream",
+                               "note": "上游该源 0 行（合法空包），不上架"})
+                log(f"  ○ OA 空包放行：{name}（{len(blob)}B，0 行，不上架）")
+                continue
             path = d / f"openaddresses_us_{state_lc}_{name}.zip"
             path.write_bytes(blob)
             detail.append({"src": name, "run": run, "url": url, "bytes": len(blob),
-                           "native_rows": _count_zip_rows(blob),
+                           "native_rows": rows, "status": "ok",
                            "file": rel(path)})
             files.append(path)
         except Exception as exc:  # noqa: BLE001
             fail.append({"src": name, "run": run, "url": url, "error": str(exc)[:200]})
     fx.add(*files)
-    status = "ok" if files else "error"
+    empty_n = len([d for d in detail if d.get("status") == "empty_upstream"])
+    status = "ok" if files else ("empty_upstream" if empty_n else "error")
     fx.note("openaddresses", status, state=state_lc, sources_total=len(latest),
-            downloaded=len(files), detail=detail, failures=fail,
+            downloaded=len(files), empty_upstream=empty_n, detail=detail, failures=fail,
             elapsed=round(time.time() - t0, 1))
-    if not files:
+    if not files and not empty_n:
         fx.problem("OpenAddresses 一个源包都没下到")
 
 
@@ -1508,18 +1519,53 @@ def _nad_harvest_county_shards(fx: Fetcher, d: Path, fields: list, oid: str,
             official = ost2.get("count") or confirm
             ost = ost2
         if not root_ids:
-            log("⚠️ 州 bbox 仍为空 → 退到「县并集」当 root（溢出集将为空，其余对账不变）")
+            # ★ 双层预检（2026-10-18 裁决）：州级 0 不等于整州无覆盖 —— NAD 是逐县逐机构
+            #   自愿申报的，必须逐县打轻量探针（returnCountOnly，几十个县几秒钟），
+            #   否则会出现"账本看起来 100% 完整、实际漏掉已申报县"的静默丢数据。
+            log("⚠️ 州 bbox 仍为空 → 进入县级逐一探针（州级 0 不代表县级 0）")
             union_root: set = set()
+            probed = empty_c = 0
+            err_c = 0
             for c in fx.cfg["counties"]:
                 rings = _county_rings(fx, c)
                 if not rings:
                     continue
-                cid, _ = _nad_ids_by_oid_ranges(fx, _county_polygon_base(rings),
-                                                err_log, f"[{c['key']}]")
+                cbase = _county_polygon_base(rings)
+                cprob = _nad_seg_count(fx, cbase, err_log, f"[{c['key']}]:preflight")
+                probed += 1
+                if cprob is None:
+                    err_c += 1                      # 查询失败（5xx/超时）≠ 0 行
+                    continue
+                if cprob == 0:
+                    empty_c += 1
+                    continue
+                cid, _ = _nad_ids_by_oid_ranges(fx, cbase, err_log, f"[{c['key']}]")
                 union_root |= set(cid)
-            root_ids = sorted(union_root)
-            official = len(root_ids) or None
-            ost = {**ost, "county_fallback": 1}
+            if union_root:
+                log(f"✅ 县级探针发现有覆盖：{probed} 个县中 {probed - empty_c - err_c} 个有数据 "
+                    f"→ 按县采集（州级 bbox 为空不影响）")
+                root_ids = sorted(union_root)
+                official = len(root_ids)
+                ost = {**ost, "county_preflight": 1, "county_fallback": 1}
+            elif probed and empty_c == probed:
+                # 整州连带所有县都是 0 → 上游确实没有本州覆盖（NAD 自愿申报制）
+                #   ★ 这是"合法缺失"，不是故障：照常流动到 Overture/OA/TIGER。
+                fx.cache["nad_no_coverage"] = {"probed": probed, "empty": empty_c}
+                fx.note("nad", "no_upstream_coverage", channel="A-official-rest",
+                        mode="ids+county_shards", official_count=0, rows_fetched=0,
+                        collected_rows=0, shard_count=0, probes=probed,
+                        note=("本州在联邦 USDOT NAD 无任何覆盖（州级 count=0 且 "
+                              f"{probed} 个县逐一探针全为 0）"),
+                        elapsed=round(time.time() - t0, 1))
+                _record_no_coverage(fx, probed)
+                log(f"ℹ️ NAD 无本州覆盖：邻州级 count=0 + {probed} 个县逐一探针全 0 "
+                    f"→ 记 no_upstream_coverage，跳过 NAD，继续其它三源")
+                return
+            elif err_c:
+                fx.note("nad", "error", channel="A-official-rest", mode="ids+county_shards",
+                        error=f"县级探针 {err_c} 个县查询失败（非 0 行）", elapsed=round(time.time() - t0, 1))
+                fx.problem(f"NAD upstream_unavailable：{err_c} 个县探针请求失败（5xx/超时），稍后重跑")
+                return
         if not root_ids:
             fx.note("nad", "error", channel="A-official-rest", mode="ids+county_shards",
                     error="州 bbox 与县并集都没拿到主键（上游疑似降级）",
@@ -2054,7 +2100,8 @@ def gate(fx: Fetcher) -> None:
         st = fx.status.get(src)
         if not st:
             errs.append(f"源 {src} 未执行（--only 漏了？）")
-        elif st.get("status") not in ("ok", "warn-truncated", "warn-partial"):
+        elif st.get("status") not in ("ok", "warn-truncated", "warn-partial",
+                                       "empty_upstream", "no_upstream_coverage"):
             errs.append(f"源 {src} 状态异常：{st.get('status')}")
     # ★ 第二把锁：不管走哪条通道，已取行数必须与官方 count 相等（防“自洽但残缺”骗过门禁）
     nad = fx.status.get("nad") or {}
@@ -2189,6 +2236,21 @@ def build_completeness(fx: Fetcher) -> dict:
     }
 
 
+def _record_no_coverage(fx: Fetcher, probed: int) -> None:
+    """把"本州在 NAD 无覆盖"这条客观事实写进产物（随 Release 上架，可追溯）。"""
+    try:
+        p = fx.out / "RAW_DATA_NOTES.md"
+        line = (f"State {fx.cfg['state']} has no address coverage in Federal USDOT NAD "
+                f"(state-level returnCountOnly=0; {probed} counties probed, all 0).\n"
+                f"其他源（Overture / OpenAddresses / TIGER）不受影响，照常采集。\n")
+        prev = p.read_text(encoding="utf-8") if p.exists() else ""
+        if line.split("\n")[0] not in prev:
+            p.write_text(prev + ("\n" if prev else "") + line, encoding="utf-8")
+        fx.add(p)
+    except Exception as exc:  # noqa: BLE001
+        log(f"⚠️ 写 RAW_DATA_NOTES.md 失败：{exc}")
+
+
 def build_manifest(fx: Fetcher) -> Path:
     def asset(p: Path) -> dict:
         r = rel(p)
@@ -2244,6 +2306,7 @@ def build_manifest(fx: Fetcher) -> Path:
         "shards": fx.cache.get("nad_shards") or [],
         "completeness": build_completeness(fx),
         "reference_check": fx.cache.get("nad_reference") or {},
+        "nad_no_coverage": fx.cache.get("nad_no_coverage") or None,
         "quality": {"note": "只读统计，不做裁剪：BBox 是矩形，必然包含邻州边角门牌",
                     "state_distribution": nad_st.get("state_distribution"),
                     "state_in_scope_rows": nad_st.get("state_in_scope_rows"),
