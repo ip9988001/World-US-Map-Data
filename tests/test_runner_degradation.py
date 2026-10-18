@@ -12,6 +12,7 @@
   T2 熔断后不再试聚合（第二次调用只发 count/probe，不发 outStatistics）
   T3 连有序探针也挂 → 用抽样清单 + returnCountOnly 指数扩上界，绝不静默截断
   T4 http_get：gzip 响应体自动解压；空 body 触发重试后成功
+  T6 Overture 防假 0：Top2 大县探针 + RAW_DATA_NOTES 幂等与口径声明
   T5 RI 事故复现：单次清单被服务端截到 400k → 自兜上界后二分切完 569,222
 
 跑法：python3 tests/test_runner_degradation.py
@@ -203,12 +204,55 @@ def t5():
         fsr._esri_post_query, fsr.time.sleep, fsr._esri_query = orig_post, orig_sleep, orig_get
 
 
+def t6():
+    print("T6 Overture 防假 0：大县探针选择 + notes 幂等")
+    import tempfile, os
+    fx = FakeFx()
+    fx.out = Path(tempfile.mkdtemp(prefix="notes-"))
+    fx.files = []
+    calls = []
+
+    def _add(*ps):
+        fx.files.extend(ps)
+    fx.add = _add
+
+    # 假县界：small(1x1) / big(10x10) / mid(5x5)
+    def fake_boundaries(_fx):
+        def rec(w, h, x=0.0):
+            return {"payload": {"features": [{"geometry": {"rings": [[[x, 0], [x + w, 0], [x + w, h], [x, h]]]}}]}}
+        return {"big": rec(10, 10), "mid": rec(5, 5, 20), "small": rec(1, 1, 40)}
+
+    # 假 CLI：把 bbox 写进产物文件，由桩 _count_parquet 解释
+    binp = Path(tempfile.mkdtemp(prefix="fakecli2-")) / "overturemaps"
+    binp.write_text("#!/usr/bin/env python3\nimport sys\nb=sys.argv[2].split('=')[1]\n"
+                    "open(sys.argv[sys.argv.index('-o')+1],'w').write(b)\n", encoding="utf-8")
+    binp.chmod(0o755)
+
+    orig_b, orig_c = fsr._county_boundaries, fsr._count_parquet
+    fsr._county_boundaries = fake_boundaries
+    fsr._count_parquet = lambda pth: 7 if "x" in str(pth) or True else 0
+    try:
+        probes = fsr._overture_probe_counties(fx, str(binp), fx.out, top=2)
+        names = [x["county"] for x in probes]
+        check("T6 取面积 Top2（big/mid）", names == ["big", "mid"], names)
+        check("T6 探针记录含 bbox/rows", all("bbox" in x and "rows" in x for x in probes), probes)
+
+        fsr._append_notes(fx, ["- **NAD**: 测试行 A"])
+        fsr._append_notes(fx, ["- **NAD**: 测试行 A"])          # 重复写
+        txt = (fx.out / "RAW_DATA_NOTES.md").read_text(encoding="utf-8")
+        check("T6 notes 含口径声明", "Pipeline Fidelity" in txt and "Ground Truth" in txt, txt[:80])
+        check("T6 notes 幂等不重复", txt.count("测试行 A") == 1, txt.count("测试行 A"))
+    finally:
+        fsr._county_boundaries, fsr._count_parquet = orig_b, orig_c
+
+
 if __name__ == "__main__":
     ERR.write_text("", encoding="utf-8")
     t1_and_t2()
     t3()
     t4()
     t5()
+    t6()
     bad = [r for r in RESULTS if not r[1]]
     print(f"\n总判定： {'✅ 全部通过' if not bad else '❌ ' + str(len(bad)) + ' 项失败'}")
     sys.exit(0 if not bad else 1)

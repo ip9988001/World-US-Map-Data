@@ -1051,8 +1051,11 @@ def harvest_overture(fx: Fetcher) -> None:
     CLI_FMT = {"parquet": "geoparquet", "geojson": "geojson"}
     EXT = {"geoparquet": "parquet", "geojson": "geojson"}
     prefs = ["geoparquet", "geojson"] if fx.args.overture_format == "parquet" else ["geojson"]
-    target, used, tail, tries = None, None, "", []
-    for fmt in prefs:
+    target, used, tries = None, None, []
+    # ★ 同一格式重试一次：Overture CLI 的 STAC 查询偶发抖动（0 行秒回），
+    #   不重试就会把网络抖动误判成"上游没数据"（HI 事故的教训之一）。
+    plan_fmt = [f for fmt in prefs for f in (fmt, fmt)]
+    for fmt in plan_fmt:
         cand = d / f"overture_us_{state_lc}_addresses.{EXT[fmt]}"
         cmd = [cli, "download", f"--bbox={bbox}", "-f", fmt, "--type=address", "-o", str(cand)]
         proc = subprocess.run(cmd, capture_output=True, text=True, timeout=fx.args.overture_timeout)
@@ -1070,22 +1073,39 @@ def harvest_overture(fx: Fetcher) -> None:
     if not target:
         raise RuntimeError(f"overturemaps 两种格式都失败：{json.dumps(tries, ensure_ascii=False)[:400]}")
 
-    feats = None
-    if used == "geojson":
-        try:
-            feats = len((json.loads(target.read_text(encoding="utf-8")).get("features") or []))
-        except Exception:  # noqa: BLE001
-            feats = None
-    else:
-        feats = _count_parquet(target)
+    feats = _count_parquet(target) if used == "geoparquet" else _count_geojson(target)
+    audit = {"cli_version": cli_version, "release": release, "state_bbox": bbox,
+             "command": "overturemaps download --type=address", "tries": tries,
+             "features": feats, "probed_at": _now()}
+
+    if feats == 0:
+        # ★ 防假 0（2026-10-18）：州框 0 行不能直接认"上游没有"，必须用大县小框证伪。
+        probes = _overture_probe_counties(fx, cli, d)
+        audit["probes"] = probes
+        hit = [x for x in probes if (x.get("rows") or 0) > 0]
+        if hit:
+            target.unlink(missing_ok=True)
+            fx.note("overture", "error", bbox=bbox, features=0, format=used, audit=audit,
+                    elapsed=round(time.time() - t0, 1))
+            fx.problem(f"Overture 假 0：州框 0 行、但县探针 {hit[0]['county']} 返回 "
+                       f"{hit[0]['rows']:,} 行 → BBox/空间拓扑异常，禁止封印（已上传资产保留）")
+            return
+        target.unlink(missing_ok=True)
+        fx.note("overture", "empty_upstream", bbox=bbox, features=0, format=used,
+                audit=audit, elapsed=round(time.time() - t0, 1),
+                note=(f"当前 release 的 addresses 主题无本州数据：州框 {bbox} 与 "
+                      f"{len(probes)} 个大县探针均返回 0 行（CLI {cli_version}）"))
+        _append_notes(fx, [f"- **Overture**: 当前 release 的 addresses 主题无本州数据"
+                           f"（州框与 {len(probes)} 个大县探针均 0 行，CLI {cli_version}，"
+                           f"release {release or '未知'}）。"])
+        log(f"ℹ️ Overture 无本州数据（州框 + {len(probes)} 个县探针均 0）→ 记 empty_upstream，放行")
+        return
 
     fx.add(target)
     fx.note("overture", "ok", bbox=bbox, format=used, features=feats,
             cli_version=cli_version, overture_release=release, feature_file=rel(target),
-            format_cli=CLI_FMT.get(used, used),
+            format_cli=CLI_FMT.get(used, used), audit=audit,
             bytes=target.stat().st_size, tries=tries, elapsed=round(time.time() - t0, 1))
-    if feats == 0:
-        fx.problem("Overture 产物 features=0")
 
 
 # --------------------------------------------------------------------------- C. OpenAddresses
@@ -2265,19 +2285,79 @@ def build_completeness(fx: Fetcher) -> dict:
     }
 
 
-def _record_no_coverage(fx: Fetcher, probed: int) -> None:
-    """把"本州在 NAD 无覆盖"这条客观事实写进产物（随 Release 上架，可追溯）。"""
+def _append_notes(fx: Fetcher, lines: list[str]) -> None:
+    """把客观事实追加进随 Release 上架的 RAW_DATA_NOTES.md（幂等，不重复写同一行）。"""
     try:
         p = fx.out / "RAW_DATA_NOTES.md"
-        line = (f"State {fx.cfg['state']} has no address coverage in Federal USDOT NAD "
-                f"(state-level returnCountOnly=0; {probed} counties probed, all 0).\n"
-                f"其他源（Overture / OpenAddresses / TIGER）不受影响，照常采集。\n")
-        prev = p.read_text(encoding="utf-8") if p.exists() else ""
-        if line.split("\n")[0] not in prev:
-            p.write_text(prev + ("\n" if prev else "") + line, encoding="utf-8")
+        head = ("# RAW DATA NOTES\n\n"
+                "**管道完整性（Pipeline Fidelity）≠ 地理真值（Ground Truth）**：本仓库声明的"
+                "\"可证明完整性\"特指**对上游 API 所公布声明的 100% 无损对齐**（上游说多少行，"
+                "我们就交付多少行）。上游为 0 或未申报，不代表该地区地面的真实门牌总量。\n")
+        prev = p.read_text(encoding="utf-8") if p.exists() else head
+        if not prev.startswith("# RAW DATA NOTES"):
+            prev = head + "\n" + prev
+        add = [ln for ln in lines if ln and ln not in prev]
+        if add:
+            p.write_text(prev.rstrip() + "\n" + "\n".join(add) + "\n", encoding="utf-8")
         fx.add(p)
     except Exception as exc:  # noqa: BLE001
         log(f"⚠️ 写 RAW_DATA_NOTES.md 失败：{exc}")
+
+
+def _count_geojson(p: Path):
+    try:
+        return len(json.loads(p.read_text(encoding="utf-8")).get("features") or [])
+    except Exception:  # noqa: BLE001
+        return None
+
+
+def _overture_probe_counties(fx: Fetcher, cli: str, d: Path, top: int = 2) -> list:
+    """取 TIGER 县界里 **bbox 面积最大** 的 top 个县，各自小框探一次 Overture。
+
+    为什么用面积不用人口：roster 只有 fips/name，没有人口；面积可由本地县界直接算，
+    不引入外部依赖。大县必然有门牌，返 0 就能证伪"上游没有"。
+    """
+    try:
+        recs = _county_boundaries(fx)
+    except Exception as exc:  # noqa: BLE001
+        log(f"⚠️ 县界缓存不可用，跳过 Overture 县探针：{exc}")
+        return []
+    rows = []
+    for key, rec in recs.items():
+        rings = (((rec.get("payload") or {}).get("features") or [{}])[0]
+                 .get("geometry") or {}).get("rings") or []
+        xs = [pt[0] for ring in rings for pt in ring]
+        ys = [pt[1] for ring in rings for pt in ring]
+        if not xs:
+            continue
+        bb = (min(xs), min(ys), max(xs), max(ys))
+        rows.append(((bb[2] - bb[0]) * (bb[3] - bb[1]), key, bb))
+    rows.sort(reverse=True)
+    probes = []
+    for _area, key, bb in rows[:top]:
+        p = d / f"overture_probe_{key}.parquet"
+        cmd = [cli, "download", f"--bbox={','.join(f'{v:.6f}' for v in bb)}",
+               "-f", "geoparquet", "--type=address", "-o", str(p)]
+        try:
+            pr = subprocess.run(cmd, capture_output=True, text=True,
+                                timeout=fx.args.overture_timeout)
+            n = _count_parquet(p) if p.exists() else None
+            probes.append({"county": key, "bbox": [round(v, 6) for v in bb],
+                           "rows": n, "rc": pr.returncode,
+                           "tail": ((pr.stdout or "")[-120:] + (pr.stderr or "")[-120:]).strip()[-200:]})
+        except Exception as exc:  # noqa: BLE001
+            probes.append({"county": key, "bbox": [round(v, 6) for v in bb],
+                           "rows": None, "error": str(exc)[:160]})
+        finally:
+            p.unlink(missing_ok=True)
+    log(f"Overture 防假 0 探针：{[ (x['county'], x.get('rows')) for x in probes ]}")
+    return probes
+
+
+def _record_no_coverage(fx: Fetcher, probed: int) -> None:
+    """把"本州在 NAD 无覆盖"这条客观事实写进产物（随 Release 上架，可追溯）。"""
+    _append_notes(fx, [f"- **NAD**: 本州在联邦 USDOT NAD 无覆盖"
+                       f"（州级 returnCountOnly=0；{probed} 个县逐一探针全为 0）。"])
 
 
 def build_manifest(fx: Fetcher) -> Path:
