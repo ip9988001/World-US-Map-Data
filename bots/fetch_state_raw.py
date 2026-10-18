@@ -1539,6 +1539,9 @@ def _nad_harvest_county_shards(fx: Fetcher, d: Path, fields: list, oid: str,
     only = [s.strip() for s in str(getattr(fx.args, "county_fips", "") or "").split(",") if s.strip()]
     counties = [c for c in fx.cfg["counties"]
                 if not only or c["fips"] in only or c["key"] in only]
+    if only and not counties:
+        die(f"--county-fips 未匹配到任何本州县：{only}（roster 里本州有 "
+            f"{len(fx.cfg['counties'])} 个县）")
     partial = bool(only) and len(counties) < len(fx.cfg["counties"])
     if partial:
         known = {c["fips"] for c in counties} | {c["key"] for c in counties}
@@ -1648,6 +1651,7 @@ def _nad_harvest_county_shards(fx: Fetcher, d: Path, fields: list, oid: str,
     if partial:
         # 只补指定县：溢出包与州级参考都是**全州口径**，本轮不动（避免把 subset 当成全集算差）
         fx.cache["nad_shards"] = shards
+        fx.cache["partial_run"] = True          # ★ 硬护栏：部分县运行禁止封印
         fx.cache["nad_reference"] = {
             "policy": "县级核验为准；本轮为部分县补跑，未重算溢出包与州级参考",
             "partial": True, "counties_run": [c["fips"] for c in counties],
@@ -2456,6 +2460,13 @@ def main(argv: list[str] | None = None) -> int:
         except RuntimeError as exc:
             log("❌ " + str(exc))
             return 3
+    if fx.cache.get("partial_run"):
+        # ★ 2026-10-18 事故护栏：`--county-fips` 传成空引号字面量 '' 时，县循环空转、
+        #   其他源照常跑完，结果拿 0 行账本盖成 phase=complete（DE/NH/RI/SD/WY 五个伪封印）。
+        #   部分县运行永远不封印：MANIFEST 是全州口径，必须由全州重跑收尾。
+        log("🛑 本轮为「只补指定县」模式：县片已上传，但**拒绝封印**"
+            "（MANIFEST 需全州口径，请用全州重跑收尾）")
+        return 5
     if args.no_release or not args.publish_release:
         log("（--no-release 或未指定 --publish-release）跳过上架")
         return 0

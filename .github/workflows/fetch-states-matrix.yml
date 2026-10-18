@@ -143,10 +143,16 @@ jobs:
         run: |
           set -u
           TAG="$(echo "${{ inputs.tag_template }}" | sed "s/{state}/${{ matrix.state }}/")"
-          ARGS="--state ${{ matrix.state }} --county-fips '${{ inputs.county_fips }}' --overture-format ${{ inputs.overture_format }} --nad-mode ${{ inputs.nad_mode }} --nad-ids-batch ${{ inputs.nad_ids_batch }} --nad-workers ${{ inputs.nad_workers }} --nad-ids-slicing ${{ inputs.nad_ids_slicing }} --pack-mode county_shards --tag $TAG"
-          if [ "${{ inputs.publish_release }}" = "true" ]; then ARGS="$ARGS --publish-release"; fi
-          echo "python bots/fetch_state_raw.py $ARGS"
-          python bots/fetch_state_raw.py $ARGS
+          ARGS=(--state "${{ matrix.state }}" --overture-format "${{ inputs.overture_format }}" \
+                --nad-mode "${{ inputs.nad_mode }}" --nad-ids-batch "${{ inputs.nad_ids_batch }}" \
+                --nad-workers "${{ inputs.nad_workers }}" --nad-ids-slicing "${{ inputs.nad_ids_slicing }}" \
+                --pack-mode county_shards --tag "$TAG")
+          if [ -n "${{ inputs.county_fips }}" ]; then
+            ARGS+=(--county-fips "${{ inputs.county_fips }}")
+          fi
+          if [ "${{ inputs.publish_release }}" = "true" ]; then ARGS+=(--publish-release); fi
+          echo "python bots/fetch_state_raw.py ${ARGS[*]}"
+          python bots/fetch_state_raw.py "${ARGS[@]}"
 
       - name: 结果摘要（人工复核用）
         if: always()

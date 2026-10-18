@@ -113,7 +113,7 @@ def verdict(r: dict) -> str:
         return "⛔ 无数据"
     if r["phase"] != "complete":
         return "⚠️ 未封印"
-    if r["c_failed"]:
+    if r.get("c_failed"):
         return f"☑️ 已封印（{r['c_failed']} 县待补）"
     return "✅ 已封印"
 
