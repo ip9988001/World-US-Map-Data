@@ -88,7 +88,6 @@ jobs:
             --tier "${{ inputs.tier }}" \
             --states "${{ inputs.states }}" \
             --limit "${{ inputs.limit }}" \
-            --county-fips "${{ inputs.county_fips }}" \
             --tag-template "${{ inputs.tag_template }}" \
             --github-output "$GITHUB_OUTPUT"
 
@@ -197,7 +196,6 @@ jobs:
         run: |
           python scripts/matrix_summary.py \
             --states-json "$STATES" \
-            --county-fips "${{ inputs.county_fips }}" \
             --tag-template "${{ inputs.tag_template }}" \
             --out BATCH_SUMMARY.md \
             --step-summary
