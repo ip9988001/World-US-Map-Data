@@ -10,8 +10,9 @@
 本文件只验证降级逻辑本身，不联网：
   T1 stats 两条通道全挂 → 有序单行探针拿到 mn/mx + count 查询拿到 n
   T2 熔断后不再试聚合（第二次调用只发 count/probe，不发 outStatistics）
-  T3 连有序探针也挂 → 返回 (None,None,count)，上层改走单次清单且不崩
+  T3 连有序探针也挂 → 用抽样清单 + returnCountOnly 指数扩上界，绝不静默截断
   T4 http_get：gzip 响应体自动解压；空 body 触发重试后成功
+  T5 RI 事故复现：单次清单被服务端截到 400k → 自兜上界后二分切完 569,222
 
 跑法：python3 tests/test_runner_degradation.py
 """
@@ -91,7 +92,7 @@ def t1_and_t2():
 
 
 def t3():
-    print("T3 探针也挂 → 降级为单次清单")
+    print("T3 探针也挂 → 抽样清单 + count 自兜上界（不得静默截断）")
     fx = FakeFx()
     fx.cache["_nad_stats_down"] = True
 
@@ -110,7 +111,7 @@ def t3():
     try:
         ids, st = fsr._nad_ids_by_oid_ranges(fx, BASE, ERR, "[state]")
         check("T3 单次清单兜住 1234 个", len(ids) == 1234, len(ids))
-        check("T3 标记 bounds_unavailable", st.get("bounds_unavailable") == 1, st)
+        check("T3 标记 bounds_bootstrapped", st.get("bounds_bootstrapped") == 1, st)
         check("T3 未误报截断", st.get("truncated_leaves") == 0, st)
     finally:
         fsr._esri_post_query, fsr.time.sleep = orig_post, orig_sleep
@@ -162,11 +163,52 @@ def t4():
         urllib.request.urlopen, df.time.sleep = orig_open, orig_sleep
 
 
+def t5():
+    print("T5 RI 复现：一次只给 400,000（服务端上限）→ 必须自兜上界切完 569,222")
+    fx = FakeFx()
+    fx.cache["_nad_stats_down"] = True
+    IDS = [1000 + i * 7 for i in range(569222)]      # 带空洞的 OBJECTID 序列
+    CAP = 400_000
+
+    import re as _re
+
+    def ids_in(where):
+        if not where:
+            return IDS
+        m = _re.search(r"OBJECTID >= (\d+) AND OBJECTID < (\d+)", where)
+        lo, hi = (int(m.group(1)), int(m.group(2))) if m else (0, 1 << 62)
+        return [i for i in IDS if lo <= i < hi]
+
+    def fake_post(f, params, err_log, label, tries=4):
+        if "outStatistics" in params or params.get("orderByFields"):
+            return {"error": "HTTP 400"}
+        if params.get("returnCountOnly"):
+            return {"count": len(ids_in(params.get("where") or ""))}
+        if params.get("returnIdsOnly"):
+            got = ids_in(params.get("where") or "")
+            return {"objectIds": got[:CAP]}          # ★ 服务端静默截到 40 万
+        return {"error": "unexpected"}
+
+    orig_post, orig_sleep, orig_get = fsr._esri_post_query, fsr.time.sleep, fsr._esri_query
+    fsr._esri_post_query = fake_post
+    fsr._esri_query = lambda url, params, tries=3, label="", timeout=120: {"error": "HTTP 400"}
+    fsr.time.sleep = lambda *_: None
+    try:
+        ids, st = fsr._nad_ids_by_oid_ranges(fx, BASE, ERR, "[state]")
+        check("T5 拿满 569,222 个主键", len(ids) == 569222, len(ids))
+        check("T5 确实发生了切分", st.get("splits", 0) > 0, st)
+        check("T5 无截断叶子", st.get("truncated_leaves") == 0, st)
+        check("T5 去重无重复", len(set(ids)) == len(ids))
+    finally:
+        fsr._esri_post_query, fsr.time.sleep, fsr._esri_query = orig_post, orig_sleep, orig_get
+
+
 if __name__ == "__main__":
     ERR.write_text("", encoding="utf-8")
     t1_and_t2()
     t3()
     t4()
+    t5()
     bad = [r for r in RESULTS if not r[1]]
     print(f"\n总判定： {'✅ 全部通过' if not bad else '❌ ' + str(len(bad)) + ' 项失败'}")
     sys.exit(0 if not bad else 1)

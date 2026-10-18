@@ -370,6 +370,33 @@ def _nad_ids_only(fx: Fetcher, bbox_str: str, err_log: Path, label: str = "") ->
     return [i for i in ids if isinstance(i, int)]
 
 
+def _nad_seg_count(fx: Fetcher, base: dict, err_log: Path, label: str = ""):
+    """单次 `returnCountOnly`（带 where 也行）—— 最轻的对账探针。
+
+    为什么不用 `_nad_oid_bounds` 判每段是否截断：后者要 3 个请求（count + 两个有序探针），
+    而探针在 runner 出口并不总是可靠；逐段只问 count 就能判「拿到的 ids 数 == 官方数」，
+    既足够又便宜（一个州几十段，省下来的全是实打实的时间）。
+    """
+    payload = _esri_post_query(fx, {**base, "where": base.get("where") or "1=1",
+                                    "returnCountOnly": "true", "f": "json"},
+                               err_log, f"{label}:count", tries=2)
+    if payload.get("error"):
+        return None
+    cnt = payload.get("count")
+    return int(cnt) if isinstance(cnt, int) else None
+
+
+def _nad_ids_sample(fx: Fetcher, base: dict, err_log: Path, label: str = ""):
+    """一次性拿清单（不看上限、不切分）—— 只在边界拿不到时用作抽样起点。"""
+    payload = _esri_post_query(fx, {**base, "where": base.get("where") or "1=1",
+                                    "returnIdsOnly": "true", "f": "json"},
+                               err_log, f"{label}:ids-sample", tries=2)
+    if payload.get("error"):
+        return [], None
+    ids = [i for i in (payload.get("objectIds") or []) if isinstance(i, int)]
+    return ids, len(ids)
+
+
 def _nad_count(fx: Fetcher, bbox_str: str, err_log: Path, label: str = ""):
     """同一 BBox 的官方行数（POST，失败返回 None）。"""
     payload = _esri_post_query(fx, {
@@ -556,18 +583,40 @@ def _nad_ids_by_oid_ranges(fx: Fetcher, base: dict, err_log: Path,
         return [], stats
     if mn is None or mx is None:
         # ★ 连有序探针都拿不到边界 → 放弃区间切分，退回单次清单（<400k 的县/州照样完整）
-        stats["bounds_unavailable"] = 1
-        payload = _esri_post_query(fx, {**base, "where": base.get("where") or "1=1",
-                                        "returnIdsOnly": "true", "f": "json"},
-                                   err_log, f"{label}:ids-nobounds", tries=3)
-        ids = [i for i in (payload.get("objectIds") or []) if isinstance(i, int)]
-        if len(ids) >= NAD_IDS_LIST_CAP:
-            stats["truncated_leaves"] += 1
-            log(f"⚠️ {label} 无边界可切且清单顶到 {NAD_IDS_LIST_CAP:,} 上限"
-                f"（{len(ids):,} 个）→ 已拿到的全交上层，由行数对账暴露缺口")
-        else:
-            log(f"ℹ️ {label} 无边界，改用单次清单：{len(ids):,} 个")
-        return ids, stats
+        # ★ 边界拿不到（聚合 + 两个探针全挂）时，**不能直接相信一次清单**：
+        #   run 39058950492 的 RI 就是这么错的 —— 一次返回 400,000（=服务端上限）被当成全量，
+        #   实际 569,222，少了 16.9 万主键，直到三数咬合才暴露（差 52,874）。
+        #   正确姿势：拿一份抽样清单当起点，用 returnCountOnly 指数扩大上界，再走正常二分。
+        stats["bounds_bootstrapped"] = 1
+        sample, _ = _nad_ids_sample(fx, base, err_log, label)
+        stats["queries"] += 1
+        if not sample:
+            return [], stats
+        if n is None:
+            n = _nad_seg_count(fx, base, err_log, f"{label}:count-boot")
+            stats["queries"] += 1
+            stats["count"] = n
+        lo, hi = min(sample), max(sample) + 1
+        if n is None or len(sample) >= n:
+            if len(sample) >= NAD_IDS_LIST_CAP:
+                stats["truncated_leaves"] += 1
+                log(f"⚠️ {label} 清单顶到 {NAD_IDS_LIST_CAP:,} 上限且无官方 count 可对"
+                    f" → 原样交上层，由三数咬合暴露缺口")
+            else:
+                log(f"ℹ️ {label} 无边界，单次清单已是全量：{len(sample):,} 个")
+            return sample, stats
+        grew = 0
+        while grew < 24:
+            c = _nad_seg_count(fx, {**base, "where": f"OBJECTID >= {lo} AND OBJECTID < {hi}"},
+                               err_log, f"{label}:grow{grew + 1}")
+            stats["queries"] += 1
+            grew += 1
+            if c is not None and c >= n:
+                break
+            hi = lo + (hi - lo) * 2
+        mn, mx = lo, hi - 1          # 自兜出来的边界直接进正常二分
+        log(f"ℹ️ {label} 边界自兜：抽样 {len(sample):,} / 官方 {n:,}"
+            f" → 上界扩到 {hi:,}（{grew} 次 count 试探）后照常二分")
     stack = [(mn, mx + 1, 0)]
     while stack:
         lo, hi, depth = stack.pop()
@@ -575,11 +624,9 @@ def _nad_ids_by_oid_ranges(fx: Fetcher, base: dict, err_log: Path,
         node = {**base, "where": where}
         # ★ 逐段先问 count：这样即使服务端上限不是 400k（或有其它隐式限制），
         #   也能用“拿到的手数 != count”当场发现被截断，不依赖任何魔法数字。
-        #   聚合熔断后每段省掉 2~3 个必然失败的重试。
-        seg_n = None
-        if not fx.cache.get("_nad_stats_down"):
-            _, _, seg_n = _nad_oid_bounds(fx, node, err_log, f"{label}[{lo}-{hi})")
-            stats["queries"] += 1
+        #   用单次 returnCountOnly（不是 3 请求的 _nad_oid_bounds）—— 聚合熔断也照样能用。
+        seg_n = _nad_seg_count(fx, node, err_log, f"{label}[{lo}-{hi})")
+        stats["queries"] += 1
         payload = _esri_post_query(fx, {**node, "returnIdsOnly": "true", "f": "json"},
                                    err_log, f"{label}[{lo}-{hi})")
         stats["queries"] += 1
@@ -1452,10 +1499,33 @@ def _nad_harvest_county_shards(fx: Fetcher, d: Path, fields: list, oid: str,
     root_ids, ost = _nad_ids_by_oid_ranges(fx, base, err_log, "[state]")
     official = ost.get("count")
     if not root_ids:
-        fx.note("nad", "error", channel="A-official-rest", mode="ids+county_shards",
-                error="州 bbox 主键清单为空", elapsed=round(time.time() - t0, 1))
-        fx.problem("NAD 州 bbox 一个主键都没拿到（见 nad_http_errors.log）")
-        return
+        # ★ 2026-10-18 实测：NAD 上游会**局部降级** —— 同一时刻 HI、CA 小框本机也返回 count=0，
+        #   而 AK/DE 正常。所以 count=0 不能直接判州死刑，先复测一次，再退到「县并集」当 root。
+        confirm = _nad_seg_count(fx, base, err_log, "[state]:recheck")
+        if confirm:
+            log(f"ℹ️ 州 bbox 复测 count={confirm:,}（首次拿不到主键）→ 重试一次清单")
+            root_ids, ost2 = _nad_ids_by_oid_ranges(fx, base, err_log, "[state]:retry")
+            official = ost2.get("count") or confirm
+            ost = ost2
+        if not root_ids:
+            log("⚠️ 州 bbox 仍为空 → 退到「县并集」当 root（溢出集将为空，其余对账不变）")
+            union_root: set = set()
+            for c in fx.cfg["counties"]:
+                rings = _county_rings(fx, c)
+                if not rings:
+                    continue
+                cid, _ = _nad_ids_by_oid_ranges(fx, _county_polygon_base(rings),
+                                                err_log, f"[{c['key']}]")
+                union_root |= set(cid)
+            root_ids = sorted(union_root)
+            official = len(root_ids) or None
+            ost = {**ost, "county_fallback": 1}
+        if not root_ids:
+            fx.note("nad", "error", channel="A-official-rest", mode="ids+county_shards",
+                    error="州 bbox 与县并集都没拿到主键（上游疑似降级）",
+                    elapsed=round(time.time() - t0, 1))
+            fx.problem("NAD 州 bbox + 县并集都没拿到主键（上游疑似降级，稍后同 tag 重跑即可）")
+            return
     log(f"州 bbox 主键 {len(root_ids):,}｜官方 count {official}｜"
         f"OID 查询 {ost['queries']} 次｜切分 {ost['splits']} 次")
 
@@ -1473,7 +1543,17 @@ def _nad_harvest_county_shards(fx: Fetcher, d: Path, fields: list, oid: str,
                                          err_log, f"[{c['key']}]")
         ccnt = cst.get("count")
         if not ids:
-            fx.problem(f"NAD 县片为空：{c['name']}（{c['fips']}）官方 count={ccnt}")
+            if ccnt:
+                # 官方说有量、我们拿到 0 → 真缺口（上游降级/限流）
+                fx.problem(f"NAD 县片为空：{c['name']}（{c['fips']}）官方 count={ccnt}"
+                           f" → 上游疑似降级，稍后同 tag 重跑即可")
+            else:
+                # ★ run 39058950492 实测：SD 59 个、AK 8 个、NH 10 个、WY 5 个县官方就是 count=0。
+                #   农村县在 NAD 里本来就没有门牌，把「空」当阻断等于拿数据质量惩罚自己。
+                #   空县放行：它不贡献县片，其主键（若有）自然落进溢出包，三数咬合仍然严格成立。
+                fx.cache.setdefault("empty_counties", []).append(c["fips"])
+                log(f"  ○ 空县放行：{c['name']}（{c['fips']}）官方 count={ccnt}"
+                    f"（NAD 确无门牌，不阻断）")
             continue
         fname = _asset_name("NAD", st, c["fips"], c["key"], ext=".ndjson.gz")
         union |= set(ids)
@@ -1604,6 +1684,7 @@ def _nad_harvest_county_shards(fx: Fetcher, d: Path, fields: list, oid: str,
             fetch_strategy="OID 区间二分取主键 → 县多边形切片 → objectIds 批取 → gzip 落盘",
             official_count=official, official_ids=len(root_ids),
             shard_count=len([s for s in shards if s["kind"] == "county"]),
+            empty_counties=list(fx.cache.get("empty_counties") or []),
             overflow_rows=over_meta["rows"], overflow_ids=over_n,
             boundary_duplicate_rows=dup_rows, total_rows=total_rows,
             coverage_pct=(round(100.0 * covered / official, 2) if official else None),
@@ -1813,7 +1894,15 @@ def _checkpoint(fx: Fetcher, path: Path, extra: dict | None = None,
         log(f"  ⏭ 远端已存在且大小一致，跳过：{name}")
     else:
         if not gh_upload(fx.tag, path, clobber=clobber):
-            return False
+            # ★ 同名旧资产冲突（run 39058950492 的 DE 溢出包就是这么挂的：tag 被复用，
+            #   上一轮已存在同名资产 → gh 报 already_exists）。数据资产平时不 clobber，
+            #   但“上传失败 + 远端确有同名”时覆盖是唯一正确解（内容就是本轮产物）。
+            if name in gh_assets(fx.tag):
+                log(f"⚠️ {name} 同名资产已存在 → 覆盖上传（远端旧版与本轮冲突）")
+                if not gh_upload(fx.tag, path, clobber=True):
+                    return False
+            else:
+                return False
         remote = gh_assets(fx.tag).get(name)
         if remote != size:
             log(f"⚠️ 远端大小不符（{remote} != {size}），重传一次：{name}")
