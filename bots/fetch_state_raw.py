@@ -1167,7 +1167,7 @@ def harvest_openaddresses(fx: Fetcher) -> None:
                 detail.append({"src": name, "run": run, "skipped": f"{len(blob) / 1e6:.1f}MB 超过 {fx.args.oa_max_mb}MB 上限"})
                 continue
             rows = _count_zip_rows(blob)
-            if rows == 0:
+            if rows == 0 or len(blob) < MIN_ASSET_BYTES:
                 # ★ 2026-10-18 AK 实测：OA 对"无门牌县"只吐 ~891B 的空 zip 头，
                 #   没有任何数据文件。它是**合法的空上游**，不是传输截断：
                 #   记 empty_upstream、不上架该 zip、不阻断发布（否则一县拖死全州）。
@@ -1912,6 +1912,15 @@ def _apply_naming(fx: Fetcher) -> None:
 
     fx.status = rewrite(fx.status)
     fx.ledger = rewrite(fx.ledger)
+
+    # ★ 2026-10-18：OA 空包若已在上一轮上架（891B 空 zip），本轮直接清掉远端与账本
+    junk = [n for n in (fx.status_doc.get("assets") or {})
+            if n.startswith("OA-") and n.endswith(".zip")
+            and ((fx.status_doc["assets"][n] or {}).get("bytes") or 0) < MIN_ASSET_BYTES]
+    for n in junk:
+        gh_delete_asset(fx.tag, n)
+        fx.status_doc["assets"].pop(n, None)
+        log(f"  🗑 清掉空 OA 资产：{n}")
     log(f"命名统一完成：{len(mapping)} 个资产改为 {{源}}-US-{st}-... 口径")
 
 
@@ -1969,6 +1978,25 @@ def gh_upload(tag: str, path: Path, clobber: bool = False) -> bool:
         log(f"⚠️ 上传失败 {path.name}：{(r.stderr or '')[:200]}")
         return False
     return True
+
+
+def gh_delete_asset(tag: str, name: str) -> bool:
+    """删掉 Release 里某个同名资产（用于清理空包/脏资产）。失败只告警不阻断。"""
+    env = _gh_env()
+    repo = os.environ.get("GITHUB_REPOSITORY", "")
+    r = subprocess.run(["gh", "api", f"repos/{repo}/releases/tags/{tag}",
+                        "--jq", '.assets[]|"\(.id)\t\(.name)"'],
+                       capture_output=True, text=True, env=env)
+    for line in (r.stdout or "").splitlines():
+        if "\t" in line and line.split("\t", 1)[1].strip() == name:
+            aid = line.split("\t", 1)[0].strip()
+            d = subprocess.run(["gh", "api", "-X", "DELETE", f"repos/{repo}/releases/assets/{aid}"],
+                               capture_output=True, text=True, env=env)
+            if d.returncode != 0:
+                log(f"⚠️ 删除资产失败 {name}：{(d.stderr or '')[:160]}")
+                return False
+            return True
+    return False
 
 
 def gh_read_asset_text(tag: str, name: str) -> str | None:
@@ -2132,7 +2160,8 @@ def gate(fx: Fetcher) -> None:
             b = m.get("bytes")
             if b is None:
                 errs.append(f"资产既不在本地也无上传记账：{rel(p)}")
-            elif p.suffix.lower() in PAYLOAD_SUFFIXES and b < MIN_ASSET_BYTES:
+            elif (p.suffix.lower() in PAYLOAD_SUFFIXES and b < MIN_ASSET_BYTES
+                  and not (p.name.startswith("OA-") and p.name.endswith(".zip"))):
                 errs.append(f"过小产物（{b}B < {MIN_ASSET_BYTES}B）：{rel(p)}")
             elif str(p).endswith(".ndjson.gz") and not (m.get("rows") or 0):
                 errs.append(f"分片行数为 0：{rel(p)}")
