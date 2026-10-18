@@ -34,6 +34,7 @@ import gzip
 import hashlib
 import io
 import json
+import random
 import os
 import re
 import shutil
@@ -100,7 +101,9 @@ def _esri_query(url: str, params: dict, tries: int = 4, label: str = "", timeout
     而换一组参数又在第 1 页撞上 —— 不是深度分页熔断，是服务端抖动。
     对策：重试（指数退避）+ 失败时缩页，最后仍失败才算真失败。
     """
-    delay = 2.0
+    # ★ 2026-10-18 实测：同一请求这一秒 400/超时、下一秒正常 → 退避要带**抖动**，
+    #   否则并发下所有客户端会在同一毫秒同时重试，把上游连接池再打崩一次。
+    steps = [5.0, 15.0, 30.0]
     last = ""
     for i in range(1, tries + 1):
         try:
@@ -112,9 +115,9 @@ def _esri_query(url: str, params: dict, tries: int = 4, label: str = "", timeout
             return payload
         last = str(err)[:200]
         if i < tries:
-            log(f"⚠️ {label} 第 {i}/{tries} 次被拒：{last[:110]} → {delay:.0f}s 后重试")
+            delay = steps[min(i - 1, len(steps) - 1)] * random.uniform(0.7, 1.3)
+            log(f"⚠️ {label} 第 {i}/{tries} 次被拒：{last[:110]} → {delay:.1f}s 后重试（带抖动）")
             time.sleep(delay)
-            delay = min(delay * 2, 30)
     return {"error": last}
 
 
@@ -340,7 +343,7 @@ def _dump_error(err_log: Path, label: str, params: dict, err) -> None:
 def _esri_post_query(fx: Fetcher, params: dict, err_log: Path, label: str,
                      tries: int = 4) -> dict:
     """POST 查询 + 指数退避重试；失败的完整响应落盘。"""
-    delay = 2.0
+    steps = [5.0, 15.0, 30.0]
     last = ""
     for i in range(1, tries + 1):
         payload = _post_json(f"{df.NAD_OFFICIAL}/query", params, timeout=fx.args.nad_timeout)
@@ -350,9 +353,10 @@ def _esri_post_query(fx: Fetcher, params: dict, err_log: Path, label: str,
         last = str(err)[:4000]
         _dump_error(err_log, f"{label} try{i}", params, last)
         if i < tries:
-            log(f"⚠️ {label} 第 {i}/{tries} 次被拒：{last[:110].replace(chr(10), ' ')} → {delay:.0f}s 后重试")
+            delay = steps[min(i - 1, len(steps) - 1)] * random.uniform(0.7, 1.3)
+            log(f"⚠️ {label} 第 {i}/{tries} 次被拒：{last[:110].replace(chr(10), ' ')} "
+                f"→ {delay:.1f}s 后重试（带抖动）")
             time.sleep(delay)
-            delay = min(delay * 2, 30)
     return {"error": last}
 
 
@@ -379,7 +383,7 @@ def _nad_seg_count(fx: Fetcher, base: dict, err_log: Path, label: str = ""):
     """
     payload = _esri_post_query(fx, {**base, "where": base.get("where") or "1=1",
                                     "returnCountOnly": "true", "f": "json"},
-                               err_log, f"{label}:count", tries=2)
+                               err_log, f"{label}:count", tries=3)
     if payload.get("error"):
         return None
     cnt = payload.get("count")

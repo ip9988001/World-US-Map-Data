@@ -32,7 +32,7 @@ UA = {"User-Agent": ("Mozilla/5.0 (X11; Linux x86_64) AppleWebKit/537.36 (KHTML,
                      "Chrome/124.0.0.0 Safari/537.36")}
 
 
-def post(params: dict, timeout: int = 90) -> dict:
+def post(params: dict, timeout: int = 25) -> dict:
     body = urllib.parse.urlencode(params, doseq=True).encode()
     req = urllib.request.Request(NAD, data=body,
                                 headers={**UA, "Content-Type": "application/x-www-form-urlencoded"})
@@ -40,7 +40,7 @@ def post(params: dict, timeout: int = 90) -> dict:
         return json.loads(resp.read().decode("utf-8", "replace"))
 
 
-def probe_state(bbox: list, tries: int = 3) -> tuple[str, int | None, str]:
+def probe_state(bbox: list, tries: int = 2, timeout: int = 25) -> tuple[str, int | None, str]:
     """返回 (status, count, note)。status ∈ has_coverage / zero_coverage / error。"""
     geom = ",".join(str(v) for v in bbox)
     delay = 2.0
@@ -49,7 +49,7 @@ def probe_state(bbox: list, tries: int = 3) -> tuple[str, int | None, str]:
         try:
             p = post({"where": "1=1", "geometry": geom, "geometryType": "esriGeometryEnvelope",
                       "inSR": "4326", "spatialRel": "esriSpatialRelIntersects",
-                      "returnCountOnly": "true", "f": "json"})
+                      "returnCountOnly": "true", "f": "json"}, timeout=timeout)
         except Exception as exc:  # noqa: BLE001
             last = f"{type(exc).__name__}: {str(exc)[:120]}"
             p = {}
@@ -58,8 +58,8 @@ def probe_state(bbox: list, tries: int = 3) -> tuple[str, int | None, str]:
             return ("has_coverage" if n > 0 else "zero_coverage"), n, f"try{i}"
         last = str(p.get("error") or last)[:160]
         if i < tries:
-            time.sleep(delay)
-            delay = min(delay * 2, 20)
+            time.sleep(1.5)
+            delay = min(delay * 2, 8)
     return "error", None, last
 
 
@@ -68,6 +68,9 @@ def main() -> int:
     ap.add_argument("--tier", default="all", help="all/tiny/small/medium/large")
     ap.add_argument("--json-out", default="")
     ap.add_argument("--step-summary", action="store_true")
+    ap.add_argument("--concurrency", type=int, default=4)
+    ap.add_argument("--tries", type=int, default=2)
+    ap.add_argument("--timeout", type=int, default=25)
     args = ap.parse_args()
 
     try:
@@ -83,13 +86,23 @@ def main() -> int:
 
     rows = []
     t0 = time.time()
-    for code in picked:
-        st, n, note = probe_state(states[code]["bbox"])
-        rows.append({"state": code, "tier": states[code].get("size_tier"), "status": st,
-                     "count": n, "note": note})
-        mark = {"has_coverage": "✅", "zero_coverage": "○", "error": "⚠️"}[st]
-        print(f"  {mark} {code:<3} {str(states[code].get('size_tier')):<7} "
-              f"{(f'{n:,}' if isinstance(n, int) else '—'):>12}  {note}", flush=True)
+    from concurrent.futures import ThreadPoolExecutor, as_completed  # noqa: PLC0415
+
+    def _one(code):
+        st, n, note = probe_state(states[code]["bbox"], tries=args.tries, timeout=args.timeout)
+        return {"state": code, "tier": states[code].get("size_tier"), "status": st,
+                "count": n, "note": note}
+
+    with ThreadPoolExecutor(max_workers=max(1, args.concurrency)) as pool:
+        futs = {pool.submit(_one, c): c for c in picked}
+        for fut in as_completed(futs):
+            r = fut.result()
+            rows.append(r)
+            mark = {"has_coverage": "✅", "zero_coverage": "○", "error": "⚠️"}[r["status"]]
+            n = r["count"]
+            print(f"  {mark} {r['state']:<3} {str(r['tier']):<7} "
+                  f"{(f'{n:,}' if isinstance(n, int) else '—'):>12}  {r['note']}", flush=True)
+    rows.sort(key=lambda r: picked.index(r["state"]))
 
     has = [r for r in rows if r["status"] == "has_coverage"]
     zero = [r for r in rows if r["status"] == "zero_coverage"]
