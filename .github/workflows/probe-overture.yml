@@ -1,0 +1,52 @@
+name: probe-overture
+
+# 诊断用：直接跑 overturemaps CLI，把 stdout/stderr 原样打出来（排查 "0 features" 到底卡在哪）
+on:
+  workflow_dispatch:
+    inputs:
+      bbox:
+        description: bbox（minx,miny,maxx,maxy）
+        default: "-157.9,21.3,-157.8,21.4"
+      fmt:
+        description: 输出格式
+        type: choice
+        options: [geojson, geoparquet]
+        default: geojson
+
+jobs:
+  probe:
+    runs-on: ubuntu-latest
+    timeout-minutes: 60
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-python@v5
+        with:
+          python-version: "3.11"
+      - run: pip install -r requirements.txt
+      - name: CLI 版本
+        run: overturemaps --version || true
+      - name: 直接下载（原始日志全打）
+        run: |
+          set -x
+          overturemaps download --bbox="${{ inputs.bbox }}" -f "${{ inputs.fmt }}" --type=address -o /tmp/probe.out 2>&1 | tail -40
+          echo "rc=$?"
+          ls -l /tmp/probe.out || true
+      - name: 数行数
+        run: |
+          python - <<'PY'
+          import pathlib
+          p = pathlib.Path("/tmp/probe.out")
+          print("exists=", p.exists(), "bytes=", p.stat().st_size if p.exists() else 0)
+          if p.exists() and p.suffix == ".out":
+              head = p.read_bytes()[:300]
+              print("head300=", head)
+          import duckdb
+          try:
+              print("rows=", duckdb.sql(f"SELECT count(*) FROM read_parquet('/tmp/probe.out')").fetchone())
+          except Exception as e:
+              print("parquet count failed:", e)
+          PY
+      - name: 小切片对照（同州更小框）
+        run: |
+          overturemaps download --bbox="-157.75,21.28,-157.70,21.33" -f geoparquet --type=address -o /tmp/probe2.pq 2>&1 | tail -20
+          ls -l /tmp/probe2.pq || true
