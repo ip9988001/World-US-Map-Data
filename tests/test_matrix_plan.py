@@ -78,7 +78,11 @@ def main():
     check("M6 已封印", ms.verdict(ok).startswith("✅"), ms.verdict(ok))
     check("M6 未封印", ms.verdict(half).startswith("⚠️"), ms.verdict(half))
     check("M6 无数据", ms.verdict(none).startswith("⛔"), ms.verdict(none))
-    check("M6 三数不咬合判缺口", ms.verdict(gap).startswith("⚠️"), ms.verdict(gap))
+    # 口径变更（2026-10-18）：州级三数不咬合只作参考，不再阻断；阻断只由失败县触发
+    check("M6 州级不咬合不再阻断", ms.verdict(gap).startswith("✅"), ms.verdict(gap))
+    gapc = {"release": True, "phase": "complete", "gate": True, "bite": False,
+            "c_failed": 2, "c_ok": 5, "c_empty": 0, "failed_list": ["10003"], "note": ""}
+    check("M6 有失败县 → 待补", "待补" in ms.verdict(gapc), ms.verdict(gapc))
 
     bad = [x for x in RESULTS if not x[1]]
     print(f"\n总判定： {'✅ 全部通过' if not bad else '❌ ' + str(len(bad)) + ' 项失败'}")
