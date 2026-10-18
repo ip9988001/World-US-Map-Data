@@ -1,0 +1,35 @@
+name: preflight-nad
+
+# 51 州 NAD 覆盖排期预检（每州一次 returnCountOnly，约 1~2 分钟）
+# 目的：进 Medium/Large 批次前先知道谁会走 no_upstream_coverage，避免整州空转。
+on:
+  workflow_dispatch:
+    inputs:
+      tier:
+        description: 档位（all=51 州）
+        type: choice
+        options: [all, tiny, small, medium, large]
+        default: all
+
+permissions:
+  contents: read
+
+jobs:
+  probe:
+    runs-on: ubuntu-latest
+    timeout-minutes: 30
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-python@v5
+        with:
+          python-version: "3.11"
+      - run: pip install pyyaml
+      - name: 逐州探针
+        run: |
+          python scripts/nad_preflight.py --tier "${{ inputs.tier }}" \
+            --json-out nad_preflight_${{ inputs.tier }}.json --step-summary
+      - uses: actions/upload-artifact@v4
+        with:
+          name: nad-preflight-${{ inputs.tier }}-${{ github.run_id }}
+          path: nad_preflight_${{ inputs.tier }}.json
+          retention-days: 90
