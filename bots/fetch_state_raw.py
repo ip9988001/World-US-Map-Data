@@ -1530,14 +1530,30 @@ def _nad_harvest_county_shards(fx: Fetcher, d: Path, fields: list, oid: str,
         f"OID 查询 {ost['queries']} 次｜切分 {ost['splits']} 次")
 
     shards: list = []
-    union: set = set()
+    union: set = set()          # 已取到主键的县（成功或失败）→ 溢出计算要减掉，防失败县数据流进溢出包
+    union_ok: set = set()       # 真正交付成功的县
     dup_rows = 0
     state_dist: Counter = Counter()
+    failed_counties: list = []
 
-    for c in fx.cfg["counties"]:
+    only = [s.strip() for s in str(getattr(fx.args, "county_fips", "") or "").split(",") if s.strip()]
+    counties = [c for c in fx.cfg["counties"]
+                if not only or c["fips"] in only or c["key"] in only]
+    partial = bool(only) and len(counties) < len(fx.cfg["counties"])
+    if partial:
+        known = {c["fips"] for c in counties} | {c["key"] for c in counties}
+        bad = [s for s in only if s not in known]
+        if bad:
+            log(f"⚠️ --county-fips 未匹配到本州县：{bad}（已忽略）")
+        log(f"⚠️ 只补指定县 {len(counties)} 个 → 本轮不重算溢出包、不做州级比对参考")
+
+    for c in counties:
         rings = _county_rings(fx, c)
         if not rings:
-            fx.problem(f"NAD 按县切片缺县界多边形：{c['name']}（{c['fips']}）")
+            failed_counties.append({"county_fips": c["fips"], "county_key": c["key"],
+                                    "county_name": c["name"], "reason": "缺县界多边形",
+                                    "official_count": None, "rows": 0, "missing_ids": None})
+            log(f"  ✗ 县失败（缺县界多边形）：{c['name']}（{c['fips']}）→ 本轮不产片，记录待补")
             continue
         ids, cst = _nad_ids_by_oid_ranges(fx, _county_polygon_base(rings),
                                          err_log, f"[{c['key']}]")
@@ -1545,18 +1561,28 @@ def _nad_harvest_county_shards(fx: Fetcher, d: Path, fields: list, oid: str,
         if not ids:
             if ccnt:
                 # 官方说有量、我们拿到 0 → 真缺口（上游降级/限流）
-                fx.problem(f"NAD 县片为空：{c['name']}（{c['fips']}）官方 count={ccnt}"
-                           f" → 上游疑似降级，稍后同 tag 重跑即可")
+                failed_counties.append({"county_fips": c["fips"], "county_key": c["key"],
+                                        "county_name": c["name"],
+                                        "reason": "主键清单为空但官方 count>0（上游疑似降级）",
+                                        "official_count": ccnt, "rows": 0, "missing_ids": None})
+                log(f"  ✗ 县失败（官方 {ccnt:,} 却拿不到主键）：{c['name']}（{c['fips']}）")
             else:
-                # ★ run 39058950492 实测：SD 59 个、AK 8 个、NH 10 个、WY 5 个县官方就是 count=0。
-                #   农村县在 NAD 里本来就没有门牌，把「空」当阻断等于拿数据质量惩罚自己。
-                #   空县放行：它不贡献县片，其主键（若有）自然落进溢出包，三数咬合仍然严格成立。
-                fx.cache.setdefault("empty_counties", []).append(c["fips"])
-                log(f"  ○ 空县放行：{c['name']}（{c['fips']}）官方 count={ccnt}"
-                    f"（NAD 确无门牌，不阻断）")
+                # 双重确认：count 与 idsOnly 两条不同查询都为 0 才认定"真空县"。
+                # 单条查询为 0 可能是上游局部降级（2026-10-18 HI/CA 实测），不能直接押空。
+                c2 = _nad_seg_count(fx, _county_polygon_base(rings), err_log, f"[{c['key']}]:empty-count")
+                sample2, n2 = _nad_ids_sample(fx, _county_polygon_base(rings), err_log, f"[{c['key']}]:empty-ids")
+                if (c2 or 0) == 0 and (n2 or 0) == 0 and not sample2:
+                    fx.cache.setdefault("empty_counties", []).append(c["fips"])
+                    log(f"  ○ 空县放行：{c['name']}（{c['fips']}）双通道确认 count=0（NAD 确无门牌）")
+                else:
+                    failed_counties.append({"county_fips": c["fips"], "county_key": c["key"],
+                                            "county_name": c["name"],
+                                            "reason": f"首查为空但复核 count={c2} ids={n2}（上游不稳定）",
+                                            "official_count": c2, "rows": 0, "missing_ids": None})
+                    log(f"  ✗ 县失败（首查空、复核 count={c2} ids={n2}）：{c['name']}（{c['fips']}）")
             continue
         fname = _asset_name("NAD", st, c["fips"], c["key"], ext=".ndjson.gz")
-        union |= set(ids)
+        union |= set(ids)        # 已取到主键（成功或失败都要算）→ 溢出必须先减掉它们
         # ★ 断点续传：远端已有该片且大小一致 → 跳过抓取（ids 仍查，因为溢出包要算差集）
         prevrec = (fx.status_doc.get("assets") or {}).get(fname)
         if (fx.publish and prevrec and c["fips"] in (fx.status_doc.get("done") or [])
@@ -1568,6 +1594,7 @@ def _nad_harvest_county_shards(fx: Fetcher, d: Path, fields: list, oid: str,
                                        "rows": prevrec.get("rows")}
             fx.add(d / fname)
             shards.append(prevrec)
+            union_ok |= set(ids)
             state_dist.update(prevrec.get("state_distribution") or {})
             continue
         path = d / fname
@@ -1582,12 +1609,21 @@ def _nad_harvest_county_shards(fx: Fetcher, d: Path, fields: list, oid: str,
             fx.args.nad_ids_batch = old
             missing = [i for i in ids if i not in seen_l]
         meta = close()
-        dup_rows += max(0, meta["rows"] - len(seen_l))
-        state_dist.update(meta["state_distribution"])
         ok = (ccnt is None or meta["rows"] == ccnt) and not missing
         if not ok:
-            fx.problem(f"NAD 县片对账失败 {c['name']}（{c['fips']}）："
-                       f"取 {meta['rows']:,} / 官方 {ccnt} / 缺 {len(missing):,} 主键")
+            # ★ 县级是**唯一硬性校验单元**：不合格的县只丢自己，绝不牵连全州。
+            #   （州级三数咬合降级为参考记录，见下方 reference_check）
+            path.unlink(missing_ok=True)
+            failed_counties.append({
+                "county_fips": c["fips"], "county_key": c["key"], "county_name": c["name"],
+                "reason": (f"行数不符：取 {meta['rows']:,} / 官方 {ccnt}" if ccnt is not None
+                           and meta["rows"] != ccnt else f"缺 {len(missing):,} 主键"),
+                "official_count": ccnt, "rows": meta["rows"], "missing_ids": len(missing)})
+            log(f"  ✗ 县失败（取 {meta['rows']:,} / 官方 {ccnt} / 缺 {len(missing):,}）："
+                f"{c['name']}（{c['fips']}）→ 不产片，记录待补")
+            continue
+        dup_rows += max(0, meta["rows"] - len(seen_l))
+        state_dist.update(meta["state_distribution"])
         rec = {"kind": "county", "county_fips": c["fips"], "county_key": c["key"],
                "county_name": c["name"], "file": rel(path),
                "rows": meta["rows"], "expected_rows": ccnt,
@@ -1605,8 +1641,27 @@ def _nad_harvest_county_shards(fx: Fetcher, d: Path, fields: list, oid: str,
             fx.status_doc.setdefault("done", []).append(c["fips"])
         _write_status(fx)
         shards.append(rec)
+        union_ok |= set(ids)
         log(f"  县片 {c['fips']} {c['key']:<14} 行 {meta['rows']:>8,} / 官方 {ccnt:>8,}"
             f"｜gz {rec['gz_bytes'] / 1e6:>6.2f} MB")
+
+    if partial:
+        # 只补指定县：溢出包与州级参考都是**全州口径**，本轮不动（避免把 subset 当成全集算差）
+        fx.cache["nad_shards"] = shards
+        fx.cache["nad_reference"] = {
+            "policy": "县级核验为准；本轮为部分县补跑，未重算溢出包与州级参考",
+            "partial": True, "counties_run": [c["fips"] for c in counties],
+            "failed_counties": failed_counties,
+            "empty_counties": list(fx.cache.get("empty_counties") or []),
+        }
+        fx.note("nad", "ok" if not failed_counties else "warn-partial",
+                channel="A-official-rest", mode="ids+county_shards", partial=True,
+                official_count=official, official_ids=len(root_ids),
+                shard_count=len(shards), failed_counties=failed_counties,
+                empty_counties=list(fx.cache.get("empty_counties") or []),
+                rows_fetched=sum(s["rows"] for s in shards), truncated=False,
+                elapsed=round(time.time() - t0, 1))
+        return
 
     # 溢出：州 bbox 全集 − 各县并集（纯集合差，绝不重复拉数据）
     over_ids = [i for i in root_ids if i not in union]
@@ -1668,15 +1723,40 @@ def _nad_harvest_county_shards(fx: Fetcher, d: Path, fields: list, oid: str,
         log(f"  溢出包 OUTOFSTATE 行 {over_meta['rows']:>8,} / 应得 {len(over_ids):>8,}"
             f"｜gz {rec['gz_bytes'] / 1e6:>6.2f} MB")
 
-    # ---- 三数咬合 ----
-    covered = len(union) + over_n
+    # ---- 州级比对参考（**只记录，不阻断**）----
+    # 口径变更（2026-10-18）：县级 count/行数/缺主键 是唯一门槛；州级三数咬合降级为参考。
+    # 一个县出问题只丢那个县（failed_counties），其余县照常上架，后面按县补跑即可。
+    covered_ok = len(union_ok) + over_n
     total_rows = sum(s["rows"] for s in shards)
-    if official is not None and covered != official:
-        fx.problem(f"NAD 三数不咬合：县并集 {len(union):,} + 溢出 {over_n:,}"
-                   f" = {covered:,} ≠ 州官方 {official:,}")
-    if total_rows - dup_rows != covered:
-        fx.problem(f"NAD 分片行数不咬合：Σ行 {total_rows:,} − 县界重复 {dup_rows:,}"
-                   f" = {total_rows - dup_rows:,} ≠ 主键覆盖 {covered:,}")
+    ref = {
+        "policy": "县级核验为唯一门槛；州级三数咬合仅作比对参考",
+        "state_upstream_count": official,
+        "state_root_ids": len(root_ids),
+        "counties_total": len(fx.cfg["counties"]),
+        "counties_ok": len([s for s in shards if s["kind"] == "county"]),
+        "counties_empty": len(fx.cache.get("empty_counties") or []),
+        "counties_failed": len(failed_counties),
+        "failed_counties": failed_counties,
+        "county_union_ids": len(union_ok),
+        "overflow_ids": over_n,
+        "three_number_check": {
+            "formula": "县并集 + 溢出 == 州官方 count",
+            "covered": covered_ok, "official": official,
+            "matches": (official is None or covered_ok == official),
+            "gap_ids": (official - covered_ok) if isinstance(official, int) else None,
+            "note": "不咬合不改数据、不阻断发布；差异通常来自失败/降级县，按需补跑",
+        },
+        "shard_rows_check": {
+            "formula": "Σ县片行 − 县界重复 == 县并集 + 溢出",
+            "sum_rows": total_rows, "boundary_dup_rows": dup_rows,
+            "net": total_rows - dup_rows,
+            "matches": (total_rows - dup_rows == covered_ok),
+        },
+    }
+    fx.cache["nad_reference"] = ref
+    if not ref["three_number_check"]["matches"]:
+        log(f"ℹ️ 州级比对参考：覆盖 {covered_ok:,} / 官方 {official}"
+            f"（差 {ref['three_number_check']['gap_ids']}，按县口径已记录待补，不阻断发布）")
 
     fx.cache["nad_shards"] = shards
     fx.note("nad", "ok" if not fx.problems else "warn-truncated",
@@ -1685,15 +1765,17 @@ def _nad_harvest_county_shards(fx: Fetcher, d: Path, fields: list, oid: str,
             official_count=official, official_ids=len(root_ids),
             shard_count=len([s for s in shards if s["kind"] == "county"]),
             empty_counties=list(fx.cache.get("empty_counties") or []),
+            failed_counties=failed_counties,
+            reference_check="manifest.reference_check（州级仅参考）",
             overflow_rows=over_meta["rows"], overflow_ids=over_n,
             boundary_duplicate_rows=dup_rows, total_rows=total_rows,
-            coverage_pct=(round(100.0 * covered / official, 2) if official else None),
+            coverage_pct=(round(100.0 * covered_ok / official, 2) if official else None),
             ids_queries=ost["queries"], ids_splits=ost["splits"],
             state_distribution=dict(state_dist.items()),
             state_in_scope_rows=state_dist.get(st),
             state_in_scope_pct=(round(100.0 * state_dist.get(st, 0) / total_rows, 2)
                                 if total_rows else None),
-            rows_fetched=covered, truncated=False,
+            rows_fetched=covered_ok, truncated=False,
             bytes=sum(s["gz_bytes"] for s in shards),
             elapsed=round(time.time() - t0, 1))
 
@@ -1968,13 +2050,21 @@ def gate(fx: Fetcher) -> None:
         st = fx.status.get(src)
         if not st:
             errs.append(f"源 {src} 未执行（--only 漏了？）")
-        elif st.get("status") not in ("ok", "warn-truncated"):
+        elif st.get("status") not in ("ok", "warn-truncated", "warn-partial"):
             errs.append(f"源 {src} 状态异常：{st.get('status')}")
     # ★ 第二把锁：不管走哪条通道，已取行数必须与官方 count 相等（防“自洽但残缺”骗过门禁）
     nad = fx.status.get("nad") or {}
     oc, rf = nad.get("official_count"), nad.get("rows_fetched")
+    ref = fx.cache.get("nad_reference") or {}
+    county_mode = str(nad.get("mode") or "").endswith("county_shards")
     if isinstance(oc, int) and isinstance(rf, int) and rf != oc:
-        errs.append(f"NAD 覆盖不全：已取 {rf:,} ≠ 官方 {oc:,}（{rf / oc:.1%}）")
+        if county_mode and ref:
+            # ★ 口径变更（2026-10-18）：县级核验为准入门槛，州级覆盖差异只记录不阻断。
+            log(f"ℹ️ 州级参考：覆盖 {rf:,} / 官方 {oc:,}（{rf / oc:.1%}）"
+                f"｜县 ok={ref.get('counties_ok')} 失败={ref.get('counties_failed')} "
+                f"空={ref.get('counties_empty')} → 不阻断，按需补跑失败县")
+        else:
+            errs.append(f"NAD 覆盖不全：已取 {rf:,} ≠ 官方 {oc:,}（{rf / oc:.1%}）")
     # ★ 第三把锁：TIGER 空间包双头对账（.dbf 记录数 vs .shx 记录数），防半载包
     for d in ((fx.status.get("census_tiger") or {}).get("detail") or []):
         if isinstance(d, dict) and d.get("records_match") is False:
@@ -2053,8 +2143,8 @@ def build_completeness(fx: Fetcher) -> dict:
             "local_rows": nad_rows,
             "local_unique_ids": nad.get("official_ids"),
             "coverage_pct": nad.get("coverage_pct"),
-            "method": ("县多边形并集主键 + 溢出主键 == 州 returnCountOnly；"
-                       "且 Σ分片行 − 县界重复 == 主键覆盖"
+            "method": ("【参考】县多边形并集主键 + 溢出主键 == 州 returnCountOnly；"
+                       "且 Σ分片行 − 县界重复 == 主键覆盖（门禁以县为准，见 reference_check）"
                        if str(nad.get("mode") or "").endswith("county_shards")
                        else ("returnCountOnly(同一 BBox) == returnIdsOnly 全集 == 落盘行数"
                              if nad.get("mode") == "ids" else "returnCountOnly == 去重后行数")),
@@ -2149,6 +2239,7 @@ def build_manifest(fx: Fetcher) -> Path:
         "row_counts": row_counts(),
         "shards": fx.cache.get("nad_shards") or [],
         "completeness": build_completeness(fx),
+        "reference_check": fx.cache.get("nad_reference") or {},
         "quality": {"note": "只读统计，不做裁剪：BBox 是矩形，必然包含邻州边角门牌",
                     "state_distribution": nad_st.get("state_distribution"),
                     "state_in_scope_rows": nad_st.get("state_in_scope_rows"),
@@ -2282,6 +2373,9 @@ def main(argv: list[str] | None = None) -> int:
                     help="每批 objectIds 个数（500~800 安全，必须走 POST）")
     ap.add_argument("--nad-split-threshold", type=int, default=50000,
                     help="ids 模式下单块超这个行数就自动降级到 tract/网格")
+    ap.add_argument("--county-fips", default="",
+                    help="只补跑指定县（逗号分隔 fips 或 key，如 10003,new_castle）；"
+                         "留空=全州县清单")
     ap.add_argument("--nad-ids-max-depth", type=int, default=NAD_IDS_MAX_DEPTH,
                     help="主键清单被 400k 上限截断时四象限递归的最大层数（默认 6）")
     ap.add_argument("--nad-ids-slicing", choices=["quadrant", "oid"], default="quadrant",

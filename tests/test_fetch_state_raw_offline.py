@@ -19,6 +19,7 @@
   S9 OID 区间二分        → 主键清单撞 400k 上限时按 OBJECTID 区间二分补齐（v1 通用切法）
   S11 增量发布 + 断点续传 → STATUS.json 过程态 / 分片即传即删 / MANIFEST 最后封印 /
                             重跑零批取（全命中断点）
+  S12 县级核验为准入门槛 → 一个县坏只丢那个县；其余县照常上架；州级三数只做参考
   S10 按县切片 + gzip    → 每个县一个 gz 分片 + 溢出包；州总量 == Σ县片 + 溢出（三数咬合）；
                             命名统一为 NAD/TIGER/OA/OVERTURE-US-{州}-...
 """
@@ -500,6 +501,41 @@ def main():
     bad10 = [k for k, v in res10.items() if not v]
     print("S10 判定：", "✅ 通过" if results["S10"] else f"❌ 失败 {bad10}")
 
+    # ---------- S12 县级核验为准入门槛（一个县坏 → 只丢那个县）----------
+    # 设计：州主键 = [1,2,3,5,6,7]；001=2、003=2、005=1；003 的 4 号主键在批取层取不到
+    #   → 003 判失败（取 1 / 官方 2）→ 不产片、也不让它混进溢出包；
+    #   州级三数参考允许不咬合（差 1 = 失败县那条已解析却未交付的主键），但不阻断发布
+    rc13, _ = scenario("S12 单县失败只丢该县", base / "s12", mode="ids", official=6,
+                       main_pool=[], ids_target=[1, 2, 3, 5, 6, 7],
+                       poly_pools={"001": [1, 2], "003": [3, 4], "005": [5]},
+                       extra=["--pack-mode", "county_shards",
+                              "--nad-ids-slicing", "oid", "--nad-ids-batch", "10"])
+    import gzip as _gz12
+    d12 = base / "s12" / "nad"
+    got12 = {p.name: len(_gz12.open(p, "rt", encoding="utf-8").read().strip().splitlines())
+             for p in sorted(d12.glob("*.ndjson.gz"))}
+    man13 = json.loads((base / "s12" / "MANIFEST.json").read_text(encoding="utf-8"))
+    ref13 = man13.get("reference_check") or {}
+    tn13 = ref13.get("three_number_check") or {}
+    nad13 = nad_of(base / "s12")
+    res13 = {
+        "退出0(不因单县阻断)": rc13 == 0,
+        "好县照常产片": all(f"NAD-US-DE-1000{i}-{k}.ndjson.gz" in got12
+                           for i, k in ((1, "kent"), (5, "sussex"))),
+        "坏县不产片": "NAD-US-DE-10003-new_castle.ndjson.gz" not in got12,
+        "坏县记录在案": [f.get("county_fips") for f in ref13.get("failed_counties") or []] == ["10003"],
+        "坏县主键未漏进溢出": got12.get("NAD-US-DE-OUTOFSTATE.ndjson.gz") == 2,
+        "州级仅参考不阻断": tn13.get("matches") is False and tn13.get("gap_ids") == 1,
+        "县计数正确": (ref13.get("counties_ok"), ref13.get("counties_failed")) == (2, 1),
+        "nad状态warn": nad13.get("status") in ("ok", "warn-truncated", "warn-partial"),
+    }
+    results["S12"] = all(res13.values())
+    print(f"  分片: {got12}")
+    print(f"  参考: ok={ref13.get('counties_ok')} failed={ref13.get('counties_failed')} "
+          f"gap={tn13.get('gap_ids')} matches={tn13.get('matches')}")
+    bad13 = [k for k, v in res13.items() if not v]
+    print("S12 判定：", "✅ 通过" if results["S12"] else f"❌ 失败 {bad13}")
+
     # ---------- S11 增量发布 + 断点续传（Step 2）----------
     install_fake_release()
     rc11, _ = scenario("S11 增量发布(首跑)", base / "s11", mode="ids", official=7,
@@ -552,7 +588,7 @@ def main():
     print("S11 判定：", "✅ 通过" if results["S11"] else f"❌ 失败 {bad11}")
 
     shutil.rmtree(base, ignore_errors=True)
-    print("\n总判定：", "✅ 十一个场景全部符合预期" if all(results.values()) else f"❌ {results}")
+    print("\n总判定：", "✅ 十二个场景全部符合预期" if all(results.values()) else f"❌ {results}")
     return 0 if all(results.values()) else 1
 
 

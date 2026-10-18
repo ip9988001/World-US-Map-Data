@@ -64,7 +64,8 @@ def summarize(state: str, tag: str) -> dict:
     rel = release_by_tag(tag)
     row = {"state": state, "tag": tag, "release": bool(rel), "assets": 0, "bytes": 0,
            "nad_rows": None, "nad_official": None, "coverage": None, "shards": None,
-           "gz_bytes": 0, "gate": None, "phase": None, "bite": None, "note": ""}
+           "gz_bytes": 0, "gate": None, "phase": None, "bite": None, "note": "",
+           "c_ok": None, "c_empty": None, "c_failed": None, "failed_list": [], "gap": None}
     if not rel:
         row["note"] = "Release 不存在（job 未跑/未上架）"
         return row
@@ -112,8 +113,8 @@ def verdict(r: dict) -> str:
         return "⛔ 无数据"
     if r["phase"] != "complete":
         return "⚠️ 未封印"
-    if r["bite"] is False or not r["gate"]:
-        return "⚠️ 有缺口"
+    if r["c_failed"]:
+        return f"☑️ 已封印（{r['c_failed']} 县待补）"
     return "✅ 已封印"
 
 
@@ -151,24 +152,32 @@ def main() -> int:
                          "shards": None, "gz_bytes": 0, "gate": None, "phase": None,
                          "bite": None, "note": f"取数失败：{type(exc).__name__}"})
 
+    sealed = sum(1 for r in rows if verdict(r).startswith(("✅", "☑️")))
     ok = sum(1 for r in rows if verdict(r).startswith("✅"))
-    lines = [f"# 批次汇总（{ok}/{len(rows)} 州已封印）", "",
-             "| 州 | 判定 | NAD 行数 | 官方 count | 覆盖 | 分片 | 产物 | 三数咬合 | tag |",
+    lines = [f"# 批次汇总（{sealed}/{len(rows)} 州已封印，其中 {ok} 州全齐）", "",
+             "| 州 | 判定 | NAD 行数 | 官方 count | 县 ok/空/失败 | 州级参考 | 分片 | 产物 | tag |",
              "|---|---|---|---|---|---|---|---|---|"]
     for r in rows:
-        bite = "—" if r["bite"] is None else ("✅" if r["bite"] else "❌")
-        lines.append("| {st} | {v} | {rows} | {off} | {cov} | {sh} | {sz} | {bite} | `{tag}` |".format(
+        ref = "—" if r["bite"] is None else ("✅ 咬合" if r["bite"] else f"⚠️ 差 {r['gap']}")
+        cty = "—"
+        if r["c_ok"] is not None:
+            cty = f"{r['c_ok']}/{r['c_empty'] if r['c_empty'] is not None else 0}/{r['c_failed'] or 0}"
+        lines.append("| {st} | {v} | {rows} | {off} | {cty} | {ref} | {sh} | {sz} | `{tag}` |".format(
             st=r["state"], v=verdict(r),
             rows=f"{r['nad_rows']:,}" if isinstance(r["nad_rows"], int) else "—",
             off=f"{r['nad_official']:,}" if isinstance(r["nad_official"], int) else "—",
-            cov=f"{r['coverage']:.1f}%" if isinstance(r["coverage"], (int, float)) else "—",
+            cty=cty, ref=ref,
             sh=r["shards"] if r["shards"] is not None else "—",
-            sz=f"{fmt_bytes(r['gz_bytes'])} / {r['assets']} 件",
-            bite=bite, tag=r["tag"]))
-    problems = [r for r in rows if not verdict(r).startswith("✅")]
+            sz=f"{fmt_bytes(r['gz_bytes'])} / {r['assets']} 件", tag=r["tag"]))
+    problems = [r for r in rows if not verdict(r).startswith(("✅", "☑️"))]
     if problems:
         lines += ["", "## 需要复核", ""]
         lines += [f"- **{r['state']}**：{r['note'] or verdict(r)}（`{r['tag']}`）" for r in problems]
+    todo = [r for r in rows if verdict(r).startswith("☑️")]
+    if todo:
+        lines += ["", "## 按县补跑清单", ""]
+        lines += [f"- **{r['state']}**：{r['note']} → `--county-fips {','.join(map(str, r['failed_list']))}`"
+                  for r in todo]
 
     md = "\n".join(lines) + "\n"
     print(md)

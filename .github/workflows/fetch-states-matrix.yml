@@ -28,6 +28,9 @@ on:
       max_parallel:
         description: 并发上限（建议 2，大州降到 1）
         default: "2"
+      county_fips:
+        description: 只补跑指定县（逗号分隔 fips/key，全州都跑就留空）
+        default: ""
       tag_template:
         description: 每州 Release tag 模板
         default: "raw-US-{state}-v1"
@@ -85,6 +88,7 @@ jobs:
             --tier "${{ inputs.tier }}" \
             --states "${{ inputs.states }}" \
             --limit "${{ inputs.limit }}" \
+            --county-fips "${{ inputs.county_fips }}" \
             --tag-template "${{ inputs.tag_template }}" \
             --github-output "$GITHUB_OUTPUT"
 
@@ -140,7 +144,7 @@ jobs:
         run: |
           set -u
           TAG="$(echo "${{ inputs.tag_template }}" | sed "s/{state}/${{ matrix.state }}/")"
-          ARGS="--state ${{ matrix.state }} --overture-format ${{ inputs.overture_format }} --nad-mode ${{ inputs.nad_mode }} --nad-ids-batch ${{ inputs.nad_ids_batch }} --nad-workers ${{ inputs.nad_workers }} --nad-ids-slicing ${{ inputs.nad_ids_slicing }} --pack-mode county_shards --tag $TAG"
+          ARGS="--state ${{ matrix.state }} --county-fips '${{ inputs.county_fips }}' --overture-format ${{ inputs.overture_format }} --nad-mode ${{ inputs.nad_mode }} --nad-ids-batch ${{ inputs.nad_ids_batch }} --nad-workers ${{ inputs.nad_workers }} --nad-ids-slicing ${{ inputs.nad_ids_slicing }} --pack-mode county_shards --tag $TAG"
           if [ "${{ inputs.publish_release }}" = "true" ]; then ARGS="$ARGS --publish-release"; fi
           echo "python bots/fetch_state_raw.py $ARGS"
           python bots/fetch_state_raw.py $ARGS
@@ -193,6 +197,7 @@ jobs:
         run: |
           python scripts/matrix_summary.py \
             --states-json "$STATES" \
+            --county-fips "${{ inputs.county_fips }}" \
             --tag-template "${{ inputs.tag_template }}" \
             --out BATCH_SUMMARY.md \
             --step-summary
