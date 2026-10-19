@@ -34,6 +34,9 @@ on:
       nad_workers:
         description: 分片并发数（建议 2，避免撞按 IP 限速）
         default: "2"
+      only:
+        description: 只跑指定源（逗号分隔：nad,overture,openaddresses,census_tiger；留空=全跑）
+        default: ""
       pack_mode:
         description: 打包方式（single=v0 单文件；county_shards=按县切片+gzip+统一命名）
         type: choice
@@ -93,6 +96,7 @@ jobs:
           set -u
           ARGS="--state ${{ inputs.state }} --nad-max ${{ inputs.nad_max }} --overture-format ${{ inputs.overture_format }} --nad-mode ${{ inputs.nad_mode }} --nad-ids-batch ${{ inputs.nad_ids_batch }} --nad-shards ${{ inputs.nad_shards }} --nad-workers ${{ inputs.nad_workers }} --pack-mode ${{ inputs.pack_mode }} --nad-ids-slicing ${{ inputs.nad_ids_slicing }}"
           if [ -n "$RELEASE_TAG" ]; then ARGS="$ARGS --tag $RELEASE_TAG"; fi
+          if [ -n "${{ inputs.only }}" ]; then ARGS="$ARGS --only ${{ inputs.only }}"; fi
           if [ "${{ inputs.publish_release }}" = "true" ]; then ARGS="$ARGS --publish-release"; fi
           echo "python bots/fetch_state_raw.py $ARGS"
           python bots/fetch_state_raw.py $ARGS

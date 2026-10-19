@@ -1034,6 +1034,103 @@ def _count_parquet(path: Path) -> int | None:
         return None
 
 
+def _overture_bbox_split(bb: tuple) -> list:
+    """跨经线的 bbox 拆两段（西经段 + 东经段）。"""
+    minx, miny, maxx, maxy = bb
+    if maxx - minx <= 180:
+        return [bb]
+    return [(minx, miny, 180.0, maxy), (-180.0, miny, maxx, maxy)]
+
+
+def _harvest_overture_county_shards(fx: Fetcher, cli: str, d: Path,
+                                    cli_fmt: dict, ext: dict, cli_version: str) -> None:
+    """按县 bbox 切片下载 Overture。
+
+    治疗两个病（2026-10-19 AK 事故）：
+      ① 2GB 单文件上限：整州 4GB → 拆成 N 个县片，每片远小于 2GB
+      ② 跨经线退化：AK 州框宽 359°，查询几乎扫全球 4291 万条 → 按县后各自小框
+    """
+    t0 = time.time()
+    st = fx.cfg["state"].upper()
+    recs = _county_boundaries(fx)
+    fips_map = {c["key"]: c.get("fips", "") for c in fx.cfg.get("counties") or []}
+    fmt = cli_fmt.get(fx.args.overture_format if fx.args.overture_format in ("parquet", "geojson") else "geoparquet")
+    suffix = ext.get(fmt, "parquet")
+    shards, total_feats, total_bytes = [], 0, 0
+    empty, failed = [], []
+
+    for raw_key, rec in recs.items():
+        key = raw_key[7:] if raw_key.startswith("county_") else raw_key
+        rings = (((rec.get("payload") or {}).get("features") or [{}])[0]
+                 .get("geometry") or {}).get("rings") or []
+        xs = [pt[0] for ring in rings for pt in ring]
+        ys = [pt[1] for ring in rings for pt in ring]
+        if not xs:
+            failed.append({"county": key, "error": "县界无坐标"})
+            continue
+        fips = fips_map.get(key, "")
+        segs = _overture_bbox_split((min(xs), min(ys), max(xs), max(ys)))
+        for idx, bb in enumerate(segs, 1):
+            tag_seg = f"-{'w' if idx == 1 else 'e'}" if len(segs) > 1 else ""
+            out = d / f"OVERTURE-US-{st}-{fips}-{key}{tag_seg}.{suffix}"
+            cmd = [cli, "download", f"--bbox={','.join(f'{v:.6f}' for v in bb)}",
+                   "-f", fmt, "--type=address", "-o", str(out)]
+            try:
+                pr = subprocess.run(cmd, capture_output=True, text=True,
+                                    timeout=fx.args.overture_timeout)
+                ok = pr.returncode == 0 and out.exists() and out.stat().st_size >= MIN_ASSET_BYTES
+                n = (_count_parquet(out) if suffix == "parquet" else _count_geojson(out)) if ok else 0
+                if ok and n:
+                    fname = out.name
+                    fx.add(out)
+                    total_feats += n
+                    total_bytes += out.stat().st_size
+                    shards.append({"county": key, "fips": fips, "file": fname,
+                                   "features": n, "bytes": out.stat().st_size,
+                                   "bbox": [round(v, 6) for v in bb]})
+                    log(f"  ⬇ Overture 县片 {key} {n:,} 条 {out.stat().st_size / 1e6:.1f}MB")
+                else:
+                    out.unlink(missing_ok=True)
+                    if ok and n == 0:
+                        empty.append({"county": key, "fips": fips})
+                    else:
+                        failed.append({"county": key, "fips": fips, "rc": pr.returncode,
+                                       "tail": ((pr.stdout or "")[-120:] + (pr.stderr or "")[-200:]).strip()})
+            except Exception as exc:  # noqa: BLE001
+                out.unlink(missing_ok=True)
+                failed.append({"county": key, "fips": fips, "error": str(exc)[:160]})
+
+    audit = {"mode": "county_shards", "cli_version": cli_version,
+             "state_bbox": fx.cfg["bbox_str"], "counties": len(recs),
+             "probed_at": _now()}
+
+    if not shards and not empty:
+        fx.note("overture", "error", mode="county_shards", features=0, audit=audit,
+                failed=failed[:10], elapsed=round(time.time() - t0, 1))
+        fx.problem(f"Overture 按县切片全部失败（{len(failed)} 个县）：{failed[:3]}")
+        return
+    if not shards:
+        fx.note("overture", "empty_upstream", mode="county_shards", features=0,
+                bbox=fx.cfg["bbox_str"], audit=audit,
+                note=f"{len(empty)} 个县框均返回 0 行")
+        _append_notes(fx, [f"- **Overture**: 按县切片后 {len(empty)} 个县均 0 行。"])
+        return
+
+    fx.note("overture", "ok", mode="county_shards", bbox=fx.cfg["bbox_str"],
+            format=fx.args.overture_format, features=total_feats,
+            cli_version=cli_version, shard_count=len(shards),
+            empty_counties=[e["county"] for e in empty],
+            failed_counties=[f["county"] for f in failed],
+            bytes=total_bytes, shards=shards[:40], audit=audit,
+            elapsed=round(time.time() - t0, 1))
+    if failed:
+        fx.problem(f"Overture 有 {len(failed)} 个县切片失败：{[f['county'] for f in failed][:6]}")
+        _notify("alarm", {"state": st, "tag": fx.tag, "stage": "overture_shards",
+                          "msg": f"Overture 按县切片有 {len(failed)} 个县失败：{[f['county'] for f in failed][:6]}"})
+    log(f"✅ Overture 按县切片完成：{len(shards)} 片 / {total_feats:,} 条 / "
+        f"{total_bytes / 1e6:.1f}MB，空县 {len(empty)}，失败 {len(failed)}")
+
+
 def harvest_overture(fx: Fetcher) -> None:
     t0 = time.time()
     cli = shutil.which("overturemaps")
@@ -1055,6 +1152,18 @@ def harvest_overture(fx: Fetcher) -> None:
     CLI_FMT = {"parquet": "geoparquet", "geojson": "geojson"}
     EXT = {"geoparquet": "parquet", "geojson": "geojson"}
     prefs = ["geoparquet", "geojson"] if fx.args.overture_format == "parquet" else ["geojson"]
+
+    # ★ 跨经线超宽州（AK 州框宽 359°）→ 州整框会让 Overture 查询退化到近全球，
+    #   产出 4GB 文件直接撞 GitHub Release 2GB 单文件上限。改按县 bbox 切片。
+    try:
+        _x0, _y0, _x1, _y1 = [float(v) for v in bbox.split(",")]
+        _too_wide = (_x1 - _x0) > 180
+    except Exception:  # noqa: BLE001
+        _too_wide = False
+    if _too_wide and not getattr(fx.args, "no_overture_shards", False):
+        log(f"⚠️ 州框宽 {_x1 - _x0:.1f}° > 180° → Overture 改按县切片（治 2GB 上限）")
+        _harvest_overture_county_shards(fx, cli, d, CLI_FMT, EXT, cli_version)
+        return
     target, used, tries = None, None, []
     # ★ 同一格式重试一次：Overture CLI 的 STAC 查询偶发抖动（0 行秒回），
     #   不重试就会把网络抖动误判成"上游没数据"（HI 事故的教训之一）。
@@ -2409,7 +2518,8 @@ def _overture_probe_counties(fx: Fetcher, cli: str, d: Path, top: int = 2) -> li
         log(f"⚠️ 县界缓存不可用，跳过 Overture 县探针：{exc}")
         return []
     rows = []
-    for key, rec in recs.items():
+    for raw_key, rec in recs.items():
+        key = raw_key[7:] if raw_key.startswith("county_") else raw_key
         rings = (((rec.get("payload") or {}).get("features") or [{}])[0]
                  .get("geometry") or {}).get("rings") or []
         xs = [pt[0] for ring in rings for pt in ring]
