@@ -394,7 +394,7 @@ def nad_socrata_files() -> tuple[list[dict], list[dict]]:
             target = RAW / name
             target.write_bytes(blob)
             info = {"file": name, "bytes": len(blob), "asset_id": asset,
-                    "file": str(target.relative_to(ROOT))}
+                    "path": str(target.relative_to(ROOT))}
             if up.endswith(".TXT") and "SAMPLE" in up:
                 head = blob.decode("utf-8", "replace").splitlines()[:2]
                 info["header_fields"] = [c.strip() for c in re.split(r"\t|\|", head[0]) if c.strip()][:60]

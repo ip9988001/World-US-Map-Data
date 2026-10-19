@@ -1,4 +1,5 @@
 #!/usr/bin/env python3
+import os as _os; _os.environ.setdefault("FSR_FAST", "1")
 # -*- coding: utf-8 -*-
 """离线自检：不联网，用假 http 层把 fetch_state_raw.py 的四源全流程跑一遍。
 
@@ -306,9 +307,51 @@ def nad_of(out):
     return next(s for s in m["sources"] if s["source"] == "nad")
 
 
+def gate_content_assert():
+    """S13（2026-10-19 · AK 假封印事故回归）：存在性≠内容。
+
+    旧 gate 只查「源跑了没 / 文件够不够大」，AK 跨经线导致 27 个县全失败、
+    counties_ok=0，却照样盖 STATUS=complete。本用例锁死：0 个真县片必须阻断。
+    """
+    import types
+
+    def mk(counties_ok, failed, empty, total=27):
+        return types.SimpleNamespace(
+            problems=[],
+            status={"nad": {"status": "warn-partial", "mode": "ids+county_shards",
+                            "official_count": 100, "rows_fetched": 90},
+                    "overture": {"status": "ok"},
+                    "openaddresses": {"status": "ok"},
+                    "census_tiger": {"status": "ok"}},
+            cache={"nad_reference": {"counties_ok": counties_ok, "counties_failed": failed,
+                                     "counties_empty": empty, "counties_total": total},
+                   "nad_shards": [{"kind": "county"}] * counties_ok},
+            files=[], meta={},
+            cfg={"state": "AK", "counties": [{"fips": "02020"}] * total},
+        )
+
+    try:
+        fs.gate(mk(0, 27, 0))
+        blocked = "未阻断（回归！）"
+    except RuntimeError as exc:
+        blocked = str(exc)
+    try:
+        fs.gate(mk(3, 0, 24))
+        ok_msg = "通过"
+    except RuntimeError as exc:
+        ok_msg = f"误伤：{exc}"
+    good = ("县级分片为 0" in blocked) and ok_msg == "通过"
+    print("\n===== S13 gate 内容断言（AK 假封印回归） =====")
+    print(f"  counties_ok=0  → {blocked[:90]}")
+    print(f"  counties_ok=3  → {ok_msg}")
+    print("S13 判定：", "✅ 通过" if good else "❌ 失败")
+    return good
+
+
 def main():
     base = Path(tempfile.mkdtemp(prefix="fsr-test-"))
     results = {}
+    results["S13"] = gate_content_assert()
 
     # ---------- S1 cursor 四源齐全 ----------
     rc1, f1 = scenario("S1 cursor 四源齐全", base / "s1", mode="cursor",
@@ -588,7 +631,7 @@ def main():
     print("S11 判定：", "✅ 通过" if results["S11"] else f"❌ 失败 {bad11}")
 
     shutil.rmtree(base, ignore_errors=True)
-    print("\n总判定：", "✅ 十二个场景全部符合预期" if all(results.values()) else f"❌ {results}")
+    print("\n总判定：", f"✅ {len(results)} 个场景全部符合预期" if all(results.values()) else f"❌ {results}")
     return 0 if all(results.values()) else 1
 
 

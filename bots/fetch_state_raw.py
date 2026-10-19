@@ -2386,6 +2386,25 @@ def gate(fx: Fetcher) -> None:
         if isinstance(d, dict) and d.get("records_match") is False:
             errs.append(f"TIGER 半载包：{d.get('file')} dbf={d.get('dbf_records')} "
                         f"≠ shx={d.get('shx_records')}")
+    # ★ 第五把锁（2026-10-19 · AK 假封印事故）：存在性 ≠ 内容。
+    #   旧版本只查「源跑了没 / 文件大小够不够」，于是县片数 = 0 也能一路绿灯：
+    #   AK 跨经线导致 27 个县全失败，counties_ok=0，却照样盖章 STATUS=complete。
+    #   这里改成**内容断言**：县级模式下必须真有县片，否则一律阻断。
+    if county_mode:
+        ok_n = int(ref.get("counties_ok") or 0)
+        empty_n = int(ref.get("counties_empty") or 0)
+        failed_n = int(ref.get("counties_failed") or 0)
+        total_n = int(ref.get("counties_total") or len(fx.cfg.get("counties") or []))
+        if ok_n <= 0:
+            errs.append(
+                f"NAD 县级分片为 0（失败 {failed_n} / 空 {empty_n} / 共 {total_n}）："
+                f"0 分片不许封印 —— 这不是「上游没数据」，是本次抓取没产出")
+        elif failed_n and ok_n + empty_n == 0:
+            errs.append(f"NAD 县片全废：失败 {failed_n} / 空 {empty_n} / 共 {total_n}")
+        elif total_n and len(fx.cache.get("nad_shards") or []) == 0:
+            errs.append("NAD 账面有县片数但 nad_shards 为空（记账与实物脱钩）")
+        else:
+            log(f"✅ 县级内容断言：真县片 {ok_n} / 共 {total_n}（空 {empty_n}，失败 {failed_n}）")
     # ★ 第四把锁：州码必须是真 ISO 3166-2（查全局注册表，防 roster 拼错）
     iso = _iso_codes(fx.cfg["state"])
     if iso["iso_3166_2_verified"] is False:
@@ -2854,6 +2873,17 @@ def main(argv: list[str] | None = None) -> int:
             _notify("alarm", {"state": state, "tag": tag, "stage": "gate",
                               "msg": str(exc)[:500]})
             return 3
+    # ★ 封印点独立复检（2026-10-19 · 不信任单点 gate）：
+    #   病根是「判据写成存在性」。封印是最终不可逆动作，这里再断言一次内容。
+    ref = fx.cache.get("nad_reference") or {}
+    nad_st = fx.status.get("nad") or {}
+    if str(nad_st.get("mode") or "").endswith("county_shards") and ref and not ref.get("partial"):
+        if int(ref.get("counties_ok") or 0) <= 0:
+            log("❌ 封印拒绝：县级分片为 0（counties_ok=0），MANIFEST 不上架")
+            _notify("alarm", {"state": state, "tag": tag, "stage": "seal_guard",
+                              "msg": f"counties_ok=0 failed={ref.get('counties_failed')} "
+                                     f"empty={ref.get('counties_empty')}"})
+            return 6
     if fx.cache.get("partial_run"):
         # ★ 2026-10-18 事故护栏：`--county-fips` 传成空引号字面量 '' 时，县循环空转、
         #   其他源照常跑完，结果拿 0 行账本盖成 phase=complete（DE/NH/RI/SD/WY 五个伪封印）。
