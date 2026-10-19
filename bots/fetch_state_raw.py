@@ -1957,6 +1957,36 @@ def _now() -> str:
     return time.strftime("%Y-%m-%dT%H:%M:%SZ", time.gmtime())
 
 
+def _notify(evt: str, payload: dict) -> None:
+    """向 pi 哨兵上报流水线事件。任何失败静默 —— 绝不拖累抓取。
+
+    county      每县上传完成 → 哨兵只记账（不唤醒）
+    state_sealed 全州封印完成 → 触发体检
+    alarm       异常（源抛错 / 门禁失败 / 上传失败）→ 立即唤醒
+    """
+    url = (os.environ.get("SENTINEL_URL") or "").strip()
+    if not url:
+        return
+    try:
+        import urllib.request as _ur
+        body = json.dumps({"evt": evt, **payload}, ensure_ascii=False).encode("utf-8")
+        req = _ur.Request(url, data=body, method="POST", headers={
+            "Content-Type": "application/json",
+            "X-Sentinel-Token": os.environ.get("SENTINEL_TOKEN", ""),
+        })
+        _ur.urlopen(req, timeout=6).read()
+    except Exception:  # noqa: BLE001
+        pass
+
+
+def _state_of_tag(tag: str) -> str:
+    parts = (tag or "").split("-")
+    for p in parts:
+        if len(p) == 2 and p.isalpha() and p.isupper():
+            return p
+    return "?"
+
+
 def _gh_env():
     tok = os.environ.get("GITHUB_TOKEN") or os.environ.get("GH_TOKEN")
     if not tok or not os.environ.get("GITHUB_REPOSITORY"):
@@ -2098,6 +2128,15 @@ def _checkpoint(fx: Fetcher, path: Path, extra: dict | None = None,
                 return False
         fx.remote[name] = size
         log(f"  ⬆ 已上传 {name}（{size / 1e6:.2f} MB）")
+        if name.endswith(".ndjson.gz") or name.startswith(("OVERTURE-", "OA-", "TIGER-")):
+            kind = ("county" if name.endswith(".ndjson.gz") and "OUTOFSTATE" not in name
+                    else "asset")
+            _notify("county", {
+                "state": _state_of_tag(fx.tag), "tag": fx.tag, "asset": name,
+                "kind": kind, "bytes": size,
+                "fips": (extra or {}).get("county_fips", ""),
+                "rows": (extra or {}).get("rows"),
+            })
     if delete:
         path.unlink(missing_ok=True)
     return True
@@ -2615,6 +2654,8 @@ def main(argv: list[str] | None = None) -> int:
         except Exception as exc:  # noqa: BLE001 单源失败不拖垮整轮，但如实记账
             fx.note(name, "exception", error=f"{type(exc).__name__}: {str(exc)[:400]}")
             fx.problem(f"源 {name} 抛异常：{type(exc).__name__}: {str(exc)[:200]}")
+            _notify("alarm", {"state": state, "tag": tag, "stage": name,
+                              "msg": f"源 {name} 抛异常：{type(exc).__name__}: {str(exc)[:300]}"})
         _checkpoint_others(fx)          # 每源跑完立刻把已产出文件传走并删本地
 
     if getattr(args, "pack_mode", "single") != "single":
@@ -2635,6 +2676,8 @@ def main(argv: list[str] | None = None) -> int:
             log("✅ 发布门禁通过")
         except RuntimeError as exc:
             log("❌ " + str(exc))
+            _notify("alarm", {"state": state, "tag": tag, "stage": "gate",
+                              "msg": str(exc)[:500]})
             return 3
     if fx.cache.get("partial_run"):
         # ★ 2026-10-18 事故护栏：`--county-fips` 传成空引号字面量 '' 时，县循环空转、
@@ -2658,6 +2701,12 @@ def main(argv: list[str] | None = None) -> int:
     fx.status_doc["completed_at"] = _now()
     _write_status(fx)
     log("✅ 已封印：MANIFEST.json 上架，STATUS.phase=complete")
+    _notify("state_sealed", {
+        "state": state, "tag": tag,
+        "assets": len(fx.files),
+        "counties_done": len(fx.status_doc.get("done") or []),
+        "counties_expected": len(fx.status_doc.get("expected") or []),
+    })
     log("完成：" + json.dumps({k: v.get("status") for k, v in fx.status.items()}, ensure_ascii=False))
     return 0
 

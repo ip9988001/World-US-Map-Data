@@ -140,6 +140,8 @@ jobs:
       - name: 单州四源全量抓取（按县切片 + 即传即删 + 断点续传）
         env:
           GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+          SENTINEL_URL: ${{ secrets.SENTINEL_URL }}
+          SENTINEL_TOKEN: ${{ secrets.SENTINEL_TOKEN }}
         run: |
           set -u
           TAG="$(echo "${{ inputs.tag_template }}" | sed "s/{state}/${{ matrix.state }}/")"
