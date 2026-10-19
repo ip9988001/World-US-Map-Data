@@ -1054,7 +1054,7 @@ def _harvest_overture_county_shards(fx: Fetcher, cli: str, d: Path,
     st = fx.cfg["state"].upper()
     recs = _county_boundaries(fx)
     fips_map = {c["key"]: c.get("fips", "") for c in fx.cfg.get("counties") or []}
-    fmt = cli_fmt.get(fx.args.overture_format if fx.args.overture_format in ("parquet", "geojson") else "geoparquet")
+    fmt = "geoparquet" if str(fx.args.overture_format) == "parquet" else "geojson"
     suffix = ext.get(fmt, "parquet")
     shards, total_feats, total_bytes = [], 0, 0
     empty, failed = [], []
@@ -1474,7 +1474,8 @@ def _zip_blob(http_get, url: str, timeout: float, tries: int = 3) -> bytes | Non
         if blob[:2] == b"PK":
             return blob
         if i + 1 < tries:
-            time.sleep(5 * (i + 1) + random.random() * 3)   # 5/10s + 抖动
+            if os.environ.get("FSR_FAST") != "1":
+                time.sleep(5 * (i + 1) + random.random() * 3)   # 5/10s + 抖动
     return None
 
 
@@ -1511,14 +1512,29 @@ def harvest_tiger(fx: Fetcher) -> None:
         detail.append({**dd, "file": rel(path)})
 
     # 3) 号段小包：每县一个（包名用 5 位县 FIPS）
+    #    ★ 熔断（2026-10-19 审计）：WAF 全面封锁时每县 3 次重试 × 5/10s 退避，
+    #      TX 254 县会线性放大到 3 小时，直接顶穿 350min job 上限。
+    #      连续 8 个县失败即判定上游整体不可用，跳过剩余县并记 alarm。
+    _tb_streak = 0
     for c in fx.cfg["counties"]:
         name = f"tl_2024_{c['fips']}_addrfeat.zip"
         url = f"{base}/ADDRFEAT/{name}"
-        blob = _zip_blob(df, url, fx.args.tiger_timeout)
+        blob = _zip_blob(df.http_get, url, fx.args.tiger_timeout)
         if blob is None:
+            _tb_streak += 1
             misses.append({"file": name, "url": url, "upstream_rejected": True,
                            "reason": "上游返回非 zip（WAF 拒页 / 截断），已重试"})
+            if _tb_streak >= 8:
+                left = len(fx.cfg["counties"]) - fx.cfg["counties"].index(c) - 1
+                misses.append({"circuit_break": True, "skipped_counties": left,
+                               "reason": f"连续 {_tb_streak} 个号段包失败 → 熔断，跳过剩余 {left} 县"})
+                log(f"⚡ TIGER 号段包连续 {_tb_streak} 次失败 → 熔断跳过剩余 {left} 县")
+                _notify("alarm", {"state": fx.cfg["state"].upper(), "tag": fx.tag,
+                                  "stage": "tiger_circuit_break",
+                                  "msg": f"TIGER 号段包连续 {_tb_streak} 次失败，已熔断跳过剩余 {left} 县（疑似 WAF 封锁）"})
+                break
             continue
+        _tb_streak = 0
         path = d / name
         path.write_bytes(blob)
         files.append(path)
@@ -1527,7 +1543,7 @@ def harvest_tiger(fx: Fetcher) -> None:
     # 州级 PLACE 小包
     pname = f"tl_2024_{fx.cfg['state_fips']}_place.zip"
     purl = f"{base}/PLACE/{pname}"
-    blob = _zip_blob(df, purl, fx.args.tiger_timeout)
+    blob = _zip_blob(df.http_get, purl, fx.args.tiger_timeout)
     if blob is None:
         misses.append({"file": pname, "url": purl, "upstream_rejected": True,
                        "reason": "上游返回非 zip（WAF 拒页 / 截断），已重试"})
