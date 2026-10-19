@@ -1347,6 +1347,28 @@ def _county_boundaries(fx: Fetcher) -> dict:
     return out
 
 
+def _zip_blob(http_get, url: str, timeout: float, tries: int = 3) -> bytes | None:
+    """下载 zip 并校验魔数 —— 只认 `PK` 开头，失败返回 None。
+
+    为什么必须校验：Census 的 WAF 会回 **HTTP 200 + HTML 拒页**
+    (`<html>...Request Rejected...support ID...</html>`，实测 247B）。
+    http_get 拿到 200 就当成功返回，落盘后文件名是 .zip、内容是 HTML，
+    最终被发布门禁按「过小产物」拦下 —— 2026-10-18 ID 州就是这么挂的（exit 3）。
+    这里重试几轮（WAF 多是瞬时/按 IP 抖动），仍不行就交给上层记 upstream_rejected。
+    """
+    for i in range(tries):
+        blob = b""
+        try:
+            blob = http_get(url, timeout=timeout)
+        except Exception:  # noqa: BLE001
+            blob = b""
+        if blob[:2] == b"PK":
+            return blob
+        if i + 1 < tries:
+            time.sleep(5 * (i + 1) + random.random() * 3)   # 5/10s + 抖动
+    return None
+
+
 def harvest_tiger(fx: Fetcher) -> None:
     t0 = time.time()
     d = fx.dir("tiger")
@@ -1383,26 +1405,28 @@ def harvest_tiger(fx: Fetcher) -> None:
     for c in fx.cfg["counties"]:
         name = f"tl_2024_{c['fips']}_addrfeat.zip"
         url = f"{base}/ADDRFEAT/{name}"
-        try:
-            blob = df.http_get(url, timeout=fx.args.tiger_timeout)
-            path = d / name
-            path.write_bytes(blob)
-            files.append(path)
-            detail.append({"file": name, "county": c["key"], "bytes": len(blob), "url": url})
-        except Exception as exc:  # noqa: BLE001
-            misses.append({"file": name, "url": url, "error": str(exc)[:200]})
+        blob = _zip_blob(df, url, fx.args.tiger_timeout)
+        if blob is None:
+            misses.append({"file": name, "url": url, "upstream_rejected": True,
+                           "reason": "上游返回非 zip（WAF 拒页 / 截断），已重试"})
+            continue
+        path = d / name
+        path.write_bytes(blob)
+        files.append(path)
+        detail.append({"file": name, "county": c["key"], "bytes": len(blob), "url": url})
 
     # 州级 PLACE 小包
     pname = f"tl_2024_{fx.cfg['state_fips']}_place.zip"
     purl = f"{base}/PLACE/{pname}"
-    try:
-        blob = df.http_get(purl, timeout=fx.args.tiger_timeout)
+    blob = _zip_blob(df, purl, fx.args.tiger_timeout)
+    if blob is None:
+        misses.append({"file": pname, "url": purl, "upstream_rejected": True,
+                       "reason": "上游返回非 zip（WAF 拒页 / 截断），已重试"})
+    else:
         path = d / pname
         path.write_bytes(blob)
         files.append(path)
         detail.append({"file": pname, "bytes": len(blob), "url": purl})
-    except Exception as exc:  # noqa: BLE001
-        misses.append({"file": pname, "url": purl, "error": str(exc)[:200]})
 
     # ADDRFEAT 行数/列名（只读元信息，不改数据）
     for c in fx.cfg["counties"]:
@@ -1428,13 +1452,30 @@ def harvest_tiger(fx: Fetcher) -> None:
         except Exception as exc:  # noqa: BLE001
             detail.append({"file": addrfeat.name, "dbf_error": str(exc)[:150]})
 
+    # ★ 上游可恢复性分级：Census WAF 拒页（返回 200 + HTML 拒页）属于**上游瞬时状态**，
+    #   不是「本州缺源」。记 upstream_rejected → 状态降为 warn-partial、不阻断发布，
+    #   下次重跑自然再抓一遍；真正的缺源/空壳仍按 error 阻断。
+    hard = [m for m in misses if not m.get("upstream_rejected")]
+    soft_reject = len(misses) - len(hard)
+    if not files:
+        st = "error"
+    elif hard:
+        st = "error"
+    elif soft_reject:
+        st = "warn-partial"
+    else:
+        st = "ok"
     fx.add(*files)
-    fx.note("census_tiger", "ok" if files and not misses else "error",
-            detail=detail, missed=misses, counties=len(fx.cfg["counties"]),
+    fx.note("census_tiger", st, detail=detail, missed=misses,
+            counties=len(fx.cfg["counties"]), upstream_rejected=soft_reject,
             elapsed=round(time.time() - t0, 1))
     for m in misses:
-        fx.problem(f"TIGER 缺失/空壳：{m.get('key') or m.get('file')} → "
-                   f"{json.dumps(m.get('tried') or m.get('error') or m.get('reason'), ensure_ascii=False)[:200]}")
+        msg = (f"TIGER 缺失/空壳：{m.get('key') or m.get('file')} → "
+               f"{json.dumps(m.get('tried') or m.get('error') or m.get('reason'), ensure_ascii=False)[:200]}")
+        if m.get("upstream_rejected"):
+            log("⚠️ " + msg + "（上游 WAF 拒页，本次跳过，重跑再抓）")
+        else:
+            fx.problem(msg)
 
 
 
@@ -2170,6 +2211,8 @@ def _asset_sanity(p: Path) -> str | None:
         return "0 字节空文件"
     if p.suffix.lower() in PAYLOAD_SUFFIXES and size < MIN_ASSET_BYTES:
         return f"过小产物（{size}B < {MIN_ASSET_BYTES}B）"
+    if p.suffix.lower() == ".zip" and not zipfile.is_zipfile(p):
+        return "非 zip 内容（上游拒页 / 截断）"          # ★ 体积够大也照样拦：zip 头不对就是假包
     if p.suffix.lower() == ".geojson":
         try:
             obj = json.loads(p.read_text(encoding="utf-8"))
