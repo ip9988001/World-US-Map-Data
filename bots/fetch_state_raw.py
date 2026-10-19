@@ -59,6 +59,7 @@ import dover_fetch as df  # noqa: E402
 ROSTER_PATH = ROOT / "rules" / "US" / "state_roster.yaml"
 ADMIN_REGISTRY = ROOT / "rules" / "geo" / "global_admin_registry.json"
 MIN_ASSET_BYTES = 1024                      # 数据载荷（geojson/ndjson/zip）的空壳体量阈值
+OVERTURE_SHARD_MIN_AREA = 8.0               # 州框面积（平方度）超过此值即改按县切片
 PAYLOAD_SUFFIXES = (".geojson", ".ndjson", ".zip", ".csv", ".parquet")
 REQUIRED_SOURCES = ("nad", "overture", "openaddresses", "census_tiger")
 
@@ -1157,11 +1158,16 @@ def harvest_overture(fx: Fetcher) -> None:
     #   产出 4GB 文件直接撞 GitHub Release 2GB 单文件上限。改按县 bbox 切片。
     try:
         _x0, _y0, _x1, _y1 = [float(v) for v in bbox.split(",")]
-        _too_wide = (_x1 - _x0) > 180
+        _w, _h = _x1 - _x0, _y1 - _y0
+        _too_wide = _w > 180
+        # ★ 2026-10-19 KY 事故：州框 7.6°×2.7°（20.2 平方度）的整框查询 50 分钟零产出，
+        #   必撞 overture_timeout（7200s）→ 大框一律按县切片，不再整州硬扛。
+        _too_big = _w * _h > OVERTURE_SHARD_MIN_AREA
     except Exception:  # noqa: BLE001
-        _too_wide = False
-    if _too_wide and not getattr(fx.args, "no_overture_shards", False):
-        log(f"⚠️ 州框宽 {_x1 - _x0:.1f}° > 180° → Overture 改按县切片（治 2GB 上限）")
+        _too_wide = _too_big = False
+    if (_too_wide or _too_big) and not getattr(fx.args, "no_overture_shards", False):
+        log(f"⚠️ 州框 {_w:.1f}°×{_h:.1f}°（面积 {_w * _h:.1f} 平方度）触发切片阈值"
+            f" → Overture 改按县切片（治 2GB 上限与整框超时）")
         _harvest_overture_county_shards(fx, cli, d, CLI_FMT, EXT, cli_version)
         return
     target, used, tries = None, None, []
