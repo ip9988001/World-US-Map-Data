@@ -2491,7 +2491,10 @@ def gate(fx: Fetcher) -> None:
                 f"0 分片不许封印 —— 这不是「上游没数据」，是本次抓取没产出")
         elif failed_n and ok_n + empty_n == 0:
             errs.append(f"NAD 县片全废：失败 {failed_n} / 空 {empty_n} / 共 {total_n}")
-        elif total_n and len(fx.cache.get("nad_shards") or []) == 0:
+        elif total_n and not (fx.cache.get("nad_shards") or _shards_from_status(fx)):
+            # ★ 2026-10-20 MN 事故：repair 模式（只补 OA）下 NAD 不跑，
+            #   fx.cache["nad_shards"] 从不落值，而县片实物与 STATUS 账本都在 → 门禁误判「记账脱钩」。
+            #   判据改成「记账 ∪ STATUS 账本」（与 build_manifest 同一套自愈口径）。
             errs.append("NAD 账面有县片数但 nad_shards 为空（记账与实物脱钩）")
         else:
             log(f"✅ 县级内容断言：真县片 {ok_n} / 共 {total_n}（空 {empty_n}，失败 {failed_n}）")
@@ -2740,7 +2743,7 @@ def _shards_from_status(fx: Fetcher) -> list[dict]:
     实物在、账丢了 → 从账本重建；否则下游二仓 C5 会误判「没有任何 county 分片」。
     """
     out = []
-    for name, rec in (fx.status_doc.get("assets") or {}).items():
+    for name, rec in ((getattr(fx, "status_doc", None) or {}).get("assets") or {}).items():
         if not isinstance(rec, dict) or rec.get("kind") != "county":
             continue
         out.append({"kind": "county", "file": name,
