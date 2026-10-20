@@ -2459,7 +2459,9 @@ def gate(fx: Fetcher) -> None:
     # ★ 第二把锁：不管走哪条通道，已取行数必须与官方 count 相等（防“自洽但残缺”骗过门禁）
     nad = fx.status.get("nad") or {}
     oc, rf = nad.get("official_count"), nad.get("rows_fetched")
-    ref = fx.cache.get("nad_reference") or {}
+    # repair 模式（只补 OA）下 nad 没跑，县账要用旧账本里的 reference_check
+    ref = (fx.cache.get("nad_reference")
+           or (fx.cache.get("prev_manifest") or {}).get("reference_check") or {})
     county_mode = str(nad.get("mode") or "").endswith("county_shards")
     if isinstance(oc, int) and isinstance(rf, int) and rf != oc:
         if county_mode and ref:
@@ -2495,7 +2497,9 @@ def gate(fx: Fetcher) -> None:
             log(f"✅ 县级内容断言：真县片 {ok_n} / 共 {total_n}（空 {empty_n}，失败 {failed_n}）")
     # ★ 第六把锁（2026-10-20 用户硬口径）：发布前必须「按县分片 → 压缩 → 再上架」。
     #   不允许未压缩的 .ndjson 裸件或整州单文件冒充县片上架。
-    if str(getattr(getattr(fx, "args", None), "pack_mode", "single")) == "county_shards":
+    _pm6 = str(getattr(getattr(fx, "args", None), "pack_mode", "single"))
+    _repair6 = bool(getattr(getattr(fx, "args", None), "repair_oa", False))
+    if _pm6 == "county_shards" and not _repair6:
         # 判据看「记账 ∪ 实物」：断点续传时县片已上传并清本地，不能只查本地文件。
         names = set((fx.status_doc.get("assets") or {}).keys()) \
             | {os.path.basename(str(p)) for p in fx.files}
@@ -2794,7 +2798,41 @@ def _manifest_integrity(m: dict) -> dict:
             "sha256_head": h[:16], "bytes": len(blob)}
 
 
+def _merge_manifest(fx: Fetcher, prev: dict) -> Path:
+    """★ repair 模式（2026-10-20）：只把本次补到的 OA 合进旧账，其余四源账本原样保留。
+
+    为什么不能直接用普通流程：`--only openaddresses` 会把 nad/overture/tiger 标 skipped，
+    build_manifest 会重写整本账 → NAD 的 shards / reference_check / 四源账本全丢。
+    补 6 个源把 23 个县片的账本毁掉，得不偿失。
+    """
+    m = dict(prev)
+    m["generated_at"] = time.strftime("%Y-%m-%dT%H:%M:%SZ", time.gmtime())
+    m["runner"] = os.environ.get("GITHUB_RUN_ID", "local")
+    srcs = [s for s in (m.get("sources") or []) if isinstance(s, dict)
+            and s.get("source") != "openaddresses"]
+    if fx.status.get("openaddresses"):
+        srcs.append(fx.status["openaddresses"])
+    m["sources"] = srcs
+    by = {str(a.get("path", "")).rsplit("/", 1)[-1]: a
+          for a in (m.get("assets") or []) if isinstance(a, dict)}
+    for a in _all_assets(fx):
+        by[str(a.get("path", "")).rsplit("/", 1)[-1]] = a
+    m["assets"] = [by[k] for k in sorted(by)]
+    m["integrity"] = {}
+    m["integrity"] = _manifest_integrity(m)
+    m.setdefault("heal", {})["repair_oa_at"] = m["generated_at"]
+    p = fx.out / "MANIFEST.json"
+    p.write_text(json.dumps(m, ensure_ascii=False, indent=1), encoding="utf-8")
+    oa = fx.status.get("openaddresses") or {}
+    log(f"📒 repair 合并完成：OA 成功 {oa.get('fetched_sources')} / 空包 {oa.get('empty_sources')}"
+        f" / 失败 {oa.get('failed_sources')}｜总资产 {len(m['assets'])}")
+    return p
+
+
 def build_manifest(fx: Fetcher) -> Path:
+    prev = fx.cache.get("prev_manifest")
+    if prev:
+        return _merge_manifest(fx, prev)
     def asset(p: Path) -> dict:
         r = rel(p)
         if p.exists():
@@ -3009,6 +3047,8 @@ def main(argv: list[str] | None = None) -> int:
                     help="源数上限（0=不限；旧默认 60 曾静默丢掉 MN 的 6 个源）")
     ap.add_argument("--allow-partial", action="store_true",
                     help="允许带失败源发布（默认阻断；仅应急用）")
+    ap.add_argument("--repair-oa", action="store_true",
+                    help="只补 OA 源，并把结果**合并**进现有 MANIFEST（不重跑 NAD/OV/TIGER，不毁账本）")
     ap.add_argument("--oa-timeout", type=int, default=1800)
     ap.add_argument("--tiger-timeout", type=int, default=900)
     args = ap.parse_args(argv)
@@ -3065,11 +3105,33 @@ def main(argv: list[str] | None = None) -> int:
             log(f"⚠️ 增量发布初始化失败（回落为跑完一次性发布）：{exc}")
             publishing = fx.publish = False
     only = {s.strip() for s in args.only.split(",") if s.strip()}
+    # ★ repair 模式（2026-10-20）：只补 OA + 合并进旧账。
+    #   不能用裸 --only 代替：那会把其他三源标 skipped、重写整本账 → NAD 县片账本丢失。
+    if getattr(args, "repair_oa", False):
+        only = {"openaddresses"}
+        args.publish_release = True
+        fx.publish = True
+        if not publishing:
+            log("❌ repair 模式需要可写的 Release（缺 token/仓库）")
+            return 2
+        txt = gh_read_asset_text(tag, "MANIFEST.json")
+        if not txt:
+            log(f"❌ repair 模式需要现有 MANIFEST.json（tag={tag}）")
+            return 2
+        fx.cache["prev_manifest"] = json.loads(txt)
+        log(f"📒 repair 模式：已载入旧账本（assets {len(fx.cache['prev_manifest'].get('assets') or [])} 条）")
     jobs = [("nad", harvest_nad), ("overture", harvest_overture),
             ("openaddresses", harvest_openaddresses), ("census_tiger", harvest_tiger)]
     for name, fn in jobs:
         if only and name not in only:
-            fx.note(name, "skipped", note="未在 --only 里")
+            # repair 模式下不重跑其他源：沿用旧账里的源记录（不能标 skipped，否则门禁会拒）
+            prev_src = next((s for s in ((fx.cache.get("prev_manifest") or {}).get("sources") or [])
+                             if isinstance(s, dict) and s.get("source") == name), None)
+            if prev_src:
+                fx.status[name] = prev_src
+                log(f"  ↺ {name} 沿用旧账（repair 模式不重跑）")
+            else:
+                fx.note(name, "skipped", note="未在 --only 里")
             continue
         try:
             fn(fx)
@@ -3103,7 +3165,8 @@ def main(argv: list[str] | None = None) -> int:
             return 3
     # ★ 封印点独立复检（2026-10-19 · 不信任单点 gate）：
     #   病根是「判据写成存在性」。封印是最终不可逆动作，这里再断言一次内容。
-    ref = fx.cache.get("nad_reference") or {}
+    ref = (fx.cache.get("nad_reference")
+           or (fx.cache.get("prev_manifest") or {}).get("reference_check") or {})
     nad_st = fx.status.get("nad") or {}
     if str(nad_st.get("mode") or "").endswith("county_shards") and ref and not ref.get("partial"):
         if int(ref.get("counties_ok") or 0) <= 0:

@@ -57,6 +57,11 @@ on:
         type: choice
         options: ["true", "false"]
         default: "true"
+      repair_oa:
+        description: 只补 OpenAddresses 源并把结果合并进现有 MANIFEST（不重跑 NAD/OV/TIGER）
+        type: choice
+        options: ["false", "true"]
+        default: "false"
 
 permissions:
   contents: write
@@ -98,6 +103,7 @@ jobs:
           if [ -n "$RELEASE_TAG" ]; then ARGS="$ARGS --tag $RELEASE_TAG"; fi
           if [ -n "${{ inputs.only }}" ]; then ARGS="$ARGS --only ${{ inputs.only }}"; fi
           if [ "${{ inputs.publish_release }}" = "true" ]; then ARGS="$ARGS --publish-release"; fi
+          if [ "${{ inputs.repair_oa }}" = "true" ]; then ARGS="$ARGS --repair-oa"; fi
           echo "python bots/fetch_state_raw.py $ARGS"
           python bots/fetch_state_raw.py $ARGS
 
