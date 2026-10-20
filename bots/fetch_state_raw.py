@@ -1081,15 +1081,18 @@ def _harvest_overture_county_shards(fx: Fetcher, cli: str, d: Path,
                                     timeout=fx.args.overture_timeout)
                 ok = pr.returncode == 0 and out.exists() and out.stat().st_size >= MIN_ASSET_BYTES
                 n = (_count_parquet(out) if suffix == "parquet" else _count_geojson(out)) if ok else 0
-                if ok and n:
+                # n is None = 无法数行（环境无 duckdb）—— 文件存在且够大即认，不能因此判失败
+                if ok and (n is None or n > 0):
                     fname = out.name
                     fx.add(out)
-                    total_feats += n
+                    total_feats += int(n or 0)
                     total_bytes += out.stat().st_size
                     shards.append({"county": key, "fips": fips, "file": fname,
                                    "features": n, "bytes": out.stat().st_size,
                                    "bbox": [round(v, 6) for v in bb]})
-                    log(f"  ⬇ Overture 县片 {key} {n:,} 条 {out.stat().st_size / 1e6:.1f}MB")
+                    log(f"  ⬇ Overture 县片 {key} "
+                        f"{'?' if n is None else format(n, ',')} 条 "
+                        f"{out.stat().st_size / 1e6:.1f}MB")
                 else:
                     out.unlink(missing_ok=True)
                     if ok and n == 0:
@@ -1165,7 +1168,9 @@ def harvest_overture(fx: Fetcher) -> None:
         _too_big = _w * _h > OVERTURE_SHARD_MIN_AREA
     except Exception:  # noqa: BLE001
         _too_wide = _too_big = False
-    if (_too_wide or _too_big) and not getattr(fx.args, "no_overture_shards", False):
+    # ★ 2026-10-20 用户定案：四源一律按县切片，不看面积也不看经线
+    #   （AK 跨 180° 曾撞 2GB 上限；KY 整框曾 50min 零产出。整州单文件一律取消）
+    if not getattr(fx.args, "no_overture_shards", False):
         log(f"⚠️ 州框 {_w:.1f}°×{_h:.1f}°（面积 {_w * _h:.1f} 平方度）触发切片阈值"
             f" → Overture 改按县切片（治 2GB 上限与整框超时）")
         _harvest_overture_county_shards(fx, cli, d, CLI_FMT, EXT, cli_version)
@@ -2624,6 +2629,55 @@ def _shards_from_status(fx: Fetcher) -> list[dict]:
     return sorted(out, key=lambda s: str(s.get("file")))
 
 
+def _all_assets(fx: Fetcher) -> list[dict]:
+    """★ 实物 ∪ 记账（2026-10-20 修 B2）：续传跳过的资产不进 fx.files，
+    只遍历 fx.files 会漏记（ID 漏 43 个 addrfeat、AK 漏 56 项）。
+    四个来源取并集：本地待传 / 本轮记账 / STATUS 账本 / 远端实物（最硬）。
+    """
+    out: dict[str, dict] = {}
+
+    def put(name: str, path_rel: str, size, sha, head, origin=None) -> None:
+        if name in out:
+            return
+        rec = {"path": path_rel, "bytes": size, "sha256": sha, "sha256_head": head}
+        if origin:
+            rec["source"] = origin
+        out[name] = rec
+
+    for p in sorted(fx.files):                       # 1) 本地待传/刚传
+        r = rel(p)
+        if p.exists():
+            put(p.name, r, p.stat().st_size, df.sha256_full(p), df.sha256_head(p), "local")
+        else:
+            m = fx.meta.get(r) or {}
+            put(p.name, r, m.get("bytes"), m.get("sha256"), m.get("sha256_head"), "meta")
+    for r, m in (fx.meta or {}).items():             # 2) 本轮记账（含续传跳过）
+        if isinstance(m, dict):
+            put(os.path.basename(r), r, m.get("bytes"), m.get("sha256"), m.get("sha256_head"), "meta")
+    for name, rec in (fx.status_doc.get("assets") or {}).items():  # 3) STATUS 账本
+        if isinstance(rec, dict):
+            put(name, name, rec.get("bytes") or rec.get("gz_bytes"), None, None, "status")
+    try:                                             # 4) 远端实物
+        for name, size in (gh_assets(fx.tag) or {}).items():
+            put(name, name, size, None, None, "release")
+    except Exception:  # noqa: BLE001
+        pass
+    return [out[k] for k in sorted(out)]
+
+
+def _manifest_integrity(m: dict) -> dict:
+    """★ 真哈希（2026-10-20 修 B5）：此前 integrity.sha256 的值是
+    中文说明字符串「整个文件的 sha256」——占位符从未被真值替换，等于没有校验。
+    口径：sha256(json(m 除 integrity 外, sort_keys=True, ensure_ascii=False))
+    """
+    import hashlib
+    body = {k: v for k, v in m.items() if k != "integrity"}
+    blob = json.dumps(body, ensure_ascii=False, sort_keys=True).encode("utf-8")
+    h = hashlib.sha256(blob).hexdigest()
+    return {"sha256": h, "algo": "sha256(manifest-minus-integrity,sort_keys)",
+            "sha256_head": h[:16], "bytes": len(blob)}
+
+
 def build_manifest(fx: Fetcher) -> Path:
     def asset(p: Path) -> dict:
         r = rel(p)
@@ -2672,9 +2726,8 @@ def build_manifest(fx: Fetcher) -> Path:
                   "state_fips": cfg["state_fips"], "bbox": cfg["bbox"],
                   "counties": [{"key": c["key"], "fips": c["fips"], "name": c["name"]} for c in cfg["counties"]],
                   "note": "四源全量【原始】数据 —— 未做任何清洗 / 去重 / 过滤 / 裁剪"},
-        "integrity": {"sha256": "整个文件的 sha256",
-                      "sha256_head": "前 1MB 的 sha256 前 16 位（快检用）"},
-        "assets": [asset(p) for p in sorted(fx.files)],
+        "integrity": {},                       # 写盘前用 _manifest_integrity() 填真值
+        "assets": _all_assets(fx),
         "row_counts": row_counts(),
         "shards": fx.cache.get("nad_shards") or _shards_from_status(fx),
         "completeness": build_completeness(fx),
@@ -2690,6 +2743,7 @@ def build_manifest(fx: Fetcher) -> Path:
         "ledger": fx.ledger,
     }
     p = fx.out / "MANIFEST.json"
+    m["integrity"] = _manifest_integrity(m)
     p.write_text(json.dumps(m, ensure_ascii=False, indent=1), encoding="utf-8")
     return p
 

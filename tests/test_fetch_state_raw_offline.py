@@ -360,8 +360,8 @@ def main():
     n1 = len(nd1.read_text().splitlines()) if nd1.exists() else 0
     n_cnty = len([p for p in f1 if p.name.startswith("tiger_county")])
     n_oa = len([p for p in f1 if p.name.startswith("openaddresses_us_de_")])
-    n_ov = len([p for p in f1 if p.name.startswith("overture")])
-    results["S1"] = (rc1 == 0 and n1 == 5 and n_cnty == 3 and n_oa == 2 and n_ov == 1
+    n_ov = len([p for p in f1 if p.name.lower().startswith("overture")])
+    results["S1"] = (rc1 == 0 and n1 == 5 and n_cnty == 3 and n_oa == 2 and n_ov == 3
                      and all(c["orderByFields"] == "OBJECTID ASC" for c in CALLS["cursor"])
                      and all(c["offset"] is None for c in CALLS["cursor"])
                      and CALLS["cursor"][1]["where"] == "OBJECTID > 2")
