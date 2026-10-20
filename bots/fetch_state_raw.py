@@ -1093,6 +1093,15 @@ def _harvest_overture_county_shards(fx: Fetcher, cli: str, d: Path,
                     log(f"  ⬇ Overture 县片 {key} "
                         f"{'?' if n is None else format(n, ',')} 条 "
                         f"{out.stat().st_size / 1e6:.1f}MB")
+                    # ★ 逐片上传并删本地（2026-10-20）：单源 OV 可达数 GB（AK 6.1GB），
+                    #   全留在 runner 会撑爆磁盘。传完即删，账走 fx.meta。
+                    #   逐片不发哨兵（否则 254 县 = 254 条），源级汇总仍有 note。
+                    if fx.publish and not _checkpoint(
+                            fx, out, extra={"county_fips": fips, "county": key,
+                                            "rows": n, "kind": "overture_shard"},
+                            delete=True, notify=False):
+                        failed.append({"county": key, "fips": fips, "error": "上传失败"})
+                        shards.pop()
                 else:
                     out.unlink(missing_ok=True)
                     if ok and n == 0:
@@ -1915,7 +1924,10 @@ def _nad_harvest_county_shards(fx: Fetcher, d: Path, fields: list, oid: str,
         return
 
     # 溢出：州 bbox 全集 − 各县并集（纯集合差，绝不重复拉数据）
-    over_ids = [i for i in root_ids if i not in union]
+    # ★ 分卷模式不产溢出包：root_ids 是全州口径，本卷之外的县都会被算成「溢出」，
+    #   那样 p1/p2 会各自把对方的县再拉一遍（双倍数据）。分卷只出县片。
+    vol = fx.cfg.get("_volume")
+    over_ids = [] if vol else [i for i in root_ids if i not in union]
     over_n = len(over_ids)          # ★ 真实溢出主键数（续传跳过时 over_ids 会清空，计数要留住）
     over_meta = {"rows": 0, "uncompressed_bytes": 0, "sha256_raw": None,
                  "state_distribution": {}}
@@ -1993,9 +2005,11 @@ def _nad_harvest_county_shards(fx: Fetcher, d: Path, fields: list, oid: str,
         "three_number_check": {
             "formula": "县并集 + 溢出 == 州官方 count",
             "covered": covered_ok, "official": official,
+            "applicable": not bool(vol),
             "matches": (official is None or covered_ok == official),
             "gap_ids": (official - covered_ok) if isinstance(official, int) else None,
-            "note": "不咬合不改数据、不阻断发布；差异通常来自失败/降级县，按需补跑",
+            "note": ("分卷模式：溢出包不产、州级咬合不适用，以县级 count 为准" if vol
+                     else "不咬合不改数据、不阻断发布；差异通常来自失败/降级县，按需补跑"),
         },
         "shard_rows_check": {
             "formula": "Σ县片行 − 县界重复 == 县并集 + 溢出",
@@ -2269,7 +2283,7 @@ def _write_status(fx: Fetcher) -> None:
 
 
 def _checkpoint(fx: Fetcher, path: Path, extra: dict | None = None,
-                clobber: bool = False, delete: bool = True) -> bool:
+                clobber: bool = False, delete: bool = True, notify: bool = True) -> bool:
     """单个文件 → 记账 → 上传 → 核对远端 size → 本地删除。数据资产绝不 clobber。"""
     r = rel(path)
     m = {"bytes": path.stat().st_size, "sha256": df.sha256_full(path),
@@ -2305,7 +2319,7 @@ def _checkpoint(fx: Fetcher, path: Path, extra: dict | None = None,
                 return False
         fx.remote[name] = size
         log(f"  ⬆ 已上传 {name}（{size / 1e6:.2f} MB）")
-        if name.endswith(".ndjson.gz") or name.startswith(("OVERTURE-", "OA-", "TIGER-")):
+        if notify and (name.endswith(".ndjson.gz") or name.startswith(("OVERTURE-", "OA-", "TIGER-"))):
             kind = ("county" if name.endswith(".ndjson.gz") and "OUTOFSTATE" not in name
                     else "asset")
             _notify("county", {
@@ -2422,6 +2436,23 @@ def gate(fx: Fetcher) -> None:
             errs.append(f"未压缩就上架（必须先分片+gzip）：{sorted(bare)[:3]}")
         if not gz:
             errs.append("county_shards 模式下没有任何 .ndjson.gz 分片（分片或压缩被跳过）")
+        # ★ 第七把锁（2026-10-20 交付契约）：命名必须可归属到县，否则下游无法按县匹配
+        import re as _re
+        _st = fx.cfg["state"]
+        _bad = []
+        for _n in sorted(names):
+            if _n.startswith("NAD-") and _n.endswith(".ndjson.gz"):
+                if not _re.match(rf"^NAD-US-{_st}-(\d{{5}}-[A-Za-z0-9_]+|OUTOFSTATE|OVERFLOW)"
+                                 r"\.ndjson\.gz$", _n):
+                    _bad.append(_n)
+            elif _n.startswith("OVERTURE-"):
+                if not _re.search(rf"-{_st}-\d{{5}}-", _n):
+                    _bad.append(_n)
+            elif _n.endswith("-addrfeat.zip"):
+                if not _re.search(rf"-{_st}-\d{{5}}-", _n):
+                    _bad.append(_n)
+        if _bad:
+            errs.append(f"命名不符合「按县」契约（缺州码/县级 fips）：{sorted(_bad)[:3]}")
     # ★ 第四把锁：州码必须是真 ISO 3166-2（查全局注册表，防 roster 拼错）
     iso = _iso_codes(fx.cfg["state"])
     if iso["iso_3166_2_verified"] is False:
@@ -2730,6 +2761,7 @@ def build_manifest(fx: Fetcher) -> Path:
         "assets": _all_assets(fx),
         "row_counts": row_counts(),
         "shards": fx.cache.get("nad_shards") or _shards_from_status(fx),
+        "volume": fx.cache.get("volume") or None,
         "completeness": build_completeness(fx),
         "reference_check": fx.cache.get("nad_reference") or {},
         "nad_no_coverage": fx.cache.get("nad_no_coverage") or None,
@@ -2851,6 +2883,9 @@ def main(argv: list[str] | None = None) -> int:
     ap = argparse.ArgumentParser(description="通用单州四源全量原始下载（World-US-Map-Data）")
     ap.add_argument("--state", required=True, help="州简称，如 DE / RI")
     ap.add_argument("--tag", default="", help="Release tag，留空 = raw-US-<州>-v1")
+    ap.add_argument("--volume", default="",
+                    help="分卷（如 1/2）：单 release 资产上限 1000，大州（TX 254 县≈1172 个）必须拆。"
+                         "只做本卷的县、tag 自动加 -pN、不产溢出包避免跨卷重复")
     ap.add_argument("--out-dir", default="", help="产物目录，留空 = data/raw/US-<州>")
     ap.add_argument("--roster", default=str(ROSTER_PATH), help="州配置档路径")
     ap.add_argument("--only", default="", help="只跑指定源，逗号分隔：nad,overture,openaddresses,census_tiger")
@@ -2894,6 +2929,28 @@ def main(argv: list[str] | None = None) -> int:
     cfg["_endpoints"] = (roster.get("endpoints") or {})
     state = cfg["state"]
     tag = args.tag or f"raw-US-{state}-v1"
+    # ★ 分卷（2026-10-20）：TX 254 县 ≈ 1172 个资产 > 单 release 1000 上限。
+    #   切分口径：按县 fips 排序后均分；每卷独立 tag / 独立 MANIFEST / 独立封印。
+    if args.volume:
+        try:
+            part, total = (int(x) for x in str(args.volume).split("/"))
+        except ValueError:
+            log(f"❌ --volume 格式错（应为 N/M）：{args.volume}")
+            return 2
+        cs_all = sorted(cfg["counties"], key=lambda c: c["fips"])
+        per = -(-len(cs_all) // max(total, 1))
+        mine = cs_all[(part - 1) * per: part * per]
+        if not mine:
+            log(f"❌ --volume {args.volume} 切出 0 个县（总 {len(cs_all)} 县）")
+            return 2
+        cfg["counties"] = mine
+        cfg["_volume"] = {"index": part, "total": total,
+                          "state_total_counties": len(cs_all),
+                          "this_volume_counties": len(mine),
+                          "fips_range": [mine[0]["fips"], mine[-1]["fips"]]}
+        tag = f"{tag}-p{part}"
+        log(f"分卷：第 {part}/{total} 卷 → {len(mine)} 县"
+            f"（{mine[0]['fips']}~{mine[-1]['fips']}）｜tag={tag}")
     out = Path(args.out_dir) if args.out_dir else (ROOT / "data" / "raw" / f"US-{state}")
     out.mkdir(parents=True, exist_ok=True)
 
@@ -2901,6 +2958,7 @@ def main(argv: list[str] | None = None) -> int:
         f"BBox {cfg['bbox_str']}｜tag={tag}｜nad_mode={args.nad_mode}｜out={rel(out)}")
 
     fx = Fetcher(cfg, out, args)
+    fx.cache["volume"] = cfg.get("_volume")      # 分卷元信息 → 写进 MANIFEST.volume
     publishing = bool(args.publish_release) and not args.no_release and _gh_env() is not None
     fx.publish, fx.tag = publishing, tag
     if publishing:

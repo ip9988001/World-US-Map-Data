@@ -630,6 +630,22 @@ def main():
     bad11 = [k for k, v in {**r1, **r2}.items() if not v]
     print("S11 判定：", "✅ 通过" if results["S11"] else f"❌ 失败 {bad11}")
 
+    # ---------- S14 分卷（--volume 1/2）：只做本卷县、不产溢出包 ----------
+    rc14, f14 = scenario("S14 分卷 1/2", base / "s14", mode="ids", official=7,
+                         main_pool=[], ids_target=range(1, 8),
+                         poly_pools={"001": [1, 2], "003": [3, 4], "005": [5]},
+                         extra=["--volume", "1/2", "--pack-mode", "county_shards",
+                                "--nad-ids-slicing", "oid", "--nad-ids-batch", "10"])
+    nad14 = [p for p in f14 if p.name.startswith("NAD-") and p.name.endswith(".ndjson.gz")]
+    man14 = json.loads((base / "s14" / "MANIFEST.json").read_text(encoding="utf-8"))
+    vol = man14.get("volume") or {}
+    ov14 = [p.name for p in f14 if "OUTOFSTATE" in p.name]
+    results["S14"] = (rc14 == 0 and len(nad14) == 2 and vol.get("index") == 1
+                      and vol.get("total") == 2 and vol.get("state_total_counties") == 3
+                      and vol.get("this_volume_counties") == 2 and not ov14)
+    print(f"S14：退出={rc14} 县片={len(nad14)}（期望2） volume={vol} 溢出包={ov14}")
+    print("S14 判定：", "✅ 通过" if results["S14"] else "❌ 失败")
+
     shutil.rmtree(base, ignore_errors=True)
     print("\n总判定：", f"✅ {len(results)} 个场景全部符合预期" if all(results.values()) else f"❌ {results}")
     return 0 if all(results.values()) else 1
