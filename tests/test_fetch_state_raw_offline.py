@@ -270,6 +270,11 @@ def setup(official=5, main_pool=None, shard_pool=None, county_ok=True,
     df.http_json = fake_http_json
     df.http_get = fake_http_get
     fs._post_json = fake_post
+    # ★ OA 改流式下载后不能真发网络：夹具直接写 ZIP 到目标文件
+    def _fake_stream(url, dest, timeout=0, tries=1):
+        Path(dest).write_bytes(ZIP)
+        return len(ZIP), "0" * 64
+    fs._stream_zip = _fake_stream
     fs.shutil.which = lambda name: str(FAKE_CLI)
 
 
@@ -348,10 +353,53 @@ def gate_content_assert():
     return good
 
 
+def oa_gate_assert():
+    """S15（2026-10-20 · OA 静默截断回归）：上游 70 个源只落了 60 个 → 必须阻断。
+
+    事故：`order[:oa_max_files]`（默认 60）把 MN 的 66 个源默默砍成 60，
+    run 仍报 success、gate 不拦、二仓拿到残缺数据也不会知道。
+    """
+    import types
+
+    def mk(up, fet, emp, fai, allow=False):
+        return types.SimpleNamespace(
+            problems=[],
+            status={"nad": {"status": "ok", "mode": "ids", "official_count": 10,
+                            "rows_fetched": 10},
+                    "overture": {"status": "ok"},
+                    "openaddresses": {"status": "ok", "upstream_sources": up,
+                                      "fetched_sources": fet, "empty_sources": emp,
+                                      "failed_sources": fai},
+                    "census_tiger": {"status": "ok"}},
+            cache={"nad_reference": {}}, files=[], meta={},
+            cfg={"state": "DE", "counties": [{"fips": "10001"}]},
+            args=types.SimpleNamespace(pack_mode="single", allow_partial=allow),
+        )
+
+    def errs_of(fx):
+        try:
+            fs.gate(fx)
+            return ""
+        except RuntimeError as exc:
+            return str(exc)
+
+    a = errs_of(mk(70, 60, 0, 0))         # 不闭合
+    b = errs_of(mk(70, 60, 5, 5))         # 闭合但有失败
+    c = errs_of(mk(70, 60, 5, 5, True))   # 显式 --allow-partial
+    good = ("OA 源数不闭合" in a) and ("OA 有 5 个源失败" in b) and c == ""
+    print("\n===== S15 OA 全量声明（静默截断回归） =====")
+    print(f"  70→60 不闭合 → {'已阻断' if a else '未阻断（回归）'}")
+    print(f"  有 5 个失败   → {'已阻断' if b else '未阻断（回归）'}")
+    print(f"  --allow-partial → {'通过' if not c else c[:80]}")
+    print("S15 判定：", "✅ 通过" if good else "❌ 失败")
+    return good
+
+
 def main():
     base = Path(tempfile.mkdtemp(prefix="fsr-test-"))
     results = {}
     results["S13"] = gate_content_assert()
+    results["S15"] = oa_gate_assert()
 
     # ---------- S1 cursor 四源齐全 ----------
     rc1, f1 = scenario("S1 cursor 四源齐全", base / "s1", mode="cursor",

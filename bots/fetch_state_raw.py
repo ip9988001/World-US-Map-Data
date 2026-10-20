@@ -1168,20 +1168,17 @@ def harvest_overture(fx: Fetcher) -> None:
 
     # ★ 跨经线超宽州（AK 州框宽 359°）→ 州整框会让 Overture 查询退化到近全球，
     #   产出 4GB 文件直接撞 GitHub Release 2GB 单文件上限。改按县 bbox 切片。
-    try:
-        _x0, _y0, _x1, _y1 = [float(v) for v in bbox.split(",")]
-        _w, _h = _x1 - _x0, _y1 - _y0
-        _too_wide = _w > 180
-        # ★ 2026-10-19 KY 事故：州框 7.6°×2.7°（20.2 平方度）的整框查询 50 分钟零产出，
-        #   必撞 overture_timeout（7200s）→ 大框一律按县切片，不再整州硬扛。
-        _too_big = _w * _h > OVERTURE_SHARD_MIN_AREA
-    except Exception:  # noqa: BLE001
-        _too_wide = _too_big = False
     # ★ 2026-10-20 用户定案：四源一律按县切片，不看面积也不看经线
     #   （AK 跨 180° 曾撞 2GB 上限；KY 整框曾 50min 零产出。整州单文件一律取消）
+    #   注：原 _too_wide / _too_big 判据已成为死代码，2026-10-20 已删。
+    try:
+        _x0, _y0, _x1, _y1 = [float(v) for v in bbox.split(",")]
+        _w, _h = abs(_x1 - _x0), abs(_y1 - _y0)
+    except Exception:  # noqa: BLE001
+        _w = _h = 0.0
     if not getattr(fx.args, "no_overture_shards", False):
-        log(f"⚠️ 州框 {_w:.1f}°×{_h:.1f}°（面积 {_w * _h:.1f} 平方度）触发切片阈值"
-            f" → Overture 改按县切片（治 2GB 上限与整框超时）")
+        log(f"州框 {_w:.1f}°×{_h:.1f}°（面积 {_w * _h:.1f} 平方度）→ Overture 一律按县切片"
+            f"（2026-10-20 定案：四源全按县，不看面积与经线）")
         _harvest_overture_county_shards(fx, cli, d, CLI_FMT, EXT, cli_version)
         return
     target, used, tries = None, None, []
@@ -1271,6 +1268,49 @@ def _scan_nad_ndjson(path: Path, state_code: str) -> dict:
             "state_blank_rows": states.get("", 0)}
 
 
+def _stream_zip(url: str, dest: Path, timeout: int = 1800, tries: int = 3) -> tuple[int, str]:
+    """★ 流式下载到磁盘（2026-10-20）：OA 单源可能 >800MB，全进内存会爆。
+    返回 (字节数, sha256)。上游 WAF 需浏览器 UA（df.UA）。
+    有了它，「单个源超过 N MB 就跳过」这个静默丢弃的上限就不再需要。
+    """
+    import hashlib
+    import urllib.request
+    last: Exception | None = None
+    for i in range(tries):
+        try:
+            h, n = hashlib.sha256(), 0
+            req = urllib.request.Request(url, headers=dict(df.UA))
+            with urllib.request.urlopen(req, timeout=timeout) as r, dest.open("wb") as fh:
+                while True:
+                    chunk = r.read(1 << 20)
+                    if not chunk:
+                        break
+                    fh.write(chunk)
+                    h.update(chunk)
+                    n += len(chunk)
+            return n, h.hexdigest()
+        except Exception as exc:  # noqa: BLE001
+            last = exc
+            dest.unlink(missing_ok=True)
+            time.sleep(1.5 * (i + 1))
+    raise RuntimeError(f"流式下载失败（{tries} 次）：{type(last).__name__}: {str(last)[:160]}")
+
+
+def _count_zip_rows_path(path: Path) -> int:
+    """数 zip 内 csv/ndjson 行数（流式，不占内存）。"""
+    n = 0
+    try:
+        with zipfile.ZipFile(path) as zf:
+            for info in zf.infolist():
+                if not info.filename.lower().endswith((".csv", ".ndjson")):
+                    continue
+                with zf.open(info) as fh:
+                    n += sum(1 for _ in io.TextIOWrapper(fh, encoding="utf-8", errors="replace"))
+    except Exception:  # noqa: BLE001
+        pass
+    return n
+
+
 def _count_zip_rows(blob: bytes) -> int:
     n = 0
     try:
@@ -1311,38 +1351,67 @@ def harvest_openaddresses(fx: Fetcher) -> None:
     priority = [n for n in fx.cfg["oa_priority"] if n in latest]
     order = priority + [n for n in sorted(latest) if n not in priority]
     files, detail, fail = [], [], []
-    for name in order[:fx.args.oa_max_files]:
+    order_all = priority + [n for n in sorted(latest) if n not in priority]
+    # ★ 2026-10-20：OA 源**全量遍历**，不再截断（旧代码 order[:60] 静默丢掉后续源，
+    #   MN 实测上游 66 个源只发了 60 个，且不报错、gate 不拦）。
+    #   分卷：OA 源无 fips，无法按县归卷 → 按源名字母序均分。
+    _vol = fx.cfg.get("_volume")
+    if _vol:
+        _per = -(-len(order_all) // _vol["total"])
+        order = order_all[(_vol["index"] - 1) * _per: _vol["index"] * _per]
+        log(f"  OA 分卷：全州 {len(order_all)} 源 → 本卷 {len(order)} 源")
+    else:
+        order = order_all
+    if fx.args.oa_max_files and len(order) > fx.args.oa_max_files:
+        # 应急上限仍保留，但**绝不静默**：剩下的源记 failed，由第八把锁阻断发布
+        dropped = order[fx.args.oa_max_files:]
+        for n in dropped:
+            fail.append({"src": n, "reason": f"被 --oa-max-files={fx.args.oa_max_files} 截断"})
+        log(f"  ⚠️ OA 被 --oa-max-files 截断：丢 {len(dropped)} 个源（会阻断发布）")
+        order = order[:fx.args.oa_max_files]
+    for name in order:
         run, st, src = latest[name]
         url = df.OA_RUN.format(run=run, st=st, src=src)
+        path = d / f"openaddresses_us_{state_lc}_{name}.zip"
         try:
-            blob = df.http_get(url, timeout=fx.args.oa_timeout)
-            if len(blob) > fx.args.oa_max_mb * 1024 * 1024:
-                detail.append({"src": name, "run": run, "skipped": f"{len(blob) / 1e6:.1f}MB 超过 {fx.args.oa_max_mb}MB 上限"})
+            nbytes, sha = _stream_zip(url, path, timeout=fx.args.oa_timeout)
+            if fx.args.oa_max_mb and nbytes > fx.args.oa_max_mb * 1024 * 1024:
+                # 不再静默跳过：记 failed，由第八把锁阻断（默认 0 = 不限）
+                fail.append({"src": name, "run": run, "url": url,
+                             "error": f"{nbytes / 1e6:.1f}MB 超过 --oa-max-mb={fx.args.oa_max_mb}MB"})
+                path.unlink(missing_ok=True)
                 continue
-            rows = _count_zip_rows(blob)
-            if rows == 0 or len(blob) < MIN_ASSET_BYTES:
+            rows = _count_zip_rows_path(path)
+            if rows == 0 or nbytes < MIN_ASSET_BYTES:
                 # ★ 2026-10-18 AK 实测：OA 对"无门牌县"只吐 ~891B 的空 zip 头，
                 #   没有任何数据文件。它是**合法的空上游**，不是传输截断：
                 #   记 empty_upstream、不上架该 zip、不阻断发布（否则一县拖死全州）。
-                detail.append({"src": name, "run": run, "url": url, "bytes": len(blob),
+                detail.append({"src": name, "run": run, "url": url, "bytes": nbytes,
                                "native_rows": 0, "status": "empty_upstream",
                                "note": "上游该源 0 行（合法空包），不上架"})
-                log(f"  ○ OA 空包放行：{name}（{len(blob)}B，0 行，不上架）")
+                path.unlink(missing_ok=True)
+                log(f"  ○ OA 空包放行：{name}（{nbytes}B，0 行，不上架）")
                 continue
-            path = d / f"openaddresses_us_{state_lc}_{name}.zip"
-            path.write_bytes(blob)
-            detail.append({"src": name, "run": run, "url": url, "bytes": len(blob),
-                           "native_rows": rows, "status": "ok",
+            detail.append({"src": name, "run": run, "url": url, "bytes": nbytes,
+                           "sha256": sha, "native_rows": rows, "status": "ok",
                            "file": rel(path)})
             files.append(path)
         except Exception as exc:  # noqa: BLE001
+            path.unlink(missing_ok=True)
             fail.append({"src": name, "run": run, "url": url, "error": str(exc)[:200]})
     fx.add(*files)
     empty_n = len([d for d in detail if d.get("status") == "empty_upstream"])
+    fetched_n = len(files)
     status = "ok" if files else ("empty_upstream" if empty_n else "error")
-    fx.note("openaddresses", status, state=state_lc, sources_total=len(latest),
-            downloaded=len(files), empty_upstream=empty_n, detail=detail, failures=fail,
-            elapsed=round(time.time() - t0, 1))
+    fx.note("openaddresses", status, state=state_lc,
+            # ★ 三段式声明（2026-10-20）：上游 / 成功 / 空包 / 失败，四条必须闭合
+            upstream_sources=len(order),
+            sources_total=len(latest),
+            fetched_sources=fetched_n,
+            empty_sources=empty_n,
+            failed_sources=len(fail),
+            downloaded=fetched_n, empty_upstream=empty_n,
+            detail=detail, failures=fail, elapsed=round(time.time() - t0, 1))
     if not files and not empty_n:
         fx.problem("OpenAddresses 一个源包都没下到")
 
@@ -2453,6 +2522,22 @@ def gate(fx: Fetcher) -> None:
                     _bad.append(_n)
         if _bad:
             errs.append(f"命名不符合「按县」契约（缺州码/县级 fips）：{sorted(_bad)[:3]}")
+    # ★ 第八把锁（2026-10-20）：OA 全量声明。上游列出的源必须棵棵有交代
+    #   （成功 / 合法空包 / 失败），一条都不许静默消失。
+    #   事故：order[:60] 把 MN 的 66 个源默默砍成 60，run 仍报 success、gate 不拦。
+    _oa = fx.status.get("openaddresses") or {}
+    _up = _oa.get("upstream_sources")
+    if _up is not None:
+        _f = int(_oa.get("fetched_sources") or 0)
+        _e = int(_oa.get("empty_sources") or 0)
+        _x = int(_oa.get("failed_sources") or 0)
+        if _f + _e + _x != int(_up):
+            errs.append(f"OA 源数不闭合：成功 {_f} + 空包 {_e} + 失败 {_x} != 上游 {_up}")
+        _allow = bool(getattr(getattr(fx, "args", None), "allow_partial", False))
+        if _x and not _allow:
+            errs.append(f"OA 有 {_x} 个源失败（确需发布请显式加 --allow-partial）")
+        elif _x:
+            log(f"⚠️ OA 有 {_x} 个源失败，已用 --allow-partial 放行")
     # ★ 第四把锁：州码必须是真 ISO 3166-2（查全局注册表，防 roster 拼错）
     iso = _iso_codes(fx.cfg["state"])
     if iso["iso_3166_2_verified"] is False:
@@ -2918,8 +3003,12 @@ def main(argv: list[str] | None = None) -> int:
     ap.add_argument("--nad-workers", type=int, default=2, help="cursor 模式分片并发（建议 2，避免撞按 IP 限速）")
     ap.add_argument("--overture-format", choices=["parquet", "geojson"], default="parquet")
     ap.add_argument("--overture-timeout", type=int, default=7200)
-    ap.add_argument("--oa-max-mb", type=int, default=800)
-    ap.add_argument("--oa-max-files", type=int, default=60)
+    ap.add_argument("--oa-max-mb", type=int, default=0,
+                    help="单源体积上限 MB（0=不限；已改流式下载，不需要这个上限）")
+    ap.add_argument("--oa-max-files", type=int, default=0,
+                    help="源数上限（0=不限；旧默认 60 曾静默丢掉 MN 的 6 个源）")
+    ap.add_argument("--allow-partial", action="store_true",
+                    help="允许带失败源发布（默认阻断；仅应急用）")
     ap.add_argument("--oa-timeout", type=int, default=1800)
     ap.add_argument("--tiger-timeout", type=int, default=900)
     args = ap.parse_args(argv)
