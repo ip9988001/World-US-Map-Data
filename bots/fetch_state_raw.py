@@ -2405,6 +2405,18 @@ def gate(fx: Fetcher) -> None:
             errs.append("NAD 账面有县片数但 nad_shards 为空（记账与实物脱钩）")
         else:
             log(f"✅ 县级内容断言：真县片 {ok_n} / 共 {total_n}（空 {empty_n}，失败 {failed_n}）")
+    # ★ 第六把锁（2026-10-20 用户硬口径）：发布前必须「按县分片 → 压缩 → 再上架」。
+    #   不允许未压缩的 .ndjson 裸件或整州单文件冒充县片上架。
+    if str(getattr(getattr(fx, "args", None), "pack_mode", "single")) == "county_shards":
+        # 判据看「记账 ∪ 实物」：断点续传时县片已上传并清本地，不能只查本地文件。
+        names = set((fx.status_doc.get("assets") or {}).keys()) \
+            | {os.path.basename(str(p)) for p in fx.files}
+        bare = [n for n in names if n.endswith(".ndjson")]
+        gz = [n for n in names if n.endswith(".ndjson.gz")]
+        if bare:
+            errs.append(f"未压缩就上架（必须先分片+gzip）：{sorted(bare)[:3]}")
+        if not gz:
+            errs.append("county_shards 模式下没有任何 .ndjson.gz 分片（分片或压缩被跳过）")
     # ★ 第四把锁：州码必须是真 ISO 3166-2（查全局注册表，防 roster 拼错）
     iso = _iso_codes(fx.cfg["state"])
     if iso["iso_3166_2_verified"] is False:
@@ -2597,6 +2609,21 @@ def _record_no_coverage(fx: Fetcher, probed: int) -> None:
                        f"（州级 returnCountOnly=0；{probed} 个县逐一探针全为 0）。"])
 
 
+def _shards_from_status(fx: Fetcher) -> list[dict]:
+    """★ 记账自愈（2026-10-20 · AK 事故）：断点续传/多次补跑时 fx.cache["nad_shards"]
+    可能为空，但 status_doc["assets"] 里已有 kind=county 的县片记录（文件早已上传）。
+    实物在、账丢了 → 从账本重建；否则下游二仓 C5 会误判「没有任何 county 分片」。
+    """
+    out = []
+    for name, rec in (fx.status_doc.get("assets") or {}).items():
+        if not isinstance(rec, dict) or rec.get("kind") != "county":
+            continue
+        out.append({"kind": "county", "file": name,
+                    "rows": rec.get("rows"), "expected_rows": rec.get("expected_rows"),
+                    "gz_bytes": rec.get("gz_bytes"), "bytes": rec.get("bytes")})
+    return sorted(out, key=lambda s: str(s.get("file")))
+
+
 def build_manifest(fx: Fetcher) -> Path:
     def asset(p: Path) -> dict:
         r = rel(p)
@@ -2626,7 +2653,7 @@ def build_manifest(fx: Fetcher) -> Path:
                     byname[n] = d["dbf_records"]
         out = {rel(p): byname[os.path.basename(p)] for p in fx.files
                if os.path.basename(p) in byname}
-        for s in (fx.cache.get("nad_shards") or []):
+        for s in (fx.cache.get("nad_shards") or _shards_from_status(fx)):
             if s.get("file"):
                 out[s["file"]] = s["rows"]
         return out
@@ -2649,7 +2676,7 @@ def build_manifest(fx: Fetcher) -> Path:
                       "sha256_head": "前 1MB 的 sha256 前 16 位（快检用）"},
         "assets": [asset(p) for p in sorted(fx.files)],
         "row_counts": row_counts(),
-        "shards": fx.cache.get("nad_shards") or [],
+        "shards": fx.cache.get("nad_shards") or _shards_from_status(fx),
         "completeness": build_completeness(fx),
         "reference_check": fx.cache.get("nad_reference") or {},
         "nad_no_coverage": fx.cache.get("nad_no_coverage") or None,

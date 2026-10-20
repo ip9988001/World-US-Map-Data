@@ -41,7 +41,7 @@ on:
         description: 打包方式（single=v0 单文件；county_shards=按县切片+gzip+统一命名）
         type: choice
         options: [single, county_shards]
-        default: single
+        default: county_shards
       nad_ids_slicing:
         description: 主键清单分段方式（quadrant=四象限仅矩形；oid=OBJECTID 区间二分，通用）
         type: choice
