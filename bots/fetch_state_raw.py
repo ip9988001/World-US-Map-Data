@@ -1911,10 +1911,32 @@ def _nad_harvest_county_shards(fx: Fetcher, d: Path, fields: list, oid: str,
     fx.add(d / "nad_native_metadata.json", d / "nad_full_columns.json")
     base = {"geometry": fx.cfg["bbox_str"], "geometryType": "esriGeometryEnvelope",
             "inSR": "4326", "spatialRel": "esriSpatialRelIntersects"}
-    log("NAD 模式=ids+county_shards｜先取州 bbox 全集（OID 区间二分）")
-    root_ids, ost = _nad_ids_by_oid_ranges(fx, base, err_log, "[state]")
-    official = ost.get("count")
-    if not root_ids:
+    # ★ 2026-10-21：--county-fips 补跑只走县口径（partial 分支在下方直接 return，不产溢出包、
+    #   不做州级参考），所以州 bbox 全量枚举是纯浪费 —— 且实测 AZ 这种 366 万行的州，一次
+    #   count 就要 56s 还被 400 拒，全量枚举要 3h 以上，补跑必撞 350 分钟 timeout（run
+    #   39553902621 实证：3h10m 仍停在州级枚举）。故补跑跳过它，只枚举目标县。
+    only = [s.strip() for s in str(getattr(fx.args, "county_fips", "") or "").split(",") if s.strip()]
+    counties = [c for c in fx.cfg["counties"]
+                if not only or c["fips"] in only or c["key"] in only]
+    if only and not counties:
+        die(f"--county-fips 未匹配到任何本州县：{only}（roster 里本州有 "
+            f"{len(fx.cfg['counties'])} 个县）")
+    partial = bool(only) and len(counties) < len(fx.cfg["counties"])
+    if partial:
+        known = {c["fips"] for c in counties} | {c["key"] for c in counties}
+        bad = [s for s in only if s not in known]
+        if bad:
+            log(f"⚠️ --county-fips 未匹配到本州县：{bad}（已忽略）")
+        log(f"⚠️ 只补指定县 {len(counties)} 个 → 本轮不重算溢出包、不做州级比对参考")
+    if partial:
+        root_ids, ost, official = [], {"queries": 0, "splits": 0}, None
+        log(f"ℹ️ 部分县补跑（{len(counties)}/{len(fx.cfg['counties'])} 县）"
+            f"→ 跳过州 bbox 全量主键枚举（州级口径与溢出包本轮不用）")
+    else:
+        log("NAD 模式=ids+county_shards｜先取州 bbox 全集（OID 区间二分）")
+        root_ids, ost = _nad_ids_by_oid_ranges(fx, base, err_log, "[state]")
+        official = ost.get("count")
+    if not partial and not root_ids:
         # ★ 2026-10-18 实测：NAD 上游会**局部降级** —— 同一时刻 HI、CA 小框本机也返回 count=0，
         #   而 AK/DE 正常。所以 count=0 不能直接判州死刑，先复测一次，再退到「县并集」当 root。
         confirm = _nad_seg_count(fx, base, err_log, "[state]:recheck")
@@ -1977,8 +1999,9 @@ def _nad_harvest_county_shards(fx: Fetcher, d: Path, fields: list, oid: str,
                     elapsed=round(time.time() - t0, 1))
             fx.problem("NAD 州 bbox + 县并集都没拿到主键（上游疑似降级，稍后同 tag 重跑即可）")
             return
-    log(f"州 bbox 主键 {len(root_ids):,}｜官方 count {official}｜"
-        f"OID 查询 {ost['queries']} 次｜切分 {ost['splits']} 次")
+    if not partial:
+        log(f"州 bbox 主键 {len(root_ids):,}｜官方 count {official}｜"
+            f"OID 查询 {ost['queries']} 次｜切分 {ost['splits']} 次")
 
     shards: list = []
     # ★ 2026-10-21：分段计时（NAD 主键 / 取数 / 上传）——先量出 4.5 分钟/县到底花在哪
@@ -1989,20 +2012,6 @@ def _nad_harvest_county_shards(fx: Fetcher, d: Path, fields: list, oid: str,
     dup_rows = 0
     state_dist: Counter = Counter()
     failed_counties: list = []
-
-    only = [s.strip() for s in str(getattr(fx.args, "county_fips", "") or "").split(",") if s.strip()]
-    counties = [c for c in fx.cfg["counties"]
-                if not only or c["fips"] in only or c["key"] in only]
-    if only and not counties:
-        die(f"--county-fips 未匹配到任何本州县：{only}（roster 里本州有 "
-            f"{len(fx.cfg['counties'])} 个县）")
-    partial = bool(only) and len(counties) < len(fx.cfg["counties"])
-    if partial:
-        known = {c["fips"] for c in counties} | {c["key"] for c in counties}
-        bad = [s for s in only if s not in known]
-        if bad:
-            log(f"⚠️ --county-fips 未匹配到本州县：{bad}（已忽略）")
-        log(f"⚠️ 只补指定县 {len(counties)} 个 → 本轮不重算溢出包、不做州级比对参考")
 
     # ★ 2026-10-21：开跑前先确认「多边形相交查询」在本州可用（NV/NH 实测失效）
     poly_ok, probe = _probe_polygon_usable(fx, counties, err_log)
