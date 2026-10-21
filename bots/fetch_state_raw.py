@@ -1098,10 +1098,29 @@ def _harvest_overture_county_shards(fx: Fetcher, cli: str, d: Path,
             cmd = [cli, "download", f"--bbox={','.join(f'{v:.6f}' for v in bb)}",
                    "-f", fmt, "--type=address", "-o", str(out)]
             try:
-                pr = subprocess.run(cmd, capture_output=True, text=True,
-                                    timeout=fx.args.overture_timeout)
-                ok = pr.returncode == 0 and out.exists() and out.stat().st_size >= MIN_ASSET_BYTES
-                n = (_count_parquet(out) if suffix == "parquet" else _count_geojson(out)) if ok else 0
+                # ★ 2026-10-21 WA 事故：前 28 片全成，后 11 县 overturemaps 每个 0.4s 秒败
+                #   （连发查询撞上游 STAC/S3 限流），原代码一次不中就记死 → 11 县永久缺片，
+                #   剩余预算也耗尽。抖动/限流必须退避重试后再判死（同 STAC 抖动重试一次的教训）。
+                pr, ok, n = None, False, 0
+                for _try in range(3):
+                    try:
+                        pr = subprocess.run(cmd, capture_output=True, text=True,
+                                            timeout=fx.args.overture_timeout)
+                        ok = (pr.returncode == 0 and out.exists()
+                              and out.stat().st_size >= MIN_ASSET_BYTES)
+                    except Exception:  # noqa: BLE001 超时/OSError 一并走重试
+                        ok = False
+                    n = (_count_parquet(out) if suffix == "parquet" else _count_geojson(out)) if ok else 0
+                    if ok and (n is None or n > 0):
+                        break                       # 真拿到数据
+                    if ok and n == 0:
+                        break                       # 真·空县，重试无意义
+                    out.unlink(missing_ok=True)
+                    if _try < 2:
+                        _wait = 15 * (_try + 1)
+                        log(f"  ↻ Overture 县片 {key} 第 {_try + 1} 次失败"
+                            f"（rc={getattr(pr, 'returncode', '?')}）→ {_wait}s 后重试")
+                        time.sleep(_wait)
                 # n is None = 无法数行（环境无 duckdb）—— 文件存在且够大即认，不能因此判失败
                 if ok and (n is None or n > 0):
                     fname = out.name
@@ -1128,8 +1147,11 @@ def _harvest_overture_county_shards(fx: Fetcher, cli: str, d: Path,
                     if ok and n == 0:
                         empty.append({"county": key, "fips": fips})
                     else:
-                        failed.append({"county": key, "fips": fips, "rc": pr.returncode,
-                                       "tail": ((pr.stdout or "")[-120:] + (pr.stderr or "")[-200:]).strip()})
+                        failed.append({"county": key, "fips": fips,
+                                       "rc": getattr(pr, "returncode", None),
+                                       "tries": 3,
+                                       "tail": (((getattr(pr, "stdout", "") or "")[-120:]
+                                                 + (getattr(pr, "stderr", "") or "")[-200:]).strip())})
             except Exception as exc:  # noqa: BLE001
                 out.unlink(missing_ok=True)
                 failed.append({"county": key, "fips": fips, "error": str(exc)[:160]})
