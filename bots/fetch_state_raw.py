@@ -1769,6 +1769,114 @@ def _county_rings(fx: Fetcher, county: dict) -> list | None:
     return ((feats[0].get("geometry") or {}).get("rings")) or None
 
 
+def _rings_bbox_str(rings: list) -> str:
+    xs = [p[0] for r in rings for p in r]
+    ys = [p[1] for r in rings for p in r]
+    return f"{min(xs)},{min(ys)},{max(xs)},{max(ys)}"
+
+
+def _county_envelope_base(rings: list) -> dict:
+    """县的外包矩形（信封）查询——多边形失效时用它取数。"""
+    return {"geometry": _rings_bbox_str(rings), "geometryType": "esriGeometryEnvelope",
+            "inSR": "4326", "spatialRel": "esriSpatialRelIntersects"}
+
+
+def _point_in_rings(lon: float, lat: float, rings: list) -> bool:
+    """射线法（奇偶规则）判点是否在县界内，多环自动按洞处理。纯几何、零依赖。"""
+    inside = False
+    for ring in rings:
+        n = len(ring)
+        if n < 3:
+            continue
+        for i in range(n - 1):
+            x1, y1 = ring[i][0], ring[i][1]
+            x2, y2 = ring[i + 1][0], ring[i + 1][1]
+            if (y1 > lat) != (y2 > lat):
+                xin = x1 + (lat - y1) * (x2 - x1) / (y2 - y1)
+                if lon < xin:
+                    inside = not inside
+    return inside
+
+
+class _PolyFilter:
+    """★ 2026-10-21（NV/NH 事故）：信封取数的本地过滤层 —— 只放行落在县多边形内的行。
+
+    背景：NAD 那个视图对 NV/NH 的县做「多边形相交」恒返回 0（信封正常，实测已排除
+    环方向/环未闭合/坐标系/where 等一切自身原因）。所以这两类州改成：
+    信封取数 → 本地按经纬度做点内判 → 只写本县的行，并记下 kept 主键供溢出差集用。
+    """
+
+    def __init__(self, inner, rings: list, oid: str = "OBJECTID"):
+        self.inner, self.rings, self.oid = inner, rings, oid
+        self.kept = 0
+        self.dropped = 0
+        self.kept_ids: set = set()
+
+    def write(self, s: str) -> int:
+        try:
+            row = json.loads(s)
+            lon = float(row.get("Longitude"))
+            lat = float(row.get("Latitude"))
+        except Exception:  # noqa: BLE001
+            self.dropped += 1
+            return len(s)
+        if _point_in_rings(lon, lat, self.rings):
+            self.inner.write(s)
+            self.kept += 1
+            o = row.get(self.oid)
+            if o is not None:
+                self.kept_ids.add(o)
+        else:
+            self.dropped += 1
+        return len(s)
+
+    def flush(self) -> None:
+        self.inner.flush()
+
+
+def _probe_polygon_usable(fx: Fetcher, counties: list, err_log: Path) -> tuple[bool, dict]:
+    """判「多边形相交查询是否真的失效」（最多验 3 个县）。
+
+    ★ 2026-10-21 修正判断口径：不能只看「信封>0 且 多边形=0」就判失效 ——
+      NAD 对本州可能**根本没有数据**（NV 实测：Clark 县信封 59,200 行，抽样 300 行
+      全是 AZ/CA 的邻州点，本地点在多边形内判定也是 0）。那种情况下多边形返回 0 是**对的**。
+      正确判据：从信封里跨段抽 50 行，若**确有点落在县界内**而多边形查询仍说 0 → 才算失效。
+    """
+    info = {"probed": 0, "env_total": 0, "poly_total": 0,
+            "sampled": 0, "inside_sample": 0, "broken": False}
+    for c in counties[:3]:
+        rings = _county_rings(fx, c)
+        if not rings:
+            continue
+        envb = _county_envelope_base(rings)
+        env = _nad_seg_count(fx, envb, err_log, f"[probe:{c['key']}]:env")
+        poly = _nad_seg_count(fx, _county_polygon_base(rings), err_log,
+                              f"[probe:{c['key']}]:poly")
+        info["probed"] += 1
+        info["env_total"] += int(env or 0)
+        info["poly_total"] += int(poly or 0)
+        if (poly or 0) == 0 and (env or 0) > 0:
+            sids, _n = _nad_ids_sample(fx, envb, err_log, f"[probe:{c['key']}]:sample")
+            step = max(1, len(sids) // 50)
+            pick = sids[::step][:50]
+            rows = _nad_one_batch(fx, pick, ["OBJECTID", "Latitude", "Longitude"],
+                                  err_log, f"[probe:{c['key']}]:rows") or []
+            inside = 0
+            for r in rows:
+                try:
+                    if _point_in_rings(float(r.get("Longitude")),
+                                      float(r.get("Latitude")), rings):
+                        inside += 1
+                except Exception:  # noqa: BLE001
+                    continue
+            info["sampled"] += len(rows)
+            info["inside_sample"] += inside
+            if inside > 0:
+                info["broken"] = True
+                break
+    return (not info["broken"]), info
+
+
 def _nad_harvest_county_shards(fx: Fetcher, d: Path, fields: list, oid: str,
                                err_log: Path) -> None:
     """v1 主路径：按县真实边界切片 → 每县一个 gzip 分片 + 一个溢出包。
@@ -1875,6 +1983,15 @@ def _nad_harvest_county_shards(fx: Fetcher, d: Path, fields: list, oid: str,
             log(f"⚠️ --county-fips 未匹配到本州县：{bad}（已忽略）")
         log(f"⚠️ 只补指定县 {len(counties)} 个 → 本轮不重算溢出包、不做州级比对参考")
 
+    # ★ 2026-10-21：开跑前先确认「多边形相交查询」在本州可用（NV/NH 实测失效）
+    poly_ok, probe = _probe_polygon_usable(fx, counties, err_log)
+    if not poly_ok:
+        log(f"⚠️ 多边形查询失效（探针 {probe['probed']} 县：信封 {probe['env_total']:,} 行 / "
+            f"多边形 {probe['poly_total']} 行）→ 改用「信封取数 + 本地按经纬度过滤」")
+    else:
+        log(f"✅ 多边形探针：{probe['probed']} 县 信封 {probe['env_total']:,} / "
+            f"多边形 {probe['poly_total']:,} → 按县几何切分可用")
+
     for c in counties:
         rings = _county_rings(fx, c)
         if not rings:
@@ -1883,8 +2000,9 @@ def _nad_harvest_county_shards(fx: Fetcher, d: Path, fields: list, oid: str,
                                     "official_count": None, "rows": 0, "missing_ids": None})
             log(f"  ✗ 县失败（缺县界多边形）：{c['name']}（{c['fips']}）→ 本轮不产片，记录待补")
             continue
-        ids, cst = _nad_ids_by_oid_ranges(fx, _county_polygon_base(rings),
-                                         err_log, f"[{c['key']}]")
+        # ★ 多边形失效州（NV/NH）：用县的外包矩形取数，再本地按经纬度过滤到县
+        cbase = _county_polygon_base(rings) if poly_ok else _county_envelope_base(rings)
+        ids, cst = _nad_ids_by_oid_ranges(fx, cbase, err_log, f"[{c['key']}]")
         ccnt = cst.get("count")
         if not ids:
             if ccnt:
@@ -1897,8 +2015,8 @@ def _nad_harvest_county_shards(fx: Fetcher, d: Path, fields: list, oid: str,
             else:
                 # 双重确认：count 与 idsOnly 两条不同查询都为 0 才认定"真空县"。
                 # 单条查询为 0 可能是上游局部降级（2026-10-18 HI/CA 实测），不能直接押空。
-                c2 = _nad_seg_count(fx, _county_polygon_base(rings), err_log, f"[{c['key']}]:empty-count")
-                sample2, n2 = _nad_ids_sample(fx, _county_polygon_base(rings), err_log, f"[{c['key']}]:empty-ids")
+                c2 = _nad_seg_count(fx, cbase, err_log, f"[{c['key']}]:empty-count")
+                sample2, n2 = _nad_ids_sample(fx, cbase, err_log, f"[{c['key']}]:empty-ids")
                 if (c2 or 0) == 0 and (n2 or 0) == 0 and not sample2:
                     fx.cache.setdefault("empty_counties", []).append(c["fips"])
                     log(f"  ○ 空县放行：{c['name']}（{c['fips']}）双通道确认 count=0（NAD 确无门牌）")
@@ -1910,10 +2028,11 @@ def _nad_harvest_county_shards(fx: Fetcher, d: Path, fields: list, oid: str,
                     log(f"  ✗ 县失败（首查空、复核 count={c2} ids={n2}）：{c['name']}（{c['fips']}）")
             continue
         fname = _asset_name("NAD", st, c["fips"], c["key"], ext=".ndjson.gz")
-        union |= set(ids)        # 已取到主键（成功或失败都要算）→ 溢出必须先减掉它们
+        union |= set(ids) if poly_ok else set()   # PIP 模式只认过滤后的主键（下方补）
         # ★ 断点续传：远端已有该片且大小一致 → 跳过抓取（ids 仍查，因为溢出包要算差集）
         prevrec = (fx.status_doc.get("assets") or {}).get(fname)
-        if (fx.publish and prevrec and c["fips"] in (fx.status_doc.get("done") or [])
+        # ★ PIP 模式不做断点续传跳过：续传账本里没有「过滤后主键集」，跳过会把溢出差集算错
+        if (poly_ok and fx.publish and prevrec and c["fips"] in (fx.status_doc.get("done") or [])
                 and fx.remote.get(fname) == prevrec.get("bytes")):
             log(f"  ⏭ 断点续传：跳过已完成县片 {fname}")
             fx.meta[rel(d / fname)] = {"bytes": prevrec.get("bytes"),
@@ -1927,34 +2046,64 @@ def _nad_harvest_county_shards(fx: Fetcher, d: Path, fields: list, oid: str,
             continue
         path = d / fname
         sink, close = _gz_open(path)
-        seen_l: set = set()
-        _nad_fetch_by_ids(fx, ids, fields, oid, sink, seen_l, err_log)
+        if not ids and not poly_ok:
+            failed_counties.append({"county_fips": c["fips"], "county_key": c["key"],
+                                    "county_name": c["name"],
+                                    "reason": "信封内也拿不到主键（上游降级）",
+                                    "official_count": ccnt, "rows": 0, "missing_ids": None})
+            log(f"  ✗ 县失败（信封也空）：{c['name']}（{c['fips']}）")
+            continue
+        seen_l: set = set()        # ★ 多边形失效州：信封取数 → 本地按经纬度过滤（过滤后的行才是本县）
+        filt = None
+        out_sink = sink
+        if not poly_ok:
+            filt = _PolyFilter(sink, rings, oid)
+            out_sink = filt
+        _nad_fetch_by_ids(fx, ids, fields, oid, out_sink, seen_l, err_log)
         missing = [i for i in ids if i not in seen_l]
         if missing:
             old = fx.args.nad_ids_batch
             fx.args.nad_ids_batch = min(100, max(25, old // 5))
-            _nad_fetch_by_ids(fx, missing, fields, oid, sink, seen_l, err_log)
+            _nad_fetch_by_ids(fx, missing, fields, oid, out_sink, seen_l, err_log)
             fx.args.nad_ids_batch = old
             missing = [i for i in ids if i not in seen_l]
         meta = close()
-        ok = (ccnt is None or meta["rows"] == ccnt) and not missing
+        kept_ids = filt.kept_ids if filt is not None else set(seen_l)
+        if filt is not None:
+            if not missing and filt.kept > 0:
+                ok, why = True, ""
+            elif missing:
+                ok = False
+                why = f"信封取 {len(ids):,} 行但缺 {len(missing):,} 主键"
+            else:
+                # 信封有数据、但全部落在县界外 → 该县确实无 NAD 点（合法空县，与 counties_empty 同口径）
+                path.unlink(missing_ok=True)
+                fx.cache.setdefault("empty_counties", []).append(c["fips"])
+                log(f"  ○ 空县放行：{c['name']}（{c['fips']}）信封 {len(ids):,} 行全部落在县界外")
+                continue
+        else:
+            ok = (ccnt is None or meta["rows"] == ccnt) and not missing
+            why = (f"行数不符：取 {meta['rows']:,} / 官方 {ccnt}" if ccnt is not None
+                   and meta["rows"] != ccnt else f"缺 {len(missing):,} 主键")
         if not ok:
             # ★ 县级是**唯一硬性校验单元**：不合格的县只丢自己，绝不牵连全州。
             #   （州级三数咬合降级为参考记录，见下方 reference_check）
             path.unlink(missing_ok=True)
             failed_counties.append({
                 "county_fips": c["fips"], "county_key": c["key"], "county_name": c["name"],
-                "reason": (f"行数不符：取 {meta['rows']:,} / 官方 {ccnt}" if ccnt is not None
-                           and meta["rows"] != ccnt else f"缺 {len(missing):,} 主键"),
-                "official_count": ccnt, "rows": meta["rows"], "missing_ids": len(missing)})
-            log(f"  ✗ 县失败（取 {meta['rows']:,} / 官方 {ccnt} / 缺 {len(missing):,}）："
-                f"{c['name']}（{c['fips']}）→ 不产片，记录待补")
+                "reason": why, "official_count": ccnt, "rows": meta["rows"],
+                "missing_ids": len(missing)})
+            log(f"  ✗ 县失败（{why}）：{c['name']}（{c['fips']}）→ 不产片，记录待补")
             continue
-        dup_rows += max(0, meta["rows"] - len(seen_l))
+        dirty = max(0, meta["rows"] - len(seen_l))
+        dup_rows += dirty
         state_dist.update(meta["state_distribution"])
         rec = {"kind": "county", "county_fips": c["fips"], "county_key": c["key"],
                "county_name": c["name"], "file": rel(path),
                "rows": meta["rows"], "expected_rows": ccnt,
+               "filter_mode": "envelope+pip" if filt is not None else "polygon",
+               "envelope_rows": (len(seen_l) if filt is not None else None),
+               "dropped_neighbor_rows": (filt.dropped if filt is not None else 0),
                "uncompressed_bytes": meta["uncompressed_bytes"],
                "gz_bytes": path.stat().st_size,
                "sha256_gz": df.sha256_full(path),
@@ -1969,8 +2118,12 @@ def _nad_harvest_county_shards(fx: Fetcher, d: Path, fields: list, oid: str,
             fx.status_doc.setdefault("done", []).append(c["fips"])
         _write_status(fx)
         shards.append(rec)
-        union_ok |= set(ids)
-        log(f"  县片 {c['fips']} {c['key']:<14} 行 {meta['rows']:>8,} / 官方 {ccnt:>8,}"
+        union_ok |= kept_ids
+        if not poly_ok:
+            union |= kept_ids                      # PIP 模式：只把过滤后的主键计入县并集
+        cnt_txt = (f"信封 {len(ids):,} → 过滤丢弃 {filt.dropped:,}" if filt is not None
+                   else f"/ 官方 {ccnt:>8,}")
+        log(f"  县片 {c['fips']} {c['key']:<14} 行 {meta['rows']:>8,} {cnt_txt}"
             f"｜gz {rec['gz_bytes'] / 1e6:>6.2f} MB")
 
     if partial:
@@ -2062,6 +2215,8 @@ def _nad_harvest_county_shards(fx: Fetcher, d: Path, fields: list, oid: str,
     total_rows = sum(s["rows"] for s in shards)
     ref = {
         "policy": "县级核验为唯一门槛；州级三数咬合仅作比对参考",
+        "county_slicing": "polygon" if poly_ok else "envelope+pip",
+        "polygon_probe": probe,
         "state_upstream_count": official,
         "state_root_ids": len(root_ids),
         "counties_total": len(fx.cfg["counties"]),
@@ -2082,11 +2237,27 @@ def _nad_harvest_county_shards(fx: Fetcher, d: Path, fields: list, oid: str,
         },
         "shard_rows_check": {
             "formula": "Σ县片行 − 县界重复 == 县并集 + 溢出",
+            "applicable": bool(poly_ok),
             "sum_rows": total_rows, "boundary_dup_rows": dup_rows,
             "net": total_rows - dup_rows,
-            "matches": (total_rows - dup_rows == covered_ok),
+            "matches": ((total_rows - dup_rows == covered_ok) if poly_ok else None),
+            "note": ("envelope+pip 模式下县片行是本地过滤后的行数，与上游 count 不同口径，此式不适用"
+                     if not poly_ok else "逐县行数与上游 count 一致，等式成立"),
         },
     }
+    # ★ 2026-10-21：bbox 会带进邻州边角。若本州一行都没有、全落在溢出包 → 如实声明
+    all_dist = Counter(state_dist)
+    all_dist.update(over_meta.get("state_distribution") or {})
+    if all_dist and not all_dist.get(st):
+        fx.cache["nad_no_coverage"] = {
+            "state_rows": 0, "bbox_rows": sum(all_dist.values()),
+            "neighbor_states": dict(all_dist.most_common(5)),
+            "note": ("本州在 NAD 无任何门牌点：BBox 里的行全部来自邻州，"
+                     "故县片为 0 属合法状态（二仓按 overflow 处理）"),
+        }
+        _nb = ", ".join(k for k, _ in all_dist.most_common(3))
+        log(f"ℹ️ NAD 本州 0 行（BBox 合计 {sum(all_dist.values()):,} 行，全部来自 {_nb}）"
+            f"→ 声明 nad_no_coverage，县片为 0 属合法")
     fx.cache["nad_reference"] = ref
     if not ref["three_number_check"]["matches"]:
         log(f"ℹ️ 州级比对参考：覆盖 {covered_ok:,} / 官方 {official}"
@@ -2098,6 +2269,8 @@ def _nad_harvest_county_shards(fx: Fetcher, d: Path, fields: list, oid: str,
                   else ("warn-truncated" if fx.problems else "ok"))
     fx.note("nad", _nad_state,
             channel="A-official-rest", mode="ids+county_shards",
+            county_slicing="polygon" if poly_ok else "envelope+pip",
+            polygon_probe=probe,
             fetch_strategy="OID 区间二分取主键 → 县多边形切片 → objectIds 批取 → gzip 落盘",
             official_count=official, official_ids=len(root_ids),
             shard_count=len([s for s in shards if s["kind"] == "county"]),
@@ -2568,7 +2741,9 @@ def gate(fx: Fetcher) -> None:
         empty_n = int(ref.get("counties_empty") or 0)
         failed_n = int(ref.get("counties_failed") or 0)
         total_n = int(ref.get("counties_total") or len(fx.cfg.get("counties") or []))
-        if ok_n <= 0:
+        _nocov = (fx.cache.get("nad_no_coverage")
+                  or (fx.cache.get("prev_manifest") or {}).get("nad_no_coverage"))
+        if ok_n <= 0 and not _nocov:
             errs.append(
                 f"NAD 县级分片为 0（失败 {failed_n} / 空 {empty_n} / 共 {total_n}）："
                 f"0 分片不许封印 —— 这不是「上游没数据」，是本次抓取没产出")

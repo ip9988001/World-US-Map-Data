@@ -674,6 +674,41 @@ def main():
     print("S17 判定：", "✅ 通过" if results["S17"]
           else f"❌ 失败 {[k for k, v in res17.items() if not v]}")
 
+    # ---------- S18 多边形失效州的本地过滤（NV/NH 事故，2026-10-21）----------
+    sq = [[[0.0, 0.0], [10.0, 0.0], [10.0, 10.0], [0.0, 10.0], [0.0, 0.0]]]
+    hole = [[[0, 0], [10, 0], [10, 10], [0, 10], [0, 0]],
+            [[4, 4], [6, 4], [6, 6], [4, 6], [4, 4]]]
+
+    class _Sink18:
+        def __init__(self):
+            self.lines = []
+
+        def write(self, s):
+            self.lines.append(s)
+            return len(s)
+
+        def flush(self):
+            pass
+
+    inner18 = _Sink18()
+    filt18 = fs._PolyFilter(inner18, hole)
+    filt18.write(json.dumps({"OBJECTID": 1, "Longitude": 2.0, "Latitude": 2.0}) + "\n")
+    filt18.write(json.dumps({"OBJECTID": 2, "Longitude": 5.0, "Latitude": 5.0}) + "\n")
+    filt18.write(json.dumps({"OBJECTID": 3, "Longitude": 20.0, "Latitude": 2.0}) + "\n")
+    filt18.write(json.dumps({"OBJECTID": 4, "Latitude": None}) + "\n")
+    res18 = {
+        "点在县界内": fs._point_in_rings(2.0, 2.0, sq),
+        "洞内的点不算": not fs._point_in_rings(5.0, 5.0, hole),
+        "界外不算": not fs._point_in_rings(20.0, 2.0, sq),
+        "只放行 1 行": len(inner18.lines) == 1,
+        "kept/dropped 计数": (filt18.kept, filt18.dropped) == (1, 3),
+        "记下 kept 主键": filt18.kept_ids == {1},
+    }
+    results["S18"] = all(res18.values())
+    print(f"  S18: {res18}")
+    print("S18 判定：", "✅ 通过" if results["S18"]
+          else f"❌ 失败 {[k for k, v in res18.items() if not v]}")
+
     # ---------- S11 增量发布 + 断点续传（Step 2）----------
     install_fake_release()
     rc11, _ = scenario("S11 增量发布(首跑)", base / "s11", mode="ids", official=7,
