@@ -69,6 +69,9 @@ REQUIRED_SOURCES = ("nad", "overture", "openaddresses", "census_tiger")
 # 铁律：拿到的清单必须跟同一 BBox 的 returnCountOnly 对上，对不上就四象限递归切。
 NAD_IDS_LIST_CAP = 400_000
 NAD_IDS_MAX_DEPTH = 6
+# ★ 2026-10-21：州级 count ≥200 万行就去掉全量主键枚举（改县口径）。
+#   实测 AZ 366 万行：单次 count 56s 且常被 400，全量 OID 二分 3h+ → 必撞 350 分钟 job 上限。
+NAD_SKIP_STATE_IDS_THRESHOLD = 2_000_000
 STAMP = time.strftime("%Y%m%d-%H%M", time.gmtime())
 
 
@@ -1928,15 +1931,37 @@ def _nad_harvest_county_shards(fx: Fetcher, d: Path, fields: list, oid: str,
         if bad:
             log(f"⚠️ --county-fips 未匹配到本州县：{bad}（已忽略）")
         log(f"⚠️ 只补指定县 {len(counties)} 个 → 本轮不重算溢出包、不做州级比对参考")
-    if partial:
+    skip_state = partial
+    if not partial:
+        _mode = str(getattr(fx.args, "skip_state_ids", "auto") or "auto")
+        if _mode == "auto":
+            _sz = _nad_seg_count(fx, base, err_log, "[state]:presize")
+            if _sz is None:
+                skip_state = True
+                log("ℹ️ 州级 count 探针拿不到（400/超时）→ 按大州处理，跳过全量枚举"
+                    "（可用 --skip-state-ids never 强制全量）")
+            else:
+                skip_state = int(_sz) >= NAD_SKIP_STATE_IDS_THRESHOLD
+                log(f"ℹ️ 州级 count={int(_sz):,}"
+                    f"→ {'跳过' if skip_state else '执行'}全量主键枚举"
+                    f"（阈值 {NAD_SKIP_STATE_IDS_THRESHOLD:,}）")
+        else:
+            skip_state = _mode == "always"
+    skip_state = bool(skip_state)
+    if skip_state:
         root_ids, ost, official = [], {"queries": 0, "splits": 0}, None
-        log(f"ℹ️ 部分县补跑（{len(counties)}/{len(fx.cfg['counties'])} 县）"
-            f"→ 跳过州 bbox 全量主键枚举（州级口径与溢出包本轮不用）")
+        fx.cache["state_ids_skipped"] = True
+        if partial:
+            log(f"ℹ️ 部分县补跑（{len(counties)}/{len(fx.cfg['counties'])} 县）"
+                f"→ 跳过州 bbox 全量主键枚举（州级口径与溢出包本轮不用）")
+        else:
+            log(f"ℹ️ --skip-state-ids：全量县循环（{len(counties)} 县）但跳过州 bbox 全量主键枚举"
+                f"→ 不产 OUTOFSTATE 溢出包、不做州级三数咬合比对")
     else:
         log("NAD 模式=ids+county_shards｜先取州 bbox 全集（OID 区间二分）")
         root_ids, ost = _nad_ids_by_oid_ranges(fx, base, err_log, "[state]")
         official = ost.get("count")
-    if not partial and not root_ids:
+    if not skip_state and not root_ids:
         # ★ 2026-10-18 实测：NAD 上游会**局部降级** —— 同一时刻 HI、CA 小框本机也返回 count=0，
         #   而 AK/DE 正常。所以 count=0 不能直接判州死刑，先复测一次，再退到「县并集」当 root。
         confirm = _nad_seg_count(fx, base, err_log, "[state]:recheck")
@@ -2272,8 +2297,9 @@ def _nad_harvest_county_shards(fx: Fetcher, d: Path, fields: list, oid: str,
         "three_number_check": {
             "formula": "县并集 + 溢出 == 州官方 count",
             "covered": covered_ok, "official": official,
-            "applicable": not bool(vol),
-            "matches": (official is None or covered_ok == official),
+            "applicable": bool(not vol and not fx.cache.get("state_ids_skipped")),
+            "matches": (official is None or covered_ok == official
+                        or bool(fx.cache.get("state_ids_skipped"))),
             "gap_ids": (official - covered_ok) if isinstance(official, int) else None,
             "note": ("分卷模式：溢出包不产、州级咬合不适用，以县级 count 为准" if vol
                      else "不咬合不改数据、不阻断发布；差异通常来自失败/降级县，按需补跑"),
@@ -3385,6 +3411,12 @@ def main(argv: list[str] | None = None) -> int:
     ap.add_argument("--county-fips", default="",
                     help="只补跑指定县（逗号分隔 fips 或 key，如 10003,new_castle）；"
                          "留空=全州县清单")
+    ap.add_argument("--skip-state-ids", choices=["auto", "always", "never"], default="auto",
+                    help="是否跳过州 bbox 全量主键枚举：auto=先查一次州级 count，≥%d 万行就跳。"
+                         "大州（MA/AZ 300~500 万行）实测州级 count 单次 56s、全量枚举 3h+，"
+                         "必撞 350 分钟 job 上限（run 39553902621 实证）；跳过后县循环照常全量跑，"
+                         "代价=不产 OUTOFSTATE 溢出包、不做州级三数咬合比对。"
+                         % int(NAD_SKIP_STATE_IDS_THRESHOLD // 10000))
     ap.add_argument("--nad-ids-max-depth", type=int, default=NAD_IDS_MAX_DEPTH,
                     help="主键清单被 400k 上限截断时四象限递归的最大层数（默认 6）")
     ap.add_argument("--nad-ids-slicing", choices=["quadrant", "oid"], default="quadrant",

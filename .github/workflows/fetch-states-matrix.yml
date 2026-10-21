@@ -60,6 +60,11 @@ on:
         type: choice
         options: ["true", "false"]
         default: "true"
+      skip_state_ids:
+        description: 跳过州 bbox 全量主键枚举（auto=按州 count≥200 万自动跳；大州不开必撞 350 分钟上限；代价=不产溢出包/不做州级咬合）
+        type: choice
+        options: [auto, always, never]
+        default: auto
 
 permissions:
   contents: write
@@ -152,6 +157,7 @@ jobs:
           if [ -n "${{ inputs.county_fips }}" ]; then
             ARGS+=(--county-fips "${{ inputs.county_fips }}")
           fi
+          if [ "${{ inputs.skip_state_ids }}" != "never" ]; then ARGS+=(--skip-state-ids "${{ inputs.skip_state_ids }}"); fi
           if [ "${{ inputs.publish_release }}" = "true" ]; then ARGS+=(--publish-release); fi
           echo "python bots/fetch_state_raw.py ${ARGS[*]}"
           python bots/fetch_state_raw.py "${ARGS[@]}"

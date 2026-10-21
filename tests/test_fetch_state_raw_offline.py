@@ -778,6 +778,22 @@ def main():
     print(f"S14：退出={rc14} 县片={len(nad14)}（期望2） volume={vol} 溢出包={ov14}")
     print("S14 判定：", "✅ 通过" if results["S14"] else "❌ 失败")
 
+    # ---------- S15 全量 + --skip-state-ids：跳过州级枚举，县循环照常 ----------
+    rc15, f15 = scenario("S15 skip_state_ids 全量", base / "s15", mode="ids", official=7,
+                         main_pool=[], ids_target=range(1, 8),
+                         poly_pools={"001": [1, 2], "003": [3, 4], "005": [5]},
+                         extra=["--pack-mode", "county_shards", "--skip-state-ids", "always",
+                                "--nad-ids-slicing", "oid", "--nad-ids-batch", "10"])
+    nad15 = [p for p in f15 if p.name.startswith("NAD-") and p.name.endswith(".ndjson.gz")]
+    ov15 = [p.name for p in f15 if "OUTOFSTATE" in p.name]
+    man15 = json.loads((base / "s15" / "MANIFEST.json").read_text(encoding="utf-8"))
+    t15 = ((man15.get("reference_check") or {}).get("three_number_check") or {})
+    results["S15"] = (rc15 == 0 and len(nad15) == 3 and not ov15
+                      and t15.get("applicable") is False and t15.get("matches") is True)
+    print(f"S15：退出={rc15} 县片={len(nad15)}（期望3） 溢出包={ov15} "
+          f"three_number_check={{'applicable': {t15.get('applicable')}, 'matches': {t15.get('matches')}}}")
+    print("S15 判定：", "✅ 通过" if results["S15"] else "❌ 失败")
+
     shutil.rmtree(base, ignore_errors=True)
     print("\n总判定：", f"✅ {len(results)} 个场景全部符合预期" if all(results.values()) else f"❌ {results}")
     return 0 if all(results.values()) else 1
