@@ -206,7 +206,7 @@ def t5():
 
 def t6():
     print("T6 Overture 防假 0：大县探针选择 + notes 幂等")
-    import tempfile, os
+    import tempfile
     fx = FakeFx()
     fx.out = Path(tempfile.mkdtemp(prefix="notes-"))
     fx.files = []

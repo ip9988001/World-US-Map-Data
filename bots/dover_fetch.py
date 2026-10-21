@@ -34,7 +34,6 @@ import gzip
 import hashlib
 import io
 import json
-import math
 import os
 import re
 import shutil
@@ -690,7 +689,7 @@ def write_report(align: dict) -> None:
             "",
             f"- 通道：`{nad.get('channel')}`　端点：`{nad.get('layer')}`",
             f"- 动态解析到的字段总数：**{nad.get('fields_n')}**",
-            f"- 关键字段验收："
+            "- 关键字段验收："
             + "、".join(f"`{k}`→`{v}`" for k, v in (chk.get("present") or {}).items())
             + (f"　❌ 缺失：{', '.join(chk.get('missing') or [])}" if chk.get("missing") else "　✅ 全部就位"),
             "",

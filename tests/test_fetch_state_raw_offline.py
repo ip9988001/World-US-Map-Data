@@ -1,5 +1,7 @@
 #!/usr/bin/env python3
-import os as _os; _os.environ.setdefault("FSR_FAST", "1")
+import os as _os
+
+_os.environ.setdefault("FSR_FAST", "1")
 # -*- coding: utf-8 -*-
 """离线自检：不联网，用假 http 层把 fetch_state_raw.py 的四源全流程跑一遍。
 

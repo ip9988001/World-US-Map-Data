@@ -21,7 +21,6 @@ from __future__ import annotations
 
 import argparse
 import csv
-import gzip
 import io
 import json
 import math
@@ -483,7 +482,6 @@ def run(data: Path, out: Path, bbox=None, docs_dir: Path | None = None,
         place_rings.extend((bnd.get(pk) or [{}])[0].get("rings") or [])
     counties = [(c["name"], c["fips"], (bnd.get(c["boundary_key"]) or [{}])[0].get("rings") or [])
                 for c in scope["counties"]]
-    de_rings = (bnd.get("state_de") or [{}])[0].get("rings") or []
 
     golden, tiers, drop, tiger_fail = [], Counter(), Counter(), Counter()
     src_map: dict = {}      # id(rec) → 该地址命中的其他三源原始记录（供 5 组四源对照）
@@ -810,7 +808,7 @@ def write_delivery_outputs(out: Path, docs_dir: Path | None, summary: dict, fill
         "   Overture 上游 100% 溯源 NAD，**不计独立票**（仅保留溯源列）。",
         f"2. TIGER 校验必须叠加空间约束：号段区间命中 **AND** 点线距离 ≤ {MATCH_METERS:.0f}m **AND** 奇偶匹配。",
         "3. 漏斗四栏分开：范围外剔除 / 脏数据剔除 / 无官方背书孤儿淘汰 / 同址去重，互不混计。",
-        f"4. 同址合并：同「门牌+街名+unit」视为同一地址（官方 NAD 常重复收录多坐标点），",
+        "4. 同址合并：同「门牌+街名+unit」视为同一地址（官方 NAD 常重复收录多坐标点），",
         "   保留最佳代表行（S 级 > OA 票 > TIGER 号段 > 有 unit）。",
         "",
         "## 结果",

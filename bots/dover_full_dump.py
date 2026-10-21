@@ -29,7 +29,6 @@ import shutil
 import subprocess
 import sys
 import time
-import urllib.parse
 import zipfile
 from pathlib import Path
 

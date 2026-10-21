@@ -110,8 +110,8 @@ def tiger_addrfeat() -> tuple[list[str], list[dict]]:
 TIGER_BOUNDARY_TARGETS = [
     ("ZCTA5 19901", f"{df.TIGER_ZCTA}", f"ZCTA5='{ZIP}'"),
     ("ZCTA5 19904", f"{df.TIGER_ZCTA}", f"ZCTA5='{df.ZIP_ALT}'"),
-    ("Dover Place", f"{df.TIGER_PLACES}", f"STATE='10' AND BASENAME='Dover'"),
-    ("Kent County", f"{df.TIGER_COUNTY}", f"STATE='10' AND COUNTY='001'"),
+    ("Dover Place", f"{df.TIGER_PLACES}", "STATE='10' AND BASENAME='Dover'"),
+    ("Kent County", f"{df.TIGER_COUNTY}", "STATE='10' AND COUNTY='001'"),
     # DE 州界：不同 vintage 图层字段名不一，逐个候选试（TASK-001 明确给了两种判据）
     ("DE State", f"{df.TIGER_STATE}", "STUSPS='DE'"),
     ("DE State", f"{df.TIGER_STATE}", "STATEFP='10'"),
@@ -239,7 +239,7 @@ def main() -> int:
 
     L: list[str] = []
     L.append("TASK-001 交付：Dover DE 19901 四源样本对照 + 全字段非空填充率")
-    L.append(f"作战室（免登录直接打开）: https://gempi.gtop.dev")
+    L.append("作战室（免登录直接打开）: https://gempi.gtop.dev")
     L.append("仓库: https://github.com/ip9988001/world-map-data-test")
     L.append("产物: data/dover/task001/task001_records.jsonl | task001_records.csv | "
              "fillrate_4sources.csv | docs/task001_report.md")

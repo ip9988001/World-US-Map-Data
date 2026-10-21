@@ -1963,6 +1963,9 @@ def _nad_harvest_county_shards(fx: Fetcher, d: Path, fields: list, oid: str,
         f"OID 查询 {ost['queries']} 次｜切分 {ost['splits']} 次")
 
     shards: list = []
+    # ★ 2026-10-21：分段计时（NAD 主键 / 取数 / 上传）——先量出 4.5 分钟/县到底花在哪
+    _t_ids = _t_fetch = _t_up = 0.0
+    _n_timed = 0
     union: set = set()          # 已取到主键的县（成功或失败）→ 溢出计算要减掉，防失败县数据流进溢出包
     union_ok: set = set()       # 真正交付成功的县
     dup_rows = 0
@@ -2002,8 +2005,10 @@ def _nad_harvest_county_shards(fx: Fetcher, d: Path, fields: list, oid: str,
             continue
         # ★ 多边形失效州（NV/NH）：用县的外包矩形取数，再本地按经纬度过滤到县
         cbase = _county_polygon_base(rings) if poly_ok else _county_envelope_base(rings)
+        _t0 = time.time()
         ids, cst = _nad_ids_by_oid_ranges(fx, cbase, err_log, f"[{c['key']}]")
         ccnt = cst.get("count")
+        _t_ids += time.time() - _t0
         if not ids:
             if ccnt:
                 # 官方说有量、我们拿到 0 → 真缺口（上游降级/限流）
@@ -2053,6 +2058,7 @@ def _nad_harvest_county_shards(fx: Fetcher, d: Path, fields: list, oid: str,
                                     "official_count": ccnt, "rows": 0, "missing_ids": None})
             log(f"  ✗ 县失败（信封也空）：{c['name']}（{c['fips']}）")
             continue
+        _t1 = time.time()
         seen_l: set = set()        # ★ 多边形失效州：信封取数 → 本地按经纬度过滤（过滤后的行才是本县）
         filt = None
         out_sink = sink
@@ -2068,6 +2074,7 @@ def _nad_harvest_county_shards(fx: Fetcher, d: Path, fields: list, oid: str,
             fx.args.nad_ids_batch = old
             missing = [i for i in ids if i not in seen_l]
         meta = close()
+        _t_fetch += time.time() - _t1
         kept_ids = filt.kept_ids if filt is not None else set(seen_l)
         if filt is not None:
             if not missing and filt.kept > 0:
@@ -2112,11 +2119,14 @@ def _nad_harvest_county_shards(fx: Fetcher, d: Path, fields: list, oid: str,
                "missing_ids": len(missing), "bytes": path.stat().st_size}
         fx.add(path)
         fx.status_doc.setdefault("assets", {})[fname] = rec
+        _t2 = time.time()
         if not _checkpoint(fx, path, extra={"rows": rec["rows"], "expected_rows": ccnt}):
             fx.problem(f"县片上传失败：{fname}")
         if c["fips"] not in (fx.status_doc.get("done") or []):
             fx.status_doc.setdefault("done", []).append(c["fips"])
         _write_status(fx)
+        _t_up += time.time() - _t2
+        _n_timed += 1
         shards.append(rec)
         union_ok |= kept_ids
         if not poly_ok:
@@ -2125,6 +2135,12 @@ def _nad_harvest_county_shards(fx: Fetcher, d: Path, fields: list, oid: str,
                    else f"/ 官方 {ccnt:>8,}")
         log(f"  县片 {c['fips']} {c['key']:<14} 行 {meta['rows']:>8,} {cnt_txt}"
             f"｜gz {rec['gz_bytes'] / 1e6:>6.2f} MB")
+
+    if _n_timed:
+        per = lambda x: x / _n_timed  # noqa: E731
+        log(f"⏱ 县循环耗时分解（{_n_timed} 县）：主键 {_t_ids:.0f}s / 取数 {_t_fetch:.0f}s / "
+            f"上传记账 {_t_up:.0f}s｜均 {per(_t_ids):.1f}s + {per(_t_fetch):.1f}s + "
+            f"{per(_t_up):.1f}s = {per(_t_ids + _t_fetch + _t_up):.1f}s/县")
 
     if partial:
         # 只补指定县：溢出包与州级参考都是**全州口径**，本轮不动（避免把 subset 当成全集算差）
@@ -2311,7 +2327,7 @@ def _apply_naming(fx: Fetcher) -> None:
             place = n[len("tiger_place_"):-len(".geojson")]
             new = _asset_name("TIGER", st, f"place-{place}", ext=".geojson")
         elif n.startswith(f"tl_2024_{fx.cfg['state_fips']}") and n.endswith("_addrfeat.zip"):
-            mid = n[len(f"tl_2024_"):-len("_addrfeat.zip")]
+            mid = n[len("tl_2024_"):-len("_addrfeat.zip")]
             new = _asset_name("TIGER", st, mid, "addrfeat", ext=".zip")
         elif n.startswith("tl_2024_"):
             rest = n[len("tl_2024_"):-len(".zip")].split("_", 1)[-1]
@@ -2484,7 +2500,7 @@ def gh_delete_asset(tag: str, name: str) -> bool:
     env = _gh_env()
     repo = os.environ.get("GITHUB_REPOSITORY", "")
     r = subprocess.run(["gh", "api", f"repos/{repo}/releases/tags/{tag}",
-                        "--jq", '.assets[]|"\(.id)\t\(.name)"'],
+                        "--jq", '.assets[]|"\\(.id)\t\\(.name)"'],
                        capture_output=True, text=True, env=env)
     for line in (r.stdout or "").splitlines():
         if "\t" in line and line.split("\t", 1)[1].strip() == name:
@@ -2502,7 +2518,7 @@ def gh_read_asset_text(tag: str, name: str) -> str | None:
     env = _gh_env()
     repo = os.environ.get("GITHUB_REPOSITORY", "")
     r = subprocess.run(["gh", "api", f"repos/{repo}/releases/tags/{tag}",
-                        "--jq", '.assets[]|"\(.id)\t\(.name)"'],
+                        "--jq", '.assets[]|"\\(.id)\t\\(.name)"'],
                        capture_output=True, text=True, env=env)
     for line in (r.stdout or "").splitlines():
         if "\t" not in line:
