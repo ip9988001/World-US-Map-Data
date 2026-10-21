@@ -569,7 +569,7 @@ def _nad_oid_bounds(fx: Fetcher, base: dict, err_log: Path, label: str = ""):
 
 
 def _nad_ids_by_oid_ranges(fx: Fetcher, base: dict, err_log: Path,
-                           label: str = "", max_depth: int = 24):
+                           label: str = "", max_depth: int = 64):
     """★ 通用主键清单获取：按 OBJECTID 区间二分，直到每段 ids < 400,000。
 
     为什么不继续用 bbox 四象限：
@@ -595,33 +595,51 @@ def _nad_ids_by_oid_ranges(fx: Fetcher, base: dict, err_log: Path,
         stats["bounds_bootstrapped"] = 1
         sample, _ = _nad_ids_sample(fx, base, err_log, label)
         stats["queries"] += 1
-        if not sample:
-            return [], stats
         if n is None:
             n = _nad_seg_count(fx, base, err_log, f"{label}:count-boot")
             stats["queries"] += 1
             stats["count"] = n
-        lo, hi = min(sample), max(sample) + 1
-        if n is None or len(sample) >= n:
-            if len(sample) >= NAD_IDS_LIST_CAP:
-                stats["truncated_leaves"] += 1
-                log(f"⚠️ {label} 清单顶到 {NAD_IDS_LIST_CAP:,} 上限且无官方 count 可对"
-                    f" → 原样交上层，由三数咬合暴露缺口")
-            else:
-                log(f"ℹ️ {label} 无边界，单次清单已是全量：{len(sample):,} 个")
-            return sample, stats
-        grew = 0
-        while grew < 24:
-            c = _nad_seg_count(fx, {**base, "where": f"OBJECTID >= {lo} AND OBJECTID < {hi}"},
-                               err_log, f"{label}:grow{grew + 1}")
-            stats["queries"] += 1
-            grew += 1
-            if c is not None and c >= n:
-                break
-            hi = lo + (hi - lo) * 2
-        mn, mx = lo, hi - 1          # 自兜出来的边界直接进正常二分
-        log(f"ℹ️ {label} 边界自兜：抽样 {len(sample):,} / 官方 {n:,}"
-            f" → 上界扩到 {hi:,}（{grew} 次 count 试探）后照常二分")
+        if not sample:
+            # ★ 2026-10-21 AZ 实证（Maricopa 218 万 / Pima 42 万）：大县的「一次清单」会被
+            #   400/504 连拒 → 旧代码在此直接判该县失败（拿不到主键）。改为**纯 count 定界**：
+            #   从 [2^20, ) 起把上界倍增到 count(OBJECTID < hi) >= n，全程不依赖任何主键样本。
+            if n is None:
+                return [], stats
+            hi, ok = 1 << 20, False
+            for _ in range(64):
+                c = _nad_seg_count(fx, {**base, "where": f"OBJECTID >= 0 AND OBJECTID < {hi}"},
+                                   err_log, f"{label}:growc")
+                stats["queries"] += 1
+                if c is not None and c >= n:
+                    ok = True
+                    break
+                hi *= 2
+            if not ok:
+                return [], stats
+            mn, mx = 0, hi - 1
+            log(f"ℹ️ {label} 清单拿不到 → 纯 count 定界：官方 {n:,}，上界 {hi:,} 后照常二分")
+        else:
+            lo, hi = min(sample), max(sample) + 1
+            if n is None or len(sample) >= n:
+                if len(sample) >= NAD_IDS_LIST_CAP:
+                    stats["truncated_leaves"] += 1
+                    log(f"⚠️ {label} 清单顶到 {NAD_IDS_LIST_CAP:,} 上限且无官方 count 可对"
+                        f" → 原样交上层，由三数咬合暴露缺口")
+                else:
+                    log(f"ℹ️ {label} 无边界，单次清单已是全量：{len(sample):,} 个")
+                return sample, stats
+            grew = 0
+            while grew < 24:
+                c = _nad_seg_count(fx, {**base, "where": f"OBJECTID >= {lo} AND OBJECTID < {hi}"},
+                                   err_log, f"{label}:grow{grew + 1}")
+                stats["queries"] += 1
+                grew += 1
+                if c is not None and c >= n:
+                    break
+                hi = lo + (hi - lo) * 2
+            mn, mx = lo, hi - 1          # 自兜出来的边界直接进正常二分
+            log(f"ℹ️ {label} 边界自兜：抽样 {len(sample):,} / 官方 {n:,}"
+                f" → 上界扩到 {hi:,}（{grew} 次 count 试探）后照常二分")
     stack = [(mn, mx + 1, 0)]
     while stack:
         lo, hi, depth = stack.pop()
