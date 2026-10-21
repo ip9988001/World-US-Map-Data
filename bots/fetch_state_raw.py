@@ -60,6 +60,8 @@ ROSTER_PATH = ROOT / "rules" / "US" / "state_roster.yaml"
 ADMIN_REGISTRY = ROOT / "rules" / "geo" / "global_admin_registry.json"
 MIN_ASSET_BYTES = 1024                      # 数据载荷（geojson/ndjson/zip）的空壳体量阈值
 OVERTURE_SHARD_MIN_AREA = 8.0               # 州框面积（平方度）超过此值即改按县切片
+# 县片全部跑完后，对没成的片整体补卷的冷却时长（秒）；2026-10-21 WA 尾 6 县瞬断事故
+OVERTURE_TAIL_RETRY_COOLDOWN = (60, 180)
 PAYLOAD_SUFFIXES = (".geojson", ".ndjson", ".zip", ".csv", ".parquet")
 REQUIRED_SOURCES = ("nad", "overture", "openaddresses", "census_tiger")
 
@@ -1081,6 +1083,7 @@ def _harvest_overture_county_shards(fx: Fetcher, cli: str, d: Path,
     shards, total_feats, total_bytes = [], 0, 0
     empty, failed = [], []
 
+    items = []
     for raw_key, rec in recs.items():
         key = raw_key[7:] if raw_key.startswith("county_") else raw_key
         rings = (((rec.get("payload") or {}).get("features") or [{}])[0]
@@ -1095,66 +1098,100 @@ def _harvest_overture_county_shards(fx: Fetcher, cli: str, d: Path,
         for idx, bb in enumerate(segs, 1):
             tag_seg = f"-{'w' if idx == 1 else 'e'}" if len(segs) > 1 else ""
             out = d / f"OVERTURE-US-{st}-{fips}-{key}{tag_seg}.{suffix}"
-            cmd = [cli, "download", f"--bbox={','.join(f'{v:.6f}' for v in bb)}",
-                   "-f", fmt, "--type=address", "-o", str(out)]
+            items.append({"county": key, "fips": fips, "bbox": bb, "out": out,
+                          "cmd": [cli, "download",
+                                  f"--bbox={','.join(f'{v:.6f}' for v in bb)}",
+                                  "-f", fmt, "--type=address", "-o", str(out)]})
+
+    def _attempt(it: dict, waits: tuple) -> str:
+        """跑一片（最多 3 次尝试）；返回 ok / empty / retry，并写回 it['rows'|'rc'|'tail']。
+
+        ★ 2026-10-21 WA 事故：前 33 片全成，后 6 县 overturemaps 每个 ~1s 秒败（同一 bbox
+          本地可下 → 上游/网络瞬断，非数据缺失、非我们的参数错），15s/30s 退避太短，
+          等不到恢复就把 6 县记死了。这里只做「同片内退避」，整批补卷交给外层轮次。
+        """
+        out = it["out"]
+        pr, ok, n = None, False, 0
+        for _try in range(3):
             try:
-                # ★ 2026-10-21 WA 事故：前 28 片全成，后 11 县 overturemaps 每个 0.4s 秒败
-                #   （连发查询撞上游 STAC/S3 限流），原代码一次不中就记死 → 11 县永久缺片，
-                #   剩余预算也耗尽。抖动/限流必须退避重试后再判死（同 STAC 抖动重试一次的教训）。
-                pr, ok, n = None, False, 0
-                for _try in range(3):
-                    try:
-                        pr = subprocess.run(cmd, capture_output=True, text=True,
-                                            timeout=fx.args.overture_timeout)
-                        ok = (pr.returncode == 0 and out.exists()
-                              and out.stat().st_size >= MIN_ASSET_BYTES)
-                    except Exception:  # noqa: BLE001 超时/OSError 一并走重试
-                        ok = False
-                    n = (_count_parquet(out) if suffix == "parquet" else _count_geojson(out)) if ok else 0
-                    if ok and (n is None or n > 0):
-                        break                       # 真拿到数据
-                    if ok and n == 0:
-                        break                       # 真·空县，重试无意义
-                    out.unlink(missing_ok=True)
-                    if _try < 2:
-                        _wait = 15 * (_try + 1)
-                        log(f"  ↻ Overture 县片 {key} 第 {_try + 1} 次失败"
-                            f"（rc={getattr(pr, 'returncode', '?')}）→ {_wait}s 后重试")
-                        time.sleep(_wait)
-                # n is None = 无法数行（环境无 duckdb）—— 文件存在且够大即认，不能因此判失败
-                if ok and (n is None or n > 0):
-                    fname = out.name
-                    fx.add(out)
-                    total_feats += int(n or 0)
-                    total_bytes += out.stat().st_size
-                    shards.append({"county": key, "fips": fips, "file": fname,
-                                   "features": n, "bytes": out.stat().st_size,
-                                   "bbox": [round(v, 6) for v in bb]})
-                    log(f"  ⬇ Overture 县片 {key} "
-                        f"{'?' if n is None else format(n, ',')} 条 "
-                        f"{out.stat().st_size / 1e6:.1f}MB")
-                    # ★ 逐片上传并删本地（2026-10-20）：单源 OV 可达数 GB（AK 6.1GB），
-                    #   全留在 runner 会撑爆磁盘。传完即删，账走 fx.meta。
-                    #   逐片不发哨兵（否则 254 县 = 254 条），源级汇总仍有 note。
-                    if fx.publish and not _checkpoint(
-                            fx, out, extra={"county_fips": fips, "county": key,
-                                            "rows": n, "kind": "overture_shard"},
-                            delete=True, notify=False):
-                        failed.append({"county": key, "fips": fips, "error": "上传失败"})
-                        shards.pop()
-                else:
-                    out.unlink(missing_ok=True)
-                    if ok and n == 0:
-                        empty.append({"county": key, "fips": fips})
-                    else:
-                        failed.append({"county": key, "fips": fips,
-                                       "rc": getattr(pr, "returncode", None),
-                                       "tries": 3,
-                                       "tail": (((getattr(pr, "stdout", "") or "")[-120:]
-                                                 + (getattr(pr, "stderr", "") or "")[-200:]).strip())})
-            except Exception as exc:  # noqa: BLE001
-                out.unlink(missing_ok=True)
-                failed.append({"county": key, "fips": fips, "error": str(exc)[:160]})
+                pr = subprocess.run(it["cmd"], capture_output=True, text=True,
+                                    timeout=fx.args.overture_timeout)
+                ok = (pr.returncode == 0 and out.exists()
+                      and out.stat().st_size >= MIN_ASSET_BYTES)
+            except Exception:  # noqa: BLE001 超时/OSError 一并走重试
+                ok = False
+            n = (_count_parquet(out) if suffix == "parquet" else _count_geojson(out)) if ok else 0
+            if ok and (n is None or n > 0):
+                break                       # 真拿到数据
+            if ok and n == 0:
+                break                       # 真·空县，重试无意义
+            out.unlink(missing_ok=True)
+            # CLI 会在产物旁落 .state 断点标记；失败残留会污染下一次尝试，必须一并清
+            Path(f"{out}.state").unlink(missing_ok=True)
+            if _try < 2:
+                log(f"  ↻ Overture 县片 {it['county']} 第 {_try + 1} 次失败"
+                    f"（rc={getattr(pr, 'returncode', '?')}）→ {waits[_try]}s 后重试")
+                time.sleep(waits[_try])
+        it["rows"] = n
+        it["rc"] = getattr(pr, "returncode", None)
+        it["tail"] = (((getattr(pr, "stdout", "") or "")[-120:]
+                       + (getattr(pr, "stderr", "") or "")[-200:]).strip())
+        if not ok:
+            out.unlink(missing_ok=True)
+            return "retry"
+        if n == 0:
+            out.unlink(missing_ok=True)
+            return "empty"
+        # n is None = 无法数行（环境无 duckdb）—— 文件存在且够大即认，不能因此判失败
+        return "ok"
+
+    pending: list = []
+    # 第 0 轮跑全量，其后每轮只补上一轮没成的片（冷却 60s / 180s 让上游瞬断/限流恢复）
+    for _round, _cool in enumerate((0,) + OVERTURE_TAIL_RETRY_COOLDOWN):
+        if _round == 0:
+            batch = items
+        else:
+            if not pending:
+                break
+            log(f"  ⏳ Overture 尾片补卷第 {_round} 轮：{len(pending)} 片未成，"
+                f"冷却 {_cool}s 后重试")
+            time.sleep(_cool)
+            batch, pending = pending, []
+        for it in batch:
+            status = _attempt(it, (15, 60) if _round == 0 else (30, 90))
+            if status == "empty":
+                empty.append({"county": it["county"], "fips": it["fips"]})
+                continue
+            if status != "ok":
+                pending.append(it)
+                continue
+            out = it["out"]
+            n = it.get("rows")
+            fx.add(out)
+            total_feats += int(n or 0)
+            total_bytes += out.stat().st_size
+            shards.append({"county": it["county"], "fips": it["fips"], "file": out.name,
+                           "features": n, "bytes": out.stat().st_size,
+                           "bbox": [round(v, 6) for v in it["bbox"]]})
+            log(f"  ⬇ Overture 县片 {it['county']} "
+                f"{'?' if n is None else format(n, ',')} 条 "
+                f"{out.stat().st_size / 1e6:.1f}MB")
+            # ★ 逐片上传并删本地（2026-10-20）：单源 OV 可达数 GB（AK 6.1GB），
+            #   全留在 runner 会撑爆磁盘。传完即删，账走 fx.meta。
+            #   逐片不发哨兵（否则 254 县 = 254 条），源级汇总仍有 note。
+            if fx.publish and not _checkpoint(
+                    fx, out, extra={"county_fips": it["fips"], "county": it["county"],
+                                    "rows": n, "kind": "overture_shard"},
+                    delete=True, notify=False):
+                failed.append({"county": it["county"], "fips": it["fips"],
+                               "error": "上传失败"})
+                shards.pop()
+
+    for it in pending:
+        it["out"].unlink(missing_ok=True)
+        failed.append({"county": it["county"], "fips": it["fips"], "rc": it.get("rc"),
+                       "tries": 3, "rounds": 1 + len(OVERTURE_TAIL_RETRY_COOLDOWN),
+                       "tail": it.get("tail", "")})
 
     audit = {"mode": "county_shards", "cli_version": cli_version,
              "state_bbox": fx.cfg["bbox_str"], "counties": len(recs),
@@ -1172,17 +1209,22 @@ def _harvest_overture_county_shards(fx: Fetcher, cli: str, d: Path,
         _append_notes(fx, [f"- **Overture**: 按县切片后 {len(empty)} 个县均 0 行。"])
         return
 
+    # ★ 2026-10-21：failed 里必须带 CLI 的 stderr 尾（tail）—— 上次只留县名，
+    #   下一次复发只能靠猜。诊断信息随 note 与告警一起落盘。
     fx.note("overture", "ok", mode="county_shards", bbox=fx.cfg["bbox_str"],
             format=fx.args.overture_format, features=total_feats,
             cli_version=cli_version, shard_count=len(shards),
             empty_counties=[e["county"] for e in empty],
-            failed_counties=[f["county"] for f in failed],
+            failed_counties=[f["county"] for f in failed], failed=failed[:10],
             bytes=total_bytes, shards=shards[:40], audit=audit,
             elapsed=round(time.time() - t0, 1))
     if failed:
-        fx.problem(f"Overture 有 {len(failed)} 个县切片失败：{[f['county'] for f in failed][:6]}")
+        _names = [f["county"] for f in failed][:6]
+        _tail = next((f.get("tail") for f in failed if f.get("tail")), "")
+        fx.problem(f"Overture 有 {len(failed)} 个县切片失败：{_names}")
         _notify("alarm", {"state": st, "tag": fx.tag, "stage": "overture_shards",
-                          "msg": f"Overture 按县切片有 {len(failed)} 个县失败：{[f['county'] for f in failed][:6]}"})
+                          "msg": f"Overture 按县切片有 {len(failed)} 个县失败：{_names}"
+                                 + (f"｜首个 stderr: {_tail[:200]}" if _tail else "")})
     log(f"✅ Overture 按县切片完成：{len(shards)} 片 / {total_feats:,} 条 / "
         f"{total_bytes / 1e6:.1f}MB，空县 {len(empty)}，失败 {len(failed)}")
 
