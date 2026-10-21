@@ -62,6 +62,14 @@ on:
         type: choice
         options: ["false", "true"]
         default: "false"
+      volume:
+        description: 分卷（如 1/2；TX 254 县≈1172 资产超单 Release 1000 上限时必须拆，留空=不分卷）
+        default: ""
+      allow_partial:
+        description: 允许带「失败县」发布（默认阻断；仅应急用，会把 phase 标为 complete_partial）
+        type: choice
+        options: ["false", "true"]
+        default: "false"
 
 permissions:
   contents: write
@@ -104,6 +112,8 @@ jobs:
           if [ -n "${{ inputs.only }}" ]; then ARGS="$ARGS --only ${{ inputs.only }}"; fi
           if [ "${{ inputs.publish_release }}" = "true" ]; then ARGS="$ARGS --publish-release"; fi
           if [ "${{ inputs.repair_oa }}" = "true" ]; then ARGS="$ARGS --repair-oa"; fi
+          if [ -n "${{ inputs.volume }}" ]; then ARGS="$ARGS --volume ${{ inputs.volume }}"; fi
+          if [ "${{ inputs.allow_partial }}" = "true" ]; then ARGS="$ARGS --allow-partial"; fi
           echo "python bots/fetch_state_raw.py $ARGS"
           python bots/fetch_state_raw.py $ARGS
 
