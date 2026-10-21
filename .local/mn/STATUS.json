@@ -1,0 +1,1170 @@
+{
+ "expected": [
+  "27001",
+  "27003",
+  "27005",
+  "27007",
+  "27009",
+  "27011",
+  "27013",
+  "27015",
+  "27017",
+  "27019",
+  "27021",
+  "27023",
+  "27025",
+  "27027",
+  "27029",
+  "27031",
+  "27033",
+  "27035",
+  "27037",
+  "27039",
+  "27041",
+  "27043",
+  "27045",
+  "27047",
+  "27049",
+  "27051",
+  "27053",
+  "27055",
+  "27057",
+  "27059",
+  "27061",
+  "27063",
+  "27065",
+  "27067",
+  "27069",
+  "27071",
+  "27073",
+  "27075",
+  "27077",
+  "27079",
+  "27081",
+  "27083",
+  "27085",
+  "27087",
+  "27089",
+  "27091",
+  "27093",
+  "27095",
+  "27097",
+  "27099",
+  "27101",
+  "27103",
+  "27105",
+  "27107",
+  "27109",
+  "27111",
+  "27113",
+  "27115",
+  "27117",
+  "27119",
+  "27121",
+  "27123",
+  "27125",
+  "27127",
+  "27129",
+  "27131",
+  "27133",
+  "27135",
+  "27137",
+  "27139",
+  "27141",
+  "27143",
+  "27145",
+  "27147",
+  "27149",
+  "27151",
+  "27153",
+  "27155",
+  "27157",
+  "27159",
+  "27161",
+  "27163",
+  "27165",
+  "27167",
+  "27169",
+  "27171",
+  "27173"
+ ],
+ "assets": {
+  "NAD-US-MN-27001-aitkin.ndjson.gz": {
+   "kind": "county",
+   "county_fips": "27001",
+   "county_key": "aitkin",
+   "county_name": "Aitkin",
+   "file": "data/raw/US-MN/nad/NAD-US-MN-27001-aitkin.ndjson.gz",
+   "rows": 17431,
+   "expected_rows": 17431,
+   "uncompressed_bytes": 25297705,
+   "gz_bytes": 2109720,
+   "sha256_gz": "7ea874c9681f4d11b8ad9699abb343bb4000c3d573f181f1e0a8c7e543a83b4c",
+   "sha256_raw": "6f588725c7fac92f563d4b9b07667b09a9b8b260ea80662899daa173b27a5684",
+   "state_distribution": {
+    "MN": 17431
+   },
+   "missing_ids": 0,
+   "bytes": 2109720
+  },
+  "NAD-US-MN-27003-anoka.ndjson.gz": {
+   "kind": "county",
+   "county_fips": "27003",
+   "county_key": "anoka",
+   "county_name": "Anoka",
+   "file": "data/raw/US-MN/nad/NAD-US-MN-27003-anoka.ndjson.gz",
+   "rows": 158982,
+   "expected_rows": 158982,
+   "uncompressed_bytes": 232981790,
+   "gz_bytes": 20327902,
+   "sha256_gz": "5cfdd2668f555c28acbdba636811b3fca12d1c143b4059e7279ce45c66114f0f",
+   "sha256_raw": "3d860cd9f566f2f14cfa602458ae9077e39a2be606a86dcae551e2a1ac6c957b",
+   "state_distribution": {
+    "MN": 158982
+   },
+   "missing_ids": 0,
+   "bytes": 20327902
+  },
+  "NAD-US-MN-27005-becker.ndjson.gz": {
+   "kind": "county",
+   "county_fips": "27005",
+   "county_key": "becker",
+   "county_name": "Becker",
+   "file": "data/raw/US-MN/nad/NAD-US-MN-27005-becker.ndjson.gz",
+   "rows": 23671,
+   "expected_rows": 23671,
+   "uncompressed_bytes": 34356564,
+   "gz_bytes": 2989701,
+   "sha256_gz": "6aa2ec662f96225704ea816a226576d5fbc9b12ef9c4322454c025d5adc05651",
+   "sha256_raw": "d3600232c81552abc7b70eb4b34c404f2e0bc70bd4d8f4e7ec0e94097516d0ce",
+   "state_distribution": {
+    "MN": 23671
+   },
+   "missing_ids": 0,
+   "bytes": 2989701
+  },
+  "NAD-US-MN-27009-benton.ndjson.gz": {
+   "kind": "county",
+   "county_fips": "27009",
+   "county_key": "benton",
+   "county_name": "Benton",
+   "file": "data/raw/US-MN/nad/NAD-US-MN-27009-benton.ndjson.gz",
+   "rows": 15240,
+   "expected_rows": 15240,
+   "uncompressed_bytes": 22043060,
+   "gz_bytes": 1792613,
+   "sha256_gz": "7350917616bf5bc63a24e1a548bfbc1af2c6a459f67270cb8231ace8a21f4780",
+   "sha256_raw": "c569e990cf459a45fcaaf9fe123f68903bded4268912c29e9bab15f3bf419b04",
+   "state_distribution": {
+    "MN": 15240
+   },
+   "missing_ids": 0,
+   "bytes": 1792613
+  },
+  "NAD-US-MN-27011-big_stone.ndjson.gz": {
+   "kind": "county",
+   "county_fips": "27011",
+   "county_key": "big_stone",
+   "county_name": "Big Stone",
+   "file": "data/raw/US-MN/nad/NAD-US-MN-27011-big_stone.ndjson.gz",
+   "rows": 3700,
+   "expected_rows": 3700,
+   "uncompressed_bytes": 5460714,
+   "gz_bytes": 445998,
+   "sha256_gz": "146dfb303f4e532158f58a6618af40ee59bf6d4e5978765f514869c068383896",
+   "sha256_raw": "3ab0e3e1da4540039a77bd4cf8596956e9d831d50ff6472a417bd73b79d92bd5",
+   "state_distribution": {
+    "MN": 3700
+   },
+   "missing_ids": 0,
+   "bytes": 445998
+  },
+  "NAD-US-MN-27017-carlton.ndjson.gz": {
+   "kind": "county",
+   "county_fips": "27017",
+   "county_key": "carlton",
+   "county_name": "Carlton",
+   "file": "data/raw/US-MN/nad/NAD-US-MN-27017-carlton.ndjson.gz",
+   "rows": 17023,
+   "expected_rows": 17023,
+   "uncompressed_bytes": 24889455,
+   "gz_bytes": 2129142,
+   "sha256_gz": "ff690a337d5415ebafa935f7bedfe17c6e965ff83bc7e5fda73de28be4f19690",
+   "sha256_raw": "3e44190a441bd247ca3ed91bf1672957f72b2873ed57785aefa98767940ceeab",
+   "state_distribution": {
+    "MN": 17023
+   },
+   "missing_ids": 0,
+   "bytes": 2129142
+  },
+  "NAD-US-MN-27019-carver.ndjson.gz": {
+   "kind": "county",
+   "county_fips": "27019",
+   "county_key": "carver",
+   "county_name": "Carver",
+   "file": "data/raw/US-MN/nad/NAD-US-MN-27019-carver.ndjson.gz",
+   "rows": 46680,
+   "expected_rows": 46680,
+   "uncompressed_bytes": 68006082,
+   "gz_bytes": 4988969,
+   "sha256_gz": "5c826cfaf69104b557e6e178c9c34a8a0652b03e90701a749fa9cc50487bb014",
+   "sha256_raw": "25fbb2f8f4e94a04fc2aca5f056a8dfb8871a3524846e34ffe700ee3aa9e1b70",
+   "state_distribution": {
+    "MN": 46680
+   },
+   "missing_ids": 0,
+   "bytes": 4988969
+  },
+  "NAD-US-MN-27021-cass.ndjson.gz": {
+   "kind": "county",
+   "county_fips": "27021",
+   "county_key": "cass",
+   "county_name": "Cass",
+   "file": "data/raw/US-MN/nad/NAD-US-MN-27021-cass.ndjson.gz",
+   "rows": 29493,
+   "expected_rows": 29493,
+   "uncompressed_bytes": 43011048,
+   "gz_bytes": 3659474,
+   "sha256_gz": "9a7e8dc81a13253452631bac68f98f2191503aa519fa2016b425a031478c8dec",
+   "sha256_raw": "2c46100b7809bcd550d76b8158d52f54651d162bbb146e221c2dfb9581738844",
+   "state_distribution": {
+    "MN": 29493
+   },
+   "missing_ids": 0,
+   "bytes": 3659474
+  },
+  "NAD-US-MN-27023-chippewa.ndjson.gz": {
+   "kind": "county",
+   "county_fips": "27023",
+   "county_key": "chippewa",
+   "county_name": "Chippewa",
+   "file": "data/raw/US-MN/nad/NAD-US-MN-27023-chippewa.ndjson.gz",
+   "rows": 6087,
+   "expected_rows": 6087,
+   "uncompressed_bytes": 8950140,
+   "gz_bytes": 755507,
+   "sha256_gz": "029cd5e6216c257f3d93affcae219bc02d442b438a46fe1dbbbb37fe22ab6cc5",
+   "sha256_raw": "08dde324216c4e5252baed54cc3a2c18c5fdc649fc01947fa76bf9f7d2ef5190",
+   "state_distribution": {
+    "MN": 6087
+   },
+   "missing_ids": 0,
+   "bytes": 755507
+  },
+  "NAD-US-MN-27025-chisago.ndjson.gz": {
+   "kind": "county",
+   "county_fips": "27025",
+   "county_key": "chisago",
+   "county_name": "Chisago",
+   "file": "data/raw/US-MN/nad/NAD-US-MN-27025-chisago.ndjson.gz",
+   "rows": 24027,
+   "expected_rows": 24027,
+   "uncompressed_bytes": 34765939,
+   "gz_bytes": 2710266,
+   "sha256_gz": "6f7bbadcf271306e5b07f4b11e4aa667b24c3d94d92af79fd006bca4e0b77c3f",
+   "sha256_raw": "fbdf886d257cb5af24ca11f2632d74aced7fa747044a0255d686d37fe91bc65c",
+   "state_distribution": {
+    "MN": 24027
+   },
+   "missing_ids": 0,
+   "bytes": 2710266
+  },
+  "NAD-US-MN-27027-clay.ndjson.gz": {
+   "kind": "county",
+   "county_fips": "27027",
+   "county_key": "clay",
+   "county_name": "Clay",
+   "file": "data/raw/US-MN/nad/NAD-US-MN-27027-clay.ndjson.gz",
+   "rows": 34535,
+   "expected_rows": 34535,
+   "uncompressed_bytes": 51213511,
+   "gz_bytes": 3471962,
+   "sha256_gz": "7257431fa1ff913c2776817fcf0695a9c853df21c43a69228a134905ace6df44",
+   "sha256_raw": "e84e8c6fcd4db3630c4425a7b94fff086d25a349181e1633df7c1fa970ac44f0",
+   "state_distribution": {
+    "MN": 34535
+   },
+   "missing_ids": 0,
+   "bytes": 3471962
+  },
+  "NAD-US-MN-27029-clearwater.ndjson.gz": {
+   "kind": "county",
+   "county_fips": "27029",
+   "county_key": "clearwater",
+   "county_name": "Clearwater",
+   "file": "data/raw/US-MN/nad/NAD-US-MN-27029-clearwater.ndjson.gz",
+   "rows": 5623,
+   "expected_rows": 5623,
+   "uncompressed_bytes": 8441595,
+   "gz_bytes": 616011,
+   "sha256_gz": "211f9d5617403329fe94207fa648a4ff4ec5b0c7af1b23943c8d2c622ebb41c5",
+   "sha256_raw": "1c85c91e44bd703b0d8f10445e0985dc285b79fdafbf9daa8a27d295d03810db",
+   "state_distribution": {
+    "MN": 5623
+   },
+   "missing_ids": 0,
+   "bytes": 616011
+  },
+  "NAD-US-MN-27031-cook.ndjson.gz": {
+   "kind": "county",
+   "county_fips": "27031",
+   "county_key": "cook",
+   "county_name": "Cook",
+   "file": "data/raw/US-MN/nad/NAD-US-MN-27031-cook.ndjson.gz",
+   "rows": 6856,
+   "expected_rows": 6856,
+   "uncompressed_bytes": 10100430,
+   "gz_bytes": 752597,
+   "sha256_gz": "41227500b70467cae82bee66d3037cb021d81bf5e5fecd1658a26e89f7e60416",
+   "sha256_raw": "95798cdad3695ddc6607e698f2724515b74cd89fff84cb06e90214ca58778e4a",
+   "state_distribution": {
+    "MN": 6856
+   },
+   "missing_ids": 0,
+   "bytes": 752597
+  },
+  "NAD-US-MN-27035-crow_wing.ndjson.gz": {
+   "kind": "county",
+   "county_fips": "27035",
+   "county_key": "crow_wing",
+   "county_name": "Crow Wing",
+   "file": "data/raw/US-MN/nad/NAD-US-MN-27035-crow_wing.ndjson.gz",
+   "rows": 46831,
+   "expected_rows": 46831,
+   "uncompressed_bytes": 68461428,
+   "gz_bytes": 5905525,
+   "sha256_gz": "78649d4f2e04e9063aad0dabe188a2c601781421158c18ba797be653f4fa0d67",
+   "sha256_raw": "ec03b0fe8f62072859f85aa9c5da6aae7cf934c04864add8f92514c348c52066",
+   "state_distribution": {
+    "MN": 46831
+   },
+   "missing_ids": 0,
+   "bytes": 5905525
+  },
+  "NAD-US-MN-27037-dakota.ndjson.gz": {
+   "kind": "county",
+   "county_fips": "27037",
+   "county_key": "dakota",
+   "county_name": "Dakota",
+   "file": "data/raw/US-MN/nad/NAD-US-MN-27037-dakota.ndjson.gz",
+   "rows": 182844,
+   "expected_rows": 182844,
+   "uncompressed_bytes": 271963610,
+   "gz_bytes": 29239177,
+   "sha256_gz": "2e92a7ba51aff418196622fc115ca860900ec9425790ae497a5127023d46ec31",
+   "sha256_raw": "7d3c51a4cd46bf03358bdd475fddeccc96fd0d26c1c4de629cad206d6f431fa9",
+   "state_distribution": {
+    "MN": 182844
+   },
+   "missing_ids": 0,
+   "bytes": 29239177
+  },
+  "NAD-US-MN-27041-douglas.ndjson.gz": {
+   "kind": "county",
+   "county_fips": "27041",
+   "county_key": "douglas",
+   "county_name": "Douglas",
+   "file": "data/raw/US-MN/nad/NAD-US-MN-27041-douglas.ndjson.gz",
+   "rows": 23579,
+   "expected_rows": 23579,
+   "uncompressed_bytes": 34671097,
+   "gz_bytes": 2954781,
+   "sha256_gz": "03a1da71d50b68e6cb01bf33a493f081eab37c2fded0fcf27fad1c9c28a9ee6e",
+   "sha256_raw": "1796444155bb46a1d3dcb37b498bb89b2d66c47c9d4e0f79e8e216d72c093129",
+   "state_distribution": {
+    "MN": 23579
+   },
+   "missing_ids": 0,
+   "bytes": 2954781
+  },
+  "NAD-US-MN-27045-fillmore.ndjson.gz": {
+   "kind": "county",
+   "county_fips": "27045",
+   "county_key": "fillmore",
+   "county_name": "Fillmore",
+   "file": "data/raw/US-MN/nad/NAD-US-MN-27045-fillmore.ndjson.gz",
+   "rows": 11091,
+   "expected_rows": 11091,
+   "uncompressed_bytes": 16044282,
+   "gz_bytes": 1176108,
+   "sha256_gz": "26b5094abbabd4d80fedd557b520991f2108735ea83fa653cf21c9bd0d7bdba5",
+   "sha256_raw": "0f344ee87b3b3d511cc37660674074f9d5de71235824293b510edac7719086dc",
+   "state_distribution": {
+    "MN": 11091
+   },
+   "missing_ids": 0,
+   "bytes": 1176108
+  },
+  "NAD-US-MN-27049-goodhue.ndjson.gz": {
+   "kind": "county",
+   "county_fips": "27049",
+   "county_key": "goodhue",
+   "county_name": "Goodhue",
+   "file": "data/raw/US-MN/nad/NAD-US-MN-27049-goodhue.ndjson.gz",
+   "rows": 482,
+   "expected_rows": 482,
+   "uncompressed_bytes": 711918,
+   "gz_bytes": 56727,
+   "sha256_gz": "8e8683dcbfed3060d6b01b2dcdf8431b186b64d3684528e429f40ffffea9abe9",
+   "sha256_raw": "b8339820320a3914e8e318dbcb0fa1b57993fe41aacf1360b6c03f84c12bbe14",
+   "state_distribution": {
+    "MN": 482
+   },
+   "missing_ids": 0,
+   "bytes": 56727
+  },
+  "NAD-US-MN-27051-grant.ndjson.gz": {
+   "kind": "county",
+   "county_fips": "27051",
+   "county_key": "grant",
+   "county_name": "Grant",
+   "file": "data/raw/US-MN/nad/NAD-US-MN-27051-grant.ndjson.gz",
+   "rows": 3774,
+   "expected_rows": 3774,
+   "uncompressed_bytes": 5442582,
+   "gz_bytes": 397661,
+   "sha256_gz": "5c93fae9cb9fb74db3fe82d32d5e04ceaed14dc3d68216909fb999093cdfda1e",
+   "sha256_raw": "a4a9eb8e3fd0f8cdef4fbe5bf35e1112930df2d70bf372c685475c327a4317fe",
+   "state_distribution": {
+    "MN": 3774
+   },
+   "missing_ids": 0,
+   "bytes": 397661
+  },
+  "NAD-US-MN-27053-hennepin.ndjson.gz": {
+   "kind": "county",
+   "county_fips": "27053",
+   "county_key": "hennepin",
+   "county_name": "Hennepin",
+   "file": "data/raw/US-MN/nad/NAD-US-MN-27053-hennepin.ndjson.gz",
+   "rows": 408414,
+   "expected_rows": 408414,
+   "uncompressed_bytes": 608026337,
+   "gz_bytes": 59588149,
+   "sha256_gz": "f7214b10411819b8806a16a9ba45d07d05af1579f5a14f0ac0733398a202afc8",
+   "sha256_raw": "1cc3814218f5491afd85521a665f80047eb021cb903dcab189fdc77052e2b180",
+   "state_distribution": {
+    "MN": 408414
+   },
+   "missing_ids": 0,
+   "bytes": 59588149
+  },
+  "NAD-US-MN-27055-houston.ndjson.gz": {
+   "kind": "county",
+   "county_fips": "27055",
+   "county_key": "houston",
+   "county_name": "Houston",
+   "file": "data/raw/US-MN/nad/NAD-US-MN-27055-houston.ndjson.gz",
+   "rows": 9402,
+   "expected_rows": 9402,
+   "uncompressed_bytes": 13472837,
+   "gz_bytes": 1010648,
+   "sha256_gz": "9b20cecb65612e8cd0760a89c34a1bcd9c5b9ec4673f4549f90414d22bd2f045",
+   "sha256_raw": "de236c66dfec7fea851ed5b115164226a9d677e94357315909b84d6f35ad49ce",
+   "state_distribution": {
+    "MN": 9402
+   },
+   "missing_ids": 0,
+   "bytes": 1010648
+  },
+  "NAD-US-MN-27059-isanti.ndjson.gz": {
+   "kind": "county",
+   "county_fips": "27059",
+   "county_key": "isanti",
+   "county_name": "Isanti",
+   "file": "data/raw/US-MN/nad/NAD-US-MN-27059-isanti.ndjson.gz",
+   "rows": 17734,
+   "expected_rows": 17734,
+   "uncompressed_bytes": 26196492,
+   "gz_bytes": 2625380,
+   "sha256_gz": "13e89e4962546dfcca96e7cbf2287f68df0b82a365f2e529b80865aa3b75d220",
+   "sha256_raw": "e597ab8d243054707833710ce470edbd1ebe8b205e57ec3f2274155f6fb2efc3",
+   "state_distribution": {
+    "MN": 17734
+   },
+   "missing_ids": 0,
+   "bytes": 2625380
+  },
+  "NAD-US-MN-27061-itasca.ndjson.gz": {
+   "kind": "county",
+   "county_fips": "27061",
+   "county_key": "itasca",
+   "county_name": "Itasca",
+   "file": "data/raw/US-MN/nad/NAD-US-MN-27061-itasca.ndjson.gz",
+   "rows": 29801,
+   "expected_rows": 29801,
+   "uncompressed_bytes": 44266704,
+   "gz_bytes": 3937907,
+   "sha256_gz": "ea1f8a520dd75262458633c77b40d0fad48d92900a3260a60f77b4b139c69029",
+   "sha256_raw": "b892a715e0f289030f60b045bdbb14bdaa9783ecbe61bcc4dde514a6cc645e33",
+   "state_distribution": {
+    "MN": 29801
+   },
+   "missing_ids": 0,
+   "bytes": 3937907
+  },
+  "NAD-US-MN-27063-jackson.ndjson.gz": {
+   "kind": "county",
+   "county_fips": "27063",
+   "county_key": "jackson",
+   "county_name": "Jackson",
+   "file": "data/raw/US-MN/nad/NAD-US-MN-27063-jackson.ndjson.gz",
+   "rows": 6034,
+   "expected_rows": 6034,
+   "uncompressed_bytes": 8808576,
+   "gz_bytes": 634756,
+   "sha256_gz": "862ffaeb062a33f08251d08d1ee20a03cef9d6bae9ce37cac021c2370b0d06f2",
+   "sha256_raw": "6701e40c50dd786ebeb27c172276af95abfeffab07e720754cee3083bb54e691",
+   "state_distribution": {
+    "MN": 6034
+   },
+   "missing_ids": 0,
+   "bytes": 634756
+  },
+  "NAD-US-MN-27071-koochiching.ndjson.gz": {
+   "kind": "county",
+   "county_fips": "27071",
+   "county_key": "koochiching",
+   "county_name": "Koochiching",
+   "file": "data/raw/US-MN/nad/NAD-US-MN-27071-koochiching.ndjson.gz",
+   "rows": 9004,
+   "expected_rows": 9004,
+   "uncompressed_bytes": 13526725,
+   "gz_bytes": 1189811,
+   "sha256_gz": "4d77b0008891549db0f8b362bb37462d2ef843b40ff1ad91bfb1c296d654e190",
+   "sha256_raw": "f0035f6528d9f319271f1ae52b3f540ea8b21387613d5381eaaad5b29fdc899d",
+   "state_distribution": {
+    "MN": 9004
+   },
+   "missing_ids": 0,
+   "bytes": 1189811
+  },
+  "NAD-US-MN-27073-lac_qui_parle.ndjson.gz": {
+   "kind": "county",
+   "county_fips": "27073",
+   "county_key": "lac_qui_parle",
+   "county_name": "Lac qui Parle",
+   "file": "data/raw/US-MN/nad/NAD-US-MN-27073-lac_qui_parle.ndjson.gz",
+   "rows": 4205,
+   "expected_rows": 4205,
+   "uncompressed_bytes": 6181942,
+   "gz_bytes": 521462,
+   "sha256_gz": "2892e0bc0cb9a07cd3c9fa26c573a2cccdee75c21c9c5c95f04c640715f4fcfb",
+   "sha256_raw": "4f15244fda79835e1e074b47e6540804d969e168f0ce1b39ca732a7c5bcded65",
+   "state_distribution": {
+    "MN": 4205
+   },
+   "missing_ids": 0,
+   "bytes": 521462
+  },
+  "NAD-US-MN-27075-lake.ndjson.gz": {
+   "kind": "county",
+   "county_fips": "27075",
+   "county_key": "lake",
+   "county_name": "Lake",
+   "file": "data/raw/US-MN/nad/NAD-US-MN-27075-lake.ndjson.gz",
+   "rows": 8445,
+   "expected_rows": 8445,
+   "uncompressed_bytes": 12221148,
+   "gz_bytes": 860607,
+   "sha256_gz": "f1e88a7c09a0cbf614ccff3fe3383c1c27fa555b22fe36179772158340b45bdc",
+   "sha256_raw": "d1c3cfd48c81ecbd309b450b19dfb062a23e651d13e9a36ed2d1f4e3e0a121ea",
+   "state_distribution": {
+    "MN": 8445
+   },
+   "missing_ids": 0,
+   "bytes": 860607
+  },
+  "NAD-US-MN-27077-lake_of_the_woods.ndjson.gz": {
+   "kind": "county",
+   "county_fips": "27077",
+   "county_key": "lake_of_the_woods",
+   "county_name": "Lake of the Woods",
+   "file": "data/raw/US-MN/nad/NAD-US-MN-27077-lake_of_the_woods.ndjson.gz",
+   "rows": 4512,
+   "expected_rows": 4512,
+   "uncompressed_bytes": 6748084,
+   "gz_bytes": 568633,
+   "sha256_gz": "f6b70f2d2c4596d69b14ca1d7da75e0196f89ac61a2a9489593a5abc834305cd",
+   "sha256_raw": "b0e37efbd18f7c3304738a5b8139380fa9cb96a0f11ebf47885a30b3a7bdfcfc",
+   "state_distribution": {
+    "MN": 4512
+   },
+   "missing_ids": 0,
+   "bytes": 568633
+  },
+  "NAD-US-MN-27079-le_sueur.ndjson.gz": {
+   "kind": "county",
+   "county_fips": "27079",
+   "county_key": "le_sueur",
+   "county_name": "Le Sueur",
+   "file": "data/raw/US-MN/nad/NAD-US-MN-27079-le_sueur.ndjson.gz",
+   "rows": 13908,
+   "expected_rows": 13908,
+   "uncompressed_bytes": 20073254,
+   "gz_bytes": 1499646,
+   "sha256_gz": "1cfb6ecc66f562823c0f14dd98ff38adf7a4acb8ff8a3b37d98aeffbea3cb902",
+   "sha256_raw": "d62d11cf77867488f941e51cb3bb3a396f28e5ce80b0c40f0269998f8d2cf2df",
+   "state_distribution": {
+    "MN": 13908
+   },
+   "missing_ids": 0,
+   "bytes": 1499646
+  },
+  "NAD-US-MN-27083-lyon.ndjson.gz": {
+   "kind": "county",
+   "county_fips": "27083",
+   "county_key": "lyon",
+   "county_name": "Lyon",
+   "file": "data/raw/US-MN/nad/NAD-US-MN-27083-lyon.ndjson.gz",
+   "rows": 11157,
+   "expected_rows": 11157,
+   "uncompressed_bytes": 16587615,
+   "gz_bytes": 1482557,
+   "sha256_gz": "739ead89521ad489641388fec7417d15780543041da9be177248abed0707a7b3",
+   "sha256_raw": "ae4855631ac013eb9dac63b396efcdbb1c9ac27c4561e7ce08e90acb943f59e9",
+   "state_distribution": {
+    "MN": 11157
+   },
+   "missing_ids": 0,
+   "bytes": 1482557
+  },
+  "NAD-US-MN-27085-mcleod.ndjson.gz": {
+   "kind": "county",
+   "county_fips": "27085",
+   "county_key": "mcleod",
+   "county_name": "McLeod",
+   "file": "data/raw/US-MN/nad/NAD-US-MN-27085-mcleod.ndjson.gz",
+   "rows": 16303,
+   "expected_rows": 16303,
+   "uncompressed_bytes": 23555335,
+   "gz_bytes": 1676823,
+   "sha256_gz": "48fa5f7b4616c28b591f059983b4d4154e579a4c850ecdbd32583a1a599db34d",
+   "sha256_raw": "0a858ee5d1d643e668976afebe452bc58c88bea305edc23b0117b3e6fd474fd7",
+   "state_distribution": {
+    "MN": 16303
+   },
+   "missing_ids": 0,
+   "bytes": 1676823
+  },
+  "NAD-US-MN-27089-marshall.ndjson.gz": {
+   "kind": "county",
+   "county_fips": "27089",
+   "county_key": "marshall",
+   "county_name": "Marshall",
+   "file": "data/raw/US-MN/nad/NAD-US-MN-27089-marshall.ndjson.gz",
+   "rows": 5233,
+   "expected_rows": 5233,
+   "uncompressed_bytes": 7700083,
+   "gz_bytes": 552510,
+   "sha256_gz": "1e0b17e40981ca34e68c7ed730e52551d5e5982c066cef9ff708ca6a58b3fb5b",
+   "sha256_raw": "a953b7d0825d9915a4273d75beb62f9f170ac3e13e852b89ee242d531fae0a8a",
+   "state_distribution": {
+    "MN": 5233
+   },
+   "missing_ids": 0,
+   "bytes": 552510
+  },
+  "NAD-US-MN-27097-morrison.ndjson.gz": {
+   "kind": "county",
+   "county_fips": "27097",
+   "county_key": "morrison",
+   "county_name": "Morrison",
+   "file": "data/raw/US-MN/nad/NAD-US-MN-27097-morrison.ndjson.gz",
+   "rows": 17899,
+   "expected_rows": 17899,
+   "uncompressed_bytes": 25363350,
+   "gz_bytes": 1776997,
+   "sha256_gz": "a627837c70c0b51758d500374f32b42ff0cbacfbd6b8ec02a6124ada1630a539",
+   "sha256_raw": "19a46524aee1a65746a07c077411ffc2621ea0990e73e0310aaf930f4c53e20a",
+   "state_distribution": {
+    "MN": 17899
+   },
+   "missing_ids": 0,
+   "bytes": 1776997
+  },
+  "NAD-US-MN-27099-mower.ndjson.gz": {
+   "kind": "county",
+   "county_fips": "27099",
+   "county_key": "mower",
+   "county_name": "Mower",
+   "file": "data/raw/US-MN/nad/NAD-US-MN-27099-mower.ndjson.gz",
+   "rows": 17158,
+   "expected_rows": 17158,
+   "uncompressed_bytes": 25723323,
+   "gz_bytes": 1852915,
+   "sha256_gz": "719aa14640b8341d48fc33a922c574679145772d6aaaba02e89c5cc776523785",
+   "sha256_raw": "7a98f3637af51267dde100a02510735a6a46c27035db9a0f3f90c9589cc214ab",
+   "state_distribution": {
+    "MN": 17158
+   },
+   "missing_ids": 0,
+   "bytes": 1852915
+  },
+  "NAD-US-MN-27101-murray.ndjson.gz": {
+   "kind": "county",
+   "county_fips": "27101",
+   "county_key": "murray",
+   "county_name": "Murray",
+   "file": "data/raw/US-MN/nad/NAD-US-MN-27101-murray.ndjson.gz",
+   "rows": 5292,
+   "expected_rows": 5292,
+   "uncompressed_bytes": 7716791,
+   "gz_bytes": 635901,
+   "sha256_gz": "a08782e4b9e8457c72b1b6b55775db64c7e9b2fe0b53e724b729ec1e5055ee38",
+   "sha256_raw": "4d853686f3406797a8b0e89e37ead8b797f4f4b1179790ba85aa8109e4b64ed6",
+   "state_distribution": {
+    "MN": 5292
+   },
+   "missing_ids": 0,
+   "bytes": 635901
+  },
+  "NAD-US-MN-27105-nobles.ndjson.gz": {
+   "kind": "county",
+   "county_fips": "27105",
+   "county_key": "nobles",
+   "county_name": "Nobles",
+   "file": "data/raw/US-MN/nad/NAD-US-MN-27105-nobles.ndjson.gz",
+   "rows": 58,
+   "expected_rows": 58,
+   "uncompressed_bytes": 86080,
+   "gz_bytes": 6771,
+   "sha256_gz": "b5f4bacf0760c54e1b372e21f1973351690d1bc69245709ea27f208636bc69c6",
+   "sha256_raw": "ed7f394ba8ed0ccc6003783fa4e6c4e5c16df3019b8bad00eba185d339a28f72",
+   "state_distribution": {
+    "MN": 58
+   },
+   "missing_ids": 0,
+   "bytes": 6771
+  },
+  "NAD-US-MN-27111-otter_tail.ndjson.gz": {
+   "kind": "county",
+   "county_fips": "27111",
+   "county_key": "otter_tail",
+   "county_name": "Otter Tail",
+   "file": "data/raw/US-MN/nad/NAD-US-MN-27111-otter_tail.ndjson.gz",
+   "rows": 41096,
+   "expected_rows": 41096,
+   "uncompressed_bytes": 59446433,
+   "gz_bytes": 4443475,
+   "sha256_gz": "56c023412a4b50940dfe482b536a80a4d913ad9182162aed5ae5223515e86d5c",
+   "sha256_raw": "2852e11dcaace917d3bfdf6a71e06613d0f9de7d55a37011e7290d443b18aa52",
+   "state_distribution": {
+    "MN": 41096
+   },
+   "missing_ids": 0,
+   "bytes": 4443475
+  },
+  "NAD-US-MN-27117-pipestone.ndjson.gz": {
+   "kind": "county",
+   "county_fips": "27117",
+   "county_key": "pipestone",
+   "county_name": "Pipestone",
+   "file": "data/raw/US-MN/nad/NAD-US-MN-27117-pipestone.ndjson.gz",
+   "rows": 5280,
+   "expected_rows": 5280,
+   "uncompressed_bytes": 7759592,
+   "gz_bytes": 646673,
+   "sha256_gz": "aa9cc4535cf255383df73279628df2324e5fecf2641d6714d4934b7f4574ddea",
+   "sha256_raw": "65176c51bf02e361146163a34f0af5d76099b4e073eb169019efbf23ec98f558",
+   "state_distribution": {
+    "MN": 5280
+   },
+   "missing_ids": 0,
+   "bytes": 646673
+  },
+  "NAD-US-MN-27119-polk.ndjson.gz": {
+   "kind": "county",
+   "county_fips": "27119",
+   "county_key": "polk",
+   "county_name": "Polk",
+   "file": "data/raw/US-MN/nad/NAD-US-MN-27119-polk.ndjson.gz",
+   "rows": 14973,
+   "expected_rows": 14973,
+   "uncompressed_bytes": 21598927,
+   "gz_bytes": 1545863,
+   "sha256_gz": "334d80633eec53a29f09a71b35ff5bc6ef06e5c5dec4a76f3495cb29e576cdc5",
+   "sha256_raw": "7cbe50e8f73c3edfe761ad9876f7b8e28f8b23a055171898ffc94e94563227a9",
+   "state_distribution": {
+    "MN": 14973
+   },
+   "missing_ids": 0,
+   "bytes": 1545863
+  },
+  "NAD-US-MN-27121-pope.ndjson.gz": {
+   "kind": "county",
+   "county_fips": "27121",
+   "county_key": "pope",
+   "county_name": "Pope",
+   "file": "data/raw/US-MN/nad/NAD-US-MN-27121-pope.ndjson.gz",
+   "rows": 8259,
+   "expected_rows": 8259,
+   "uncompressed_bytes": 11812145,
+   "gz_bytes": 863431,
+   "sha256_gz": "9a95bd5b3d272ba42e8695cf99d640e44e4ca07f1115d9bad1a0498077b17b62",
+   "sha256_raw": "06e7edc07e54cd4a0bbe6a3c205c4c5650a651ac7990cf7266fd417cdc7aff80",
+   "state_distribution": {
+    "MN": 8259
+   },
+   "missing_ids": 0,
+   "bytes": 863431
+  },
+  "NAD-US-MN-27123-ramsey.ndjson.gz": {
+   "kind": "county",
+   "county_fips": "27123",
+   "county_key": "ramsey",
+   "county_name": "Ramsey",
+   "file": "data/raw/US-MN/nad/NAD-US-MN-27123-ramsey.ndjson.gz",
+   "rows": 220995,
+   "expected_rows": 220995,
+   "uncompressed_bytes": 331662591,
+   "gz_bytes": 28711492,
+   "sha256_gz": "925edaf135a1161fa4642e896415c384dde44db204dea21b5eb3ac7a78874c77",
+   "sha256_raw": "1c4736956f3a225b307641378c39adf7b562ae4832f9dae6430217df1b64719b",
+   "state_distribution": {
+    "MN": 220995
+   },
+   "missing_ids": 0,
+   "bytes": 28711492
+  },
+  "NAD-US-MN-27129-renville.ndjson.gz": {
+   "kind": "county",
+   "county_fips": "27129",
+   "county_key": "renville",
+   "county_name": "Renville",
+   "file": "data/raw/US-MN/nad/NAD-US-MN-27129-renville.ndjson.gz",
+   "rows": 7968,
+   "expected_rows": 7968,
+   "uncompressed_bytes": 11764042,
+   "gz_bytes": 855915,
+   "sha256_gz": "4c91bc050fea13dc53f774706ebca31a39515a7a10412d963e41881fb4d575c0",
+   "sha256_raw": "243b84f936c6be256192113ca6d7bd8d7b7af803e0960a75dd1b0f1eae5cdbd5",
+   "state_distribution": {
+    "MN": 7968
+   },
+   "missing_ids": 0,
+   "bytes": 855915
+  },
+  "NAD-US-MN-27133-rock.ndjson.gz": {
+   "kind": "county",
+   "county_fips": "27133",
+   "county_key": "rock",
+   "county_name": "Rock",
+   "file": "data/raw/US-MN/nad/NAD-US-MN-27133-rock.ndjson.gz",
+   "rows": 4783,
+   "expected_rows": 4783,
+   "uncompressed_bytes": 6907469,
+   "gz_bytes": 593341,
+   "sha256_gz": "70039d04e91509987bbc11b1143cd376d998c2292a4df2baf98ddf9ad0261fc1",
+   "sha256_raw": "ea21d3592ea230c6094cbd3a94cd56825f67401bdb2e310684fd58805ab15c70",
+   "state_distribution": {
+    "MN": 4783
+   },
+   "missing_ids": 0,
+   "bytes": 593341
+  },
+  "NAD-US-MN-27137-st_louis.ndjson.gz": {
+   "kind": "county",
+   "county_fips": "27137",
+   "county_key": "st_louis",
+   "county_name": "St. Louis",
+   "file": "data/raw/US-MN/nad/NAD-US-MN-27137-st_louis.ndjson.gz",
+   "rows": 102307,
+   "expected_rows": 102307,
+   "uncompressed_bytes": 150565207,
+   "gz_bytes": 11463766,
+   "sha256_gz": "f4d66646b3dc294eae02e06a35260ebe447b008df66b2f952e0f3a9d0e5b37bd",
+   "sha256_raw": "81dcc6b4525aa89317f8f81da2f08a86f8bff0f1d7b259b2b3330c344dc537f1",
+   "state_distribution": {
+    "MN": 102307
+   },
+   "missing_ids": 0,
+   "bytes": 11463766
+  },
+  "NAD-US-MN-27139-scott.ndjson.gz": {
+   "kind": "county",
+   "county_fips": "27139",
+   "county_key": "scott",
+   "county_name": "Scott",
+   "file": "data/raw/US-MN/nad/NAD-US-MN-27139-scott.ndjson.gz",
+   "rows": 63748,
+   "expected_rows": 63748,
+   "uncompressed_bytes": 95445188,
+   "gz_bytes": 8532359,
+   "sha256_gz": "70180171cb48e3037f987375b4f2f8655fb674e7399588de4808fd0dbca7522b",
+   "sha256_raw": "18c4a3ba1b990133a8311be19698010e4aa31f0c002dc1f6d424a70168b752b6",
+   "state_distribution": {
+    "MN": 63748
+   },
+   "missing_ids": 0,
+   "bytes": 8532359
+  },
+  "NAD-US-MN-27141-sherburne.ndjson.gz": {
+   "kind": "county",
+   "county_fips": "27141",
+   "county_key": "sherburne",
+   "county_name": "Sherburne",
+   "file": "data/raw/US-MN/nad/NAD-US-MN-27141-sherburne.ndjson.gz",
+   "rows": 39569,
+   "expected_rows": 39569,
+   "uncompressed_bytes": 59115281,
+   "gz_bytes": 5083849,
+   "sha256_gz": "8f1844ed6733609ac579b61900691e26c5c69061bb451783a533062cdf64d730",
+   "sha256_raw": "a48d07acf990aa71a915b971081de3347143ec9c53dc50ecdee83fee34f7787a",
+   "state_distribution": {
+    "MN": 39569
+   },
+   "missing_ids": 0,
+   "bytes": 5083849
+  },
+  "NAD-US-MN-27145-stearns.ndjson.gz": {
+   "kind": "county",
+   "county_fips": "27145",
+   "county_key": "stearns",
+   "county_name": "Stearns",
+   "file": "data/raw/US-MN/nad/NAD-US-MN-27145-stearns.ndjson.gz",
+   "rows": 60326,
+   "expected_rows": 60326,
+   "uncompressed_bytes": 85318287,
+   "gz_bytes": 6522831,
+   "sha256_gz": "5a0cb8f78feacde4c58b0da9e6fa08c53f0a55af4a2012d42fc5b1e032d9edaf",
+   "sha256_raw": "67676d4e21eb645dcc41a54896adc1ffb044436cdf83983d5c30f91dc54f6f73",
+   "state_distribution": {
+    "MN": 60326
+   },
+   "missing_ids": 0,
+   "bytes": 6522831
+  },
+  "NAD-US-MN-27149-stevens.ndjson.gz": {
+   "kind": "county",
+   "county_fips": "27149",
+   "county_key": "stevens",
+   "county_name": "Stevens",
+   "file": "data/raw/US-MN/nad/NAD-US-MN-27149-stevens.ndjson.gz",
+   "rows": 4361,
+   "expected_rows": 4361,
+   "uncompressed_bytes": 6360511,
+   "gz_bytes": 550014,
+   "sha256_gz": "88a451fc765db904d0265a7fb1d3fe627e513bed9f1e39c478ac45a003c668ed",
+   "sha256_raw": "ef819c139d2d5cbd15cf528ca3d1bb0decfc14f653c1a39fe9b9cf37cea80b16",
+   "state_distribution": {
+    "MN": 4361
+   },
+   "missing_ids": 0,
+   "bytes": 550014
+  },
+  "NAD-US-MN-27151-swift.ndjson.gz": {
+   "kind": "county",
+   "county_fips": "27151",
+   "county_key": "swift",
+   "county_name": "Swift",
+   "file": "data/raw/US-MN/nad/NAD-US-MN-27151-swift.ndjson.gz",
+   "rows": 5816,
+   "expected_rows": 5816,
+   "uncompressed_bytes": 8440598,
+   "gz_bytes": 631886,
+   "sha256_gz": "4fd577d5e7594a14c255fa71a43c5ab6cdcce2792738897a41797626606f4115",
+   "sha256_raw": "d446297fe561d17c30221fa295a7ac0ea2c0ec1864c1c1dab6967164fb3d3c2c",
+   "state_distribution": {
+    "MN": 5816
+   },
+   "missing_ids": 0,
+   "bytes": 631886
+  },
+  "NAD-US-MN-27157-wabasha.ndjson.gz": {
+   "kind": "county",
+   "county_fips": "27157",
+   "county_key": "wabasha",
+   "county_name": "Wabasha",
+   "file": "data/raw/US-MN/nad/NAD-US-MN-27157-wabasha.ndjson.gz",
+   "rows": 11652,
+   "expected_rows": 11652,
+   "uncompressed_bytes": 17339821,
+   "gz_bytes": 1506134,
+   "sha256_gz": "17d53643b7c5c9a7f835ff9c780fa7d6a0f4af000a986f7f6d55fbb1aabe8eb8",
+   "sha256_raw": "969c2e7f7e7d9ec346ea065de05a08d09cd749bfedce511b04c191ec0a78237e",
+   "state_distribution": {
+    "MN": 11652
+   },
+   "missing_ids": 0,
+   "bytes": 1506134
+  },
+  "NAD-US-MN-27161-waseca.ndjson.gz": {
+   "kind": "county",
+   "county_fips": "27161",
+   "county_key": "waseca",
+   "county_name": "Waseca",
+   "file": "data/raw/US-MN/nad/NAD-US-MN-27161-waseca.ndjson.gz",
+   "rows": 7963,
+   "expected_rows": 7963,
+   "uncompressed_bytes": 11588999,
+   "gz_bytes": 945149,
+   "sha256_gz": "92f6c7fb6bf5619e5e4a3c3c78c035b3f31f7740fb7790fbf8cbaf83980c8f8b",
+   "sha256_raw": "8b8eb7d522b2fe4db63cdf6e0a49180616af08841cc4e9c6856b71cdb55a2f01",
+   "state_distribution": {
+    "MN": 7963
+   },
+   "missing_ids": 0,
+   "bytes": 945149
+  },
+  "NAD-US-MN-27163-washington.ndjson.gz": {
+   "kind": "county",
+   "county_fips": "27163",
+   "county_key": "washington",
+   "county_name": "Washington",
+   "file": "data/raw/US-MN/nad/NAD-US-MN-27163-washington.ndjson.gz",
+   "rows": 124824,
+   "expected_rows": 124824,
+   "uncompressed_bytes": 187628158,
+   "gz_bytes": 18188898,
+   "sha256_gz": "381f140fe62d2c7cb0b3176e63e33ddb3077d5ff51349a27c15ba4ca7f1e5e43",
+   "sha256_raw": "dde6eb3c04873088f64905cf3140e3abcb3110a9476ebc57fe2e19f2fbdd8718",
+   "state_distribution": {
+    "MN": 124824
+   },
+   "missing_ids": 0,
+   "bytes": 18188898
+  },
+  "NAD-US-MN-27169-winona.ndjson.gz": {
+   "kind": "county",
+   "county_fips": "27169",
+   "county_key": "winona",
+   "county_name": "Winona",
+   "file": "data/raw/US-MN/nad/NAD-US-MN-27169-winona.ndjson.gz",
+   "rows": 19800,
+   "expected_rows": 19800,
+   "uncompressed_bytes": 28138904,
+   "gz_bytes": 2091953,
+   "sha256_gz": "b5f5240f131664a33fbf4a4d50215bbb04ba01d51293750b2f786ab2295a34be",
+   "sha256_raw": "8e6e8ab0caccd0f88157479128386f760f6648096c04735e323a3aec1a329d10",
+   "state_distribution": {
+    "MN": 19800
+   },
+   "missing_ids": 0,
+   "bytes": 2091953
+  },
+  "NAD-US-MN-27171-wright.ndjson.gz": {
+   "kind": "county",
+   "county_fips": "27171",
+   "county_key": "wright",
+   "county_name": "Wright",
+   "file": "data/raw/US-MN/nad/NAD-US-MN-27171-wright.ndjson.gz",
+   "rows": 71387,
+   "expected_rows": 71387,
+   "uncompressed_bytes": 105676080,
+   "gz_bytes": 7414588,
+   "sha256_gz": "4ddbd69aa186e8a8a530e647a646b9e670c4a438c352e6a26e8c62f81425d54f",
+   "sha256_raw": "f136b41482334d1cbcfcd83f6f6d6ac87f3c497e35d210585f43f11029f15801",
+   "state_distribution": {
+    "MN": 71387
+   },
+   "missing_ids": 0,
+   "bytes": 7414588
+  },
+  "NAD-US-MN-27173-yellow_medicine.ndjson.gz": {
+   "kind": "county",
+   "county_fips": "27173",
+   "county_key": "yellow_medicine",
+   "county_name": "Yellow Medicine",
+   "file": "data/raw/US-MN/nad/NAD-US-MN-27173-yellow_medicine.ndjson.gz",
+   "rows": 5129,
+   "expected_rows": 5129,
+   "uncompressed_bytes": 7490819,
+   "gz_bytes": 626289,
+   "sha256_gz": "573fe9ff8a4b0de56bbb78eed6e8634963a703c04c60c8f152942d177da9db2e",
+   "sha256_raw": "f7364709777c9f60758d24a0c11f8f166d5d0baccf502c718c5605c23ffe5353",
+   "state_distribution": {
+    "MN": 5129
+   },
+   "missing_ids": 0,
+   "bytes": 626289
+  },
+  "NAD-US-MN-OUTOFSTATE.ndjson.gz": {
+   "kind": "overflow",
+   "county_fips": null,
+   "county_key": "OUTOFSTATE",
+   "county_name": "不在本州界内的 BBox 溢出点（邻州门牌，供核验用）",
+   "file": "data/raw/US-MN/nad/NAD-US-MN-OUTOFSTATE.ndjson.gz",
+   "rows": 857605,
+   "expected_rows": 857605,
+   "uncompressed_bytes": 1259033414,
+   "gz_bytes": 100566522,
+   "sha256_gz": "1e598a011aa01ff6331a60279974e0f616e7d900ed6adb17b78a96fa1f8a1428",
+   "sha256_raw": "7746f1178710dd0e68f360f8506e0ce558f8d1c71fdb0989ad62328111ef3c94",
+   "state_distribution": {
+    "WI": 652258,
+    "ND": 140638,
+    "SD": 64472,
+    "IA": 237
+   },
+   "missing_ids": 0,
+   "bytes": 100566522
+  }
+ },
+ "done": [
+  "27001",
+  "27003",
+  "27005",
+  "27009",
+  "27011",
+  "27017",
+  "27019",
+  "27021",
+  "27023",
+  "27025",
+  "27027",
+  "27029",
+  "27031",
+  "27035",
+  "27037",
+  "27041",
+  "27045",
+  "27049",
+  "27051",
+  "27053",
+  "27055",
+  "27059",
+  "27061",
+  "27063",
+  "27071",
+  "27073",
+  "27075",
+  "27077",
+  "27079",
+  "27083",
+  "27085",
+  "27089",
+  "27097",
+  "27099",
+  "27101",
+  "27105",
+  "27111",
+  "27117",
+  "27119",
+  "27121",
+  "27123",
+  "27129",
+  "27133",
+  "27137",
+  "27139",
+  "27141",
+  "27145",
+  "27149",
+  "27151",
+  "27157",
+  "27161",
+  "27163",
+  "27169",
+  "27171",
+  "27173",
+  "OUTOFSTATE"
+ ],
+ "schema": "state-release-status/v1",
+ "state": "MN",
+ "tag": "raw-US-MN-v1",
+ "generator": "bots/fetch_state_raw.py",
+ "started_at": "2026-10-19T02:27:44Z",
+ "updated_at": "2026-10-19T07:11:08Z",
+ "phase": "complete",
+ "completed_at": "2026-10-19T07:11:08Z"
+}

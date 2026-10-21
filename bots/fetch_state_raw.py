@@ -2093,7 +2093,10 @@ def _nad_harvest_county_shards(fx: Fetcher, d: Path, fields: list, oid: str,
             f"（差 {ref['three_number_check']['gap_ids']}，按县口径已记录待补，不阻断发布）")
 
     fx.cache["nad_shards"] = shards
-    fx.note("nad", "ok" if not fx.problems else "warn-truncated",
+    # ★ 2026-10-21：有失败县就不能报 ok —— 下游只看 status 字段，不能逼它去翻 reference_check
+    _nad_state = ("warn-partial" if failed_counties
+                  else ("warn-truncated" if fx.problems else "ok"))
+    fx.note("nad", _nad_state,
             channel="A-official-rest", mode="ids+county_shards",
             fetch_strategy="OID 区间二分取主键 → 县多边形切片 → objectIds 批取 → gzip 落盘",
             official_count=official, official_ids=len(root_ids),
@@ -2211,6 +2214,9 @@ def _apply_naming(fx: Fetcher) -> None:
 # --------------------------------------------------------------------------- 增量发布 / 断点续传
 STATUS_NAME = "STATUS.json"
 SEAL_NAME = "MANIFEST.json"
+# ★ 2026-10-21：过程态与发布说明**不是数据资产**，不进 MANIFEST.assets。
+#   旧实现把远端实物取并集，于是首轮 assets 不含 MANIFEST.json、重跑却含 → 条数不一致。
+_META_ASSETS = {STATUS_NAME, SEAL_NAME, "RELEASE_NOTES.md"}
 
 
 def _now() -> str:
@@ -2239,10 +2245,16 @@ def _notify(evt: str, payload: dict) -> None:
         pass
 
 
+# ★ 2026-10-21 修：tag 形如 raw-US-TX-v1，国家码 "US" 排在州码前面 →
+#   旧实现逐段找「2 位大写字母」，于是一律返回 "US"，县级上报的 state 全错。
+#   国家码固定在第 2 段，必须显式跳过。
+_TAG_COUNTRY_CODES = {"US"}
+
+
 def _state_of_tag(tag: str) -> str:
     parts = (tag or "").split("-")
     for p in parts:
-        if len(p) == 2 and p.isalpha() and p.isupper():
+        if len(p) == 2 and p.isalpha() and p.isupper() and p not in _TAG_COUNTRY_CODES:
             return p
     return "?"
 
@@ -2446,6 +2458,74 @@ def _asset_sanity(p: Path) -> str | None:
     return None
 
 
+def _volume_closure(fx: Fetcher, vol: dict) -> list[str]:
+    """★ 第十把锁（2026-10-21 · 分卷闭合）：单卷只看得见自己那一份，必须跨卷对账。
+
+    三件事只有跨卷才能验：① 县有没有重复切/漏切；② OA 源有没有被切丢；
+    ③ 卷内资产是否超单 Release 上限。兄弟卷账本没齐时只记日志、不阻断。
+    """
+    errs: list[str] = []
+    total = int(vol.get("total") or 0)
+    if not vol or total <= 1 or not fx.publish or _gh_env() is None:
+        return errs
+    base_tag = re.sub(r"-p\d+$", "", fx.tag or "")
+    if base_tag == fx.tag:
+        return errs                      # tag 不带 -pN → 不是分卷，跳过
+    man: dict[int, dict] = {}
+    for i in range(1, total + 1):
+        try:
+            txt = gh_read_asset_text(f"{base_tag}-p{i}", SEAL_NAME)
+        except Exception:  # noqa: BLE001
+            txt = None
+        if txt:
+            try:
+                man[i] = json.loads(txt)
+            except Exception:  # noqa: BLE001
+                log(f"⚠️ 分卷 p{i} 的 MANIFEST 无法解析，跳过对账")
+    if not man:
+        log(f"ℹ️ 分卷闭合：尚无兄弟卷账本（本卷 {vol.get('index')}/{total}）"
+            f"→ 待最后一卷封印时统一对账")
+        return errs
+    seen_fips: dict[str, int] = {}
+    for i, m in sorted(man.items()):
+        for c in ((m.get("scope") or {}).get("counties") or []):
+            fips = str(c.get("fips") or "")
+            if not fips:
+                continue
+            if fips in seen_fips and seen_fips[fips] != i:
+                errs.append(f"分卷县重复：{fips} 同时出现在 p{seen_fips[fips]} 与 p{i}")
+            seen_fips[fips] = i
+    scope_total = int(vol.get("state_total_counties") or 0)
+    if len(man) == total and scope_total and len(seen_fips) != scope_total:
+        errs.append(f"分卷县不闭合：{total} 卷合计 {len(seen_fips)} 县 != 全州 {scope_total}")
+    oa_seen: dict[str, int] = {}
+    oa_want = None
+    for i, m in sorted(man.items()):
+        s = next((x for x in (m.get("sources") or [])
+                  if isinstance(x, dict) and x.get("source") == "openaddresses"), None)
+        if not s:
+            continue
+        if s.get("sources_total"):
+            oa_want = int(s["sources_total"])
+        for d in (s.get("detail") or []):
+            src = (d or {}).get("src") if isinstance(d, dict) else None
+            if src:
+                oa_seen.setdefault(str(src), i)
+        for f in (s.get("failures") or []):
+            src = (f or {}).get("src") if isinstance(f, dict) else None
+            if src:
+                oa_seen.setdefault(str(src), i)
+    if len(man) == total and oa_want and len(oa_seen) != oa_want:
+        errs.append(f"分卷 OA 不闭合：{total} 卷合计 {len(oa_seen)} 个源 != 上游 {oa_want}"
+                    f"（分卷切片丢了源？）")
+    if len(man) == total and not errs:
+        log(f"✅ 分卷闭合断言：{total} 卷 → 县 {len(seen_fips)}/{scope_total}、"
+            f"OA 源 {len(oa_seen)}/{oa_want}，无重复无遗漏")
+    elif len(man) < total:
+        log(f"ℹ️ 分卷闭合：已见 {sorted(man)} / 共 {total} 卷，最后一卷封印时再断言")
+    return errs
+
+
 def gate(fx: Fetcher) -> None:
     """★ 发布门禁：缺源 / 空壳 / 边界为 0 → 直接阻断，绝不把废资产推上架。"""
     errs = list(fx.problems)
@@ -2480,7 +2560,10 @@ def gate(fx: Fetcher) -> None:
     #   旧版本只查「源跑了没 / 文件大小够不够」，于是县片数 = 0 也能一路绿灯：
     #   AK 跨经线导致 27 个县全失败，counties_ok=0，却照样盖章 STATUS=complete。
     #   这里改成**内容断言**：县级模式下必须真有县片，否则一律阻断。
-    if county_mode:
+    # ★ partial（--county-fips 补跑）时 ref 里没有 counties_ok/total，
+    #   旧代码会误报「县级分片为 0」并把退出码从设计好的 5 变成 3。
+    #   这种轮次由 main 里的 partial_run 护栏统一拒绝封印，这里不做全州口径断言。
+    if county_mode and not ref.get("partial"):
         ok_n = int(ref.get("counties_ok") or 0)
         empty_n = int(ref.get("counties_empty") or 0)
         failed_n = int(ref.get("counties_failed") or 0)
@@ -2498,6 +2581,22 @@ def gate(fx: Fetcher) -> None:
             errs.append("NAD 账面有县片数但 nad_shards 为空（记账与实物脱钩）")
         else:
             log(f"✅ 县级内容断言：真县片 {ok_n} / 共 {total_n}（空 {empty_n}，失败 {failed_n}）")
+        # ★ 第九把锁（2026-10-21 · 用户硬口径「差额必须 0」）：部分县失败不许静默封印。
+        #   旧行为：failed=20 只记 warn，STATUS 照样 complete、nad.status 照样 ok。
+        _failed_list = ref.get("failed_counties") or []
+        if _failed_list:
+            _ids = [str(f.get("county_fips") if isinstance(f, dict) else f)
+                    for f in _failed_list[:6]]
+            if not bool(getattr(getattr(fx, "args", None), "allow_partial", False)):
+                errs.append(f"NAD 有 {len(_failed_list)} 个县失败（{', '.join(_ids)}"
+                            f"{'…' if len(_failed_list) > 6 else ''}）：县片不齐不许封印。"
+                            f"先用 --county-fips 补跑失败县；确需带缺发布请显式加 --allow-partial")
+            else:
+                log(f"⚠️ {len(_failed_list)} 个县失败，已用 --allow-partial 放行"
+                    f"（STATUS.phase 将标 complete_partial）")
+        if total_n and (ok_n + empty_n + len(_failed_list)) != total_n:
+            errs.append(f"县覆盖不闭合：片 {ok_n} + 空 {empty_n} + 失败 {len(_failed_list)}"
+                        f" != 共 {total_n}（账本与实物脱钩）")
     # ★ 第六把锁（2026-10-20 用户硬口径）：发布前必须「按县分片 → 压缩 → 再上架」。
     #   不允许未压缩的 .ndjson 裸件或整州单文件冒充县片上架。
     _pm6 = str(getattr(getattr(fx, "args", None), "pack_mode", "single"))
@@ -2565,6 +2664,12 @@ def gate(fx: Fetcher) -> None:
         bad = _asset_sanity(p)
         if bad:
             errs.append(f"{bad}：{rel(p)}")
+    # ★ 第十把锁：分卷闭合 + 单 Release 资产上限（GitHub 硬上限 1000 个）
+    errs += _volume_closure(fx, fx.cache.get("volume") or {})
+    _n_assets = len(_all_assets(fx))
+    if _n_assets + len(_META_ASSETS) > 1000:
+        errs.append(f"资产 {_n_assets} 个 > 单 Release 上限 1000（含元信息）"
+                    f"：请用 --volume 1/N 分卷")
     if errs:
         raise RuntimeError("发布门禁未通过，共 %d 项：\n  - %s" % (len(errs), "\n  - ".join(errs)))
 
@@ -2737,18 +2842,38 @@ def _record_no_coverage(fx: Fetcher, probed: int) -> None:
                        f"（州级 returnCountOnly=0；{probed} 个县逐一探针全为 0）。"])
 
 
+_NAD_SHARD_NAME = re.compile(
+    r"^NAD-US-[A-Z]{2}-(\d{5})-([A-Za-z0-9_]+)\.ndjson\.gz$")
+
+
 def _shards_from_status(fx: Fetcher) -> list[dict]:
     """★ 记账自愈（2026-10-20 · AK 事故）：断点续传/多次补跑时 fx.cache["nad_shards"]
     可能为空，但 status_doc["assets"] 里已有 kind=county 的县片记录（文件早已上传）。
     实物在、账丢了 → 从账本重建；否则下游二仓 C5 会误判「没有任何 county 分片」。
+
+    ★ 2026-10-21 修：旧实现只留 file/rows/expected_rows/gz_bytes/bytes 五个键，
+      把 county_fips / county_key / county_name / sha256_gz / sha256_raw 全丢了，
+      且 file 从「data/raw/US-XX/nad/xxx.gz」降级成裸文件名 —— 与正常路径两套口径，
+      下游按 fips 匹配会断。现在整条记录原样保留，缺的字段从文件名补。
     """
     out = []
     for name, rec in ((getattr(fx, "status_doc", None) or {}).get("assets") or {}).items():
         if not isinstance(rec, dict) or rec.get("kind") != "county":
             continue
-        out.append({"kind": "county", "file": name,
-                    "rows": rec.get("rows"), "expected_rows": rec.get("expected_rows"),
-                    "gz_bytes": rec.get("gz_bytes"), "bytes": rec.get("bytes")})
+        fixed = {k: v for k, v in rec.items()}
+        fixed["kind"] = "county"
+        m = _NAD_SHARD_NAME.match(str(name))
+        if m:
+            fixed["county_fips"] = fixed.get("county_fips") or m.group(1)
+            fixed["county_key"] = fixed.get("county_key") or m.group(2)
+        fixed["county_name"] = fixed.get("county_name") or fixed.get("county_key")
+        fixed["file"] = str(fixed.get("file") or name)
+        fixed.setdefault("rows", None)
+        fixed.setdefault("expected_rows", None)
+        fixed.setdefault("gz_bytes", rec.get("bytes"))
+        fixed.setdefault("sha256_gz", rec.get("sha256_gz"))
+        fixed.setdefault("sha256_raw", rec.get("sha256_raw"))
+        out.append(fixed)
     return sorted(out, key=lambda s: str(s.get("file")))
 
 
@@ -2760,28 +2885,28 @@ def _all_assets(fx: Fetcher) -> list[dict]:
     out: dict[str, dict] = {}
 
     def put(name: str, path_rel: str, size, sha, head, origin=None) -> None:
-        if name in out:
+        if name in out or name in _META_ASSETS:
             return
         rec = {"path": path_rel, "bytes": size, "sha256": sha, "sha256_head": head}
         if origin:
             rec["source"] = origin
         out[name] = rec
 
-    for p in sorted(fx.files):                       # 1) 本地待传/刚传
+    for p in sorted(getattr(fx, "files", None) or []):        # 1) 本地待传/刚传
         r = rel(p)
         if p.exists():
             put(p.name, r, p.stat().st_size, df.sha256_full(p), df.sha256_head(p), "local")
         else:
-            m = fx.meta.get(r) or {}
+            m = (getattr(fx, "meta", None) or {}).get(r) or {}
             put(p.name, r, m.get("bytes"), m.get("sha256"), m.get("sha256_head"), "meta")
-    for r, m in (fx.meta or {}).items():             # 2) 本轮记账（含续传跳过）
+    for r, m in (getattr(fx, "meta", None) or {}).items():      # 2) 本轮记账（含续传跳过）
         if isinstance(m, dict):
             put(os.path.basename(r), r, m.get("bytes"), m.get("sha256"), m.get("sha256_head"), "meta")
-    for name, rec in (fx.status_doc.get("assets") or {}).items():  # 3) STATUS 账本
+    for name, rec in ((getattr(fx, "status_doc", None) or {}).get("assets") or {}).items():  # 3) STATUS 账本
         if isinstance(rec, dict):
             put(name, name, rec.get("bytes") or rec.get("gz_bytes"), None, None, "status")
     try:                                             # 4) 远端实物
-        for name, size in (gh_assets(fx.tag) or {}).items():
+        for name, size in (gh_assets(getattr(fx, "tag", "") or "") or {}).items():
             put(name, name, size, None, None, "release")
     except Exception:  # noqa: BLE001
         pass
@@ -2821,6 +2946,17 @@ def _merge_manifest(fx: Fetcher, prev: dict) -> Path:
     for a in _all_assets(fx):
         by[str(a.get("path", "")).rsplit("/", 1)[-1]] = a
     m["assets"] = [by[k] for k in sorted(by)]
+    # ★ 2026-10-21：补 OA 之后完整性段/行数表必须一起刷新，否则账本还写着「OA 失败 6」
+    m["completeness"] = build_completeness(fx)
+    rc = dict(m.get("row_counts") or {})
+    for d in ((fx.status.get("openaddresses") or {}).get("detail") or []):
+        if not isinstance(d, dict) or d.get("native_rows") is None:
+            continue
+        if d.get("file"):
+            rc[str(d["file"])] = d["native_rows"]
+        if d.get("src"):
+            rc.setdefault(f"openaddresses_us_*_{d['src']}.zip", d["native_rows"])
+    m["row_counts"] = rc
     m["integrity"] = {}
     m["integrity"] = _manifest_integrity(m)
     m.setdefault("heal", {})["repair_oa_at"] = m["generated_at"]
@@ -3113,9 +3249,14 @@ def main(argv: list[str] | None = None) -> int:
     if getattr(args, "repair_oa", False):
         only = {"openaddresses"}
         args.publish_release = True
-        fx.publish = True
+        # ★ 2026-10-21 修：publishing 在上面（args.publish_release 还是 False 的时候）就算好了，
+        #   直接复用会把「漏传 --publish-release」误报成「缺 token/仓库」。这里重算一次。
         if not publishing:
-            log("❌ repair 模式需要可写的 Release（缺 token/仓库）")
+            publishing = bool(not args.no_release and _gh_env() is not None)
+        fx.publish = publishing
+        if not publishing:
+            log("❌ repair 模式需要可写的 Release："
+                "缺 GITHUB_TOKEN/GH_TOKEN 或 GITHUB_REPOSITORY，或被 --no-release 关掉了")
             return 2
         txt = gh_read_asset_text(tag, "MANIFEST.json")
         if not txt:
@@ -3196,15 +3337,28 @@ def main(argv: list[str] | None = None) -> int:
         log("❌ MANIFEST 封印上传失败")
         return 4
     _checkpoint(fx, notes, clobber=True, delete=False)
-    fx.status_doc["phase"] = "complete"
+    # ★ 2026-10-21：done 里混着 "OUTOFSTATE" 这种非县条目，len(done) 会把溢出包算成 1 个县。
+    #   只统计 5 位 fips，并且与 expected 求交，才是真「县完成数」。
+    _expected = {str(x) for x in (fx.status_doc.get("expected") or [])}
+    _done_ids = [str(d) for d in (fx.status_doc.get("done") or [])
+                 if str(d).isdigit() and len(str(d)) == 5]
+    _done_ids = [d for d in _done_ids if not _expected or d in _expected]
+    _failed = [f for f in ((ref.get("failed_counties") or [])) if f]
+    fx.status_doc["phase"] = "complete_partial" if _failed else "complete"
     fx.status_doc["completed_at"] = _now()
+    fx.status_doc["counties_done"] = len(_done_ids)
+    fx.status_doc["counties_failed"] = [
+        str(f.get("county_fips") if isinstance(f, dict) else f) for f in _failed]
     _write_status(fx)
-    log("✅ 已封印：MANIFEST.json 上架，STATUS.phase=complete")
+    log(f"✅ 已封印：MANIFEST.json 上架，STATUS.phase={fx.status_doc['phase']}"
+        f"｜县 {len(_done_ids)}/{len(_expected) or '?'} 完成"
+        + (f"、{len(_failed)} 个失败（--allow-partial 放行）" if _failed else ""))
     _notify("state_sealed", {
         "state": state, "tag": tag,
-        "assets": len(fx.files),
-        "counties_done": len(fx.status_doc.get("done") or []),
-        "counties_expected": len(fx.status_doc.get("expected") or []),
+        "assets": len(_all_assets(fx)),
+        "counties_done": len(_done_ids),
+        "counties_failed": len(_failed),
+        "counties_expected": len(_expected),
     })
     log("完成：" + json.dumps({k: v.get("status") for k, v in fx.status.items()}, ensure_ascii=False))
     return 0

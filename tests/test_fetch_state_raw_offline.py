@@ -600,7 +600,9 @@ def main():
                        main_pool=[], ids_target=[1, 2, 3, 5, 6, 7],
                        poly_pools={"001": [1, 2], "003": [3, 4], "005": [5]},
                        extra=["--pack-mode", "county_shards",
-                              "--nad-ids-slicing", "oid", "--nad-ids-batch", "10"])
+                              "--nad-ids-slicing", "oid", "--nad-ids-batch", "10",
+                              # ★ 2026-10-21：带缺发布现在必须显式放行（第九把锁）
+                              "--allow-partial"])
     import gzip as _gz12
     d12 = base / "s12" / "nad"
     got12 = {p.name: len(_gz12.open(p, "rt", encoding="utf-8").read().strip().splitlines())
@@ -626,6 +628,51 @@ def main():
           f"gap={tn13.get('gap_ids')} matches={tn13.get('matches')}")
     bad13 = [k for k, v in res13.items() if not v]
     print("S12 判定：", "✅ 通过" if results["S12"] else f"❌ 失败 {bad13}")
+
+    # ---------- S16 部分县失败 → 没显式 --allow-partial 必须阻断封印 ----------
+    # 2026-10-21 用户硬口径「差额必须 0」：S12 那种「一个县坏照常发布」现在必须显式放行。
+    rc16, _ = scenario("S16 失败县未放行→门禁阻断", base / "s16", mode="ids", official=6,
+                       main_pool=[], ids_target=[1, 2, 3, 5, 6, 7],
+                       poly_pools={"001": [1, 2], "003": [3, 4], "005": [5]},
+                       extra=["--pack-mode", "county_shards",
+                              "--nad-ids-slicing", "oid", "--nad-ids-batch", "10"])
+    results["S16"] = (rc16 == 3)
+    print(f"S16：退出={rc16}（期望 3 = 门禁阻断，不许封印）")
+    print("S16 判定：", "✅ 通过" if results["S16"] else "❌ 失败")
+
+    # ---------- S17 账本字段口径（2026-10-21 修的一批账本 bug）----------
+    import types as _t
+    st17 = {
+        "NAD-US-DE-10003-new_castle.ndjson.gz": {
+            "kind": "county", "county_fips": "10003", "county_key": "new_castle",
+            "county_name": "New Castle",
+            "file": "data/raw/US-DE/nad/NAD-US-DE-10003-new_castle.ndjson.gz",
+            "rows": 12, "expected_rows": 12, "gz_bytes": 345, "bytes": 345,
+            "sha256_gz": "ab" * 32, "sha256_raw": "cd" * 32},
+        "STATUS.json": {"bytes": 10},
+        "MANIFEST.json": {"bytes": 20},
+    }
+    fx17 = _t.SimpleNamespace(status_doc={"assets": st17}, files=[], meta={},
+                              tag="raw-US-DE-v1", cache={}, cfg={"state": "DE"})
+    sh17 = fs._shards_from_status(fx17)
+    res17 = {
+        "state_of_tag不返回US": (fs._state_of_tag("raw-US-DE-v1-p2") == "DE"
+                                 and fs._state_of_tag("raw-US-TX-v1") == "TX"),
+        "自愈片带fips": [s.get("county_fips") for s in sh17] == ["10003"],
+        "自愈片带key/name": bool(sh17) and sh17[0].get("county_key") == "new_castle"
+                            and bool(sh17[0].get("county_name")),
+        "自愈片保留全路径": bool(sh17) and "/" in str(sh17[0].get("file"))
+                            and str(sh17[0].get("file")).endswith(".ndjson.gz"),
+        "自愈片保留双摘要": bool(sh17) and sh17[0].get("sha256_gz") == "ab" * 32
+                            and sh17[0].get("sha256_raw") == "cd" * 32,
+        "元信息不进assets": all(a["path"] not in ("STATUS.json", "MANIFEST.json",
+                                                "RELEASE_NOTES.md")
+                                for a in fs._all_assets(fx17)),
+    }
+    results["S17"] = all(res17.values())
+    print(f"  S17: {res17}")
+    print("S17 判定：", "✅ 通过" if results["S17"]
+          else f"❌ 失败 {[k for k, v in res17.items() if not v]}")
 
     # ---------- S11 增量发布 + 断点续传（Step 2）----------
     install_fake_release()
