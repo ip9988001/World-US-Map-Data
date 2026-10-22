@@ -1,0 +1,38 @@
+name: nad-county-probe
+
+# NAD 逐县覆盖探针（手动）—— 把「上游真无数据」和「我们查询漏了」分开。
+#
+# 背景：GA 159 县只有 2 个 NAD 县片，STATUS 却判 complete 且 counties_failed 为空。
+# 用 Release 里现成的 TIGER 县界 geojson 算 bbox，逐县打 NAD returnCountOnly。
+on:
+  workflow_dispatch:
+    inputs:
+      states:
+        description: 州（逗号分隔）
+        default: "GA,FL,SC,MS,LA,SD"
+      sample:
+        description: 每州抽查县数（0=全量）
+        default: "30"
+
+permissions:
+  contents: read
+  issues: write
+
+jobs:
+  probe:
+    runs-on: ubuntu-latest
+    timeout-minutes: 45
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-python@v5
+        with:
+          python-version: "3.11"
+      - name: 逐县探针
+        env:
+          GH_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+        run: |
+          if [ "${{ inputs.sample }}" = "0" ]; then
+            python scripts/nad_county_probe.py --states "${{ inputs.states }}" --all
+          else
+            python scripts/nad_county_probe.py --states "${{ inputs.states }}" --sample "${{ inputs.sample }}"
+          fi
