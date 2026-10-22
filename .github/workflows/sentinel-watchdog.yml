@@ -1,0 +1,37 @@
+name: sentinel-watchdog
+
+# 哨兵看门狗（每 30 分钟）—— 盯「哨兵自己不转了」。
+#
+# schedule 被 GitHub 悄悄禁用 / cron 写错 / 脚本 import 崩了，表现都是「安静」，
+# 跟「一切正常」长得一模一样。这个 workflow 专门把两者区分开。
+#
+# 输出方式（用户口径）：**不推送任何企微消息**。有问题就开/更新 Issue
+# （label=sentinel-alarm），由本机收信 py 唤醒 pi，pi 处理完再由二号 bot 推结果。
+#
+# 天然上限：GitHub Actions 整体挂了，本 workflow 也不会跑。
+# 所以本机收信 py 必须兼任外部观察者：检查最近一次哨兵 run 时间，超时直接推你。
+on:
+  schedule:
+    - cron: "*/30 * * * *"
+  workflow_dispatch:
+
+permissions:
+  contents: read
+  actions: read
+  issues: write
+
+jobs:
+  watchdog:
+    runs-on: ubuntu-latest
+    timeout-minutes: 10
+    steps:
+      - uses: actions/checkout@v4
+
+      - uses: actions/setup-python@v5
+        with:
+          python-version: "3.11"
+
+      - name: 检查哨兵存活
+        env:
+          GH_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+        run: python scripts/sentinel_watchdog.py
