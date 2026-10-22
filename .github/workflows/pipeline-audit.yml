@@ -1,0 +1,44 @@
+name: pipeline-audit
+
+# 全流水线账本巡检（每 30 分钟）—— 盯「没有 job 在跑时的死状态」。
+#
+# 存在理由（2026-10-21 实证）：NM/NE 的 STATUS 停在 collecting 躺了 57 小时、
+# KY 数据齐 120/120 却 53 小时没封印、MD/NY/OK 有 Release 零资产 —— 这三类都不产生
+# 任何 run 事件，只看 run 状态的监控永远不会说话。
+#
+# 铁律：全部流程在仓库里完成，不依赖任何本机/常驻服务器。
+# runner 自带 gh CLI + GITHUB_TOKEN，本脚本只读 Release 账本与 run 列表。
+on:
+  schedule:
+    - cron: "*/30 * * * *"
+  workflow_dispatch:
+
+permissions:
+  contents: read
+  actions: read
+
+jobs:
+  audit:
+    runs-on: ubuntu-latest
+    timeout-minutes: 20
+    steps:
+      - uses: actions/checkout@v4
+
+      - uses: actions/setup-python@v5
+        with:
+          python-version: "3.11"
+
+      - run: pip install --quiet pyyaml
+
+      - name: 账本巡检
+        env:
+          GH_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+        run: python scripts/pipeline_audit.py
+
+      - name: 留档
+        if: always()
+        uses: actions/upload-artifact@v4
+        with:
+          name: audit-report-${{ github.run_id }}
+          path: audit_report.json
+          retention-days: 30
