@@ -77,8 +77,9 @@ def verify(name: str, path: Path) -> str:
             return "ok"
         if name.endswith(".parquet") or name.endswith(".geoparquet"):
             import duckdb
-            q = duckdb.sql(f"SELECT count(*) FROM read_parquet('{path}')").fetchone()
-            if q is None:
+            # ★ duckdb 新 API：duckdb.sql() 返回 Relation，已无 fetchone()，必须 fetchall()
+            q = duckdb.sql(f"SELECT count(*) FROM read_parquet('{path}')").fetchall()
+            if not q:
                 return "parquet 读不出行数"
             cols = duckdb.sql(f"DESCRIBE SELECT * FROM read_parquet('{path}')").fetchall()
             if not cols:
