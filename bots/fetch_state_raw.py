@@ -1046,6 +1046,20 @@ def harvest_nad(fx: Fetcher) -> None:
 
 
 # --------------------------------------------------------------------------- B. Overture
+STAC_NO_TILE = "No data found for release"     # CLI 原句：该 release 无任何分片覆盖此 bbox
+
+
+def _stac_no_tile(text: str) -> bool:
+    """CLI 回报「本 release 的 STAC 索引完全没有分片覆盖这个 bbox」（rc=0、不落文件）。
+
+    2026-10-21 SC georgetown 事故：release 2026-09-23.1 的 64 个 address 分片里，
+    x∈[-79.97,-76.96] × y∈[32.74,33.84] 这一整格缺失；2026-09-23.0 同样缺。
+    本地复现同一句 → 上游索引缺片，重试 9 次/换 release 都拿不到，属「上游无片」，
+    不该记 failed 卡发布门禁（同县其余三源齐全）。
+    """
+    return STAC_NO_TILE in (text or "")
+
+
 def _count_parquet(path: Path) -> int | None:
     try:
         import duckdb  # noqa: PLC0415
@@ -1081,7 +1095,7 @@ def _harvest_overture_county_shards(fx: Fetcher, cli: str, d: Path,
     fmt = "geoparquet" if str(fx.args.overture_format) == "parquet" else "geojson"
     suffix = ext.get(fmt, "parquet")
     shards, total_feats, total_bytes = [], 0, 0
-    empty, failed = [], []
+    empty, failed, nopart = [], [], []
 
     items = []
     for raw_key, rec in recs.items():
@@ -1120,6 +1134,14 @@ def _harvest_overture_county_shards(fx: Fetcher, cli: str, d: Path,
                       and out.stat().st_size >= MIN_ASSET_BYTES)
             except Exception:  # noqa: BLE001 超时/OSError 一并走重试
                 ok = False
+            if (not ok and pr is not None and pr.returncode == 0
+                    and _stac_no_tile((pr.stdout or "") + (pr.stderr or ""))):
+                # 上游缺片：本片再怎么重试/补卷都不会有数据，立刻收手记 nopart
+                it["rows"], it["rc"] = 0, 0
+                it["tail"] = ((pr.stdout or "") + (pr.stderr or "")).strip()[-300:]
+                out.unlink(missing_ok=True)
+                Path(f"{out}.state").unlink(missing_ok=True)
+                return "nopart"
             n = (_count_parquet(out) if suffix == "parquet" else _count_geojson(out)) if ok else 0
             if ok and (n is None or n > 0):
                 break                       # 真拿到数据
@@ -1162,6 +1184,12 @@ def _harvest_overture_county_shards(fx: Fetcher, cli: str, d: Path,
             if status == "empty":
                 empty.append({"county": it["county"], "fips": it["fips"]})
                 continue
+            if status == "nopart":
+                nopart.append({"county": it["county"], "fips": it["fips"],
+                               "tail": it.get("tail", "")})
+                log(f"  ○ Overture 上游无片：{it['county']}（STAC 索引无分片覆盖此框，"
+                    f"非本片区故障，不发告警）")
+                continue
             if status != "ok":
                 pending.append(it)
                 continue
@@ -1197,7 +1225,7 @@ def _harvest_overture_county_shards(fx: Fetcher, cli: str, d: Path,
              "state_bbox": fx.cfg["bbox_str"], "counties": len(recs),
              "probed_at": _now()}
 
-    if not shards and not empty:
+    if not shards and not empty and not nopart:
         fx.note("overture", "error", mode="county_shards", features=0, audit=audit,
                 failed=failed[:10], elapsed=round(time.time() - t0, 1))
         fx.problem(f"Overture 按县切片全部失败（{len(failed)} 个县）：{failed[:3]}")
@@ -1205,8 +1233,11 @@ def _harvest_overture_county_shards(fx: Fetcher, cli: str, d: Path,
     if not shards:
         fx.note("overture", "empty_upstream", mode="county_shards", features=0,
                 bbox=fx.cfg["bbox_str"], audit=audit,
-                note=f"{len(empty)} 个县框均返回 0 行")
-        _append_notes(fx, [f"- **Overture**: 按县切片后 {len(empty)} 个县均 0 行。"])
+                nopart_counties=[e["county"] for e in nopart],
+                note=f"{len(empty)} 个县框均返回 0 行，{len(nopart)} 个县上游无片")
+        _append_notes(fx, [f"- **Overture**: 按县切片后 {len(empty)} 个县均 0 行"
+                           + (f"；{len(nopart)} 个县上游 STAC 无分片（{[e['county'] for e in nopart]}）"
+                              if nopart else "") + "。"])
         return
 
     # ★ 2026-10-21：failed 里必须带 CLI 的 stderr 尾（tail）—— 上次只留县名，
@@ -1215,9 +1246,15 @@ def _harvest_overture_county_shards(fx: Fetcher, cli: str, d: Path,
             format=fx.args.overture_format, features=total_feats,
             cli_version=cli_version, shard_count=len(shards),
             empty_counties=[e["county"] for e in empty],
+            nopart_counties=[e["county"] for e in nopart],
             failed_counties=[f["county"] for f in failed], failed=failed[:10],
             bytes=total_bytes, shards=shards[:40], audit=audit,
             elapsed=round(time.time() - t0, 1))
+    if nopart:
+        _nn = [e["county"] for e in nopart]
+        _append_notes(fx, [f"- **Overture 上游缺片**（非本片区故障，release 的 STAC 索引"
+                           f"无分片覆盖该县框）：{_nn}；其余三源正常。"])
+        log(f"  ○ Overture 上游无片 {len(nopart)} 个县：{_nn}")
     if failed:
         _names = [f["county"] for f in failed][:6]
         _tail = next((f.get("tail") for f in failed if f.get("tail")), "")
@@ -1226,7 +1263,8 @@ def _harvest_overture_county_shards(fx: Fetcher, cli: str, d: Path,
                           "msg": f"Overture 按县切片有 {len(failed)} 个县失败：{_names}"
                                  + (f"｜首个 stderr: {_tail[:200]}" if _tail else "")})
     log(f"✅ Overture 按县切片完成：{len(shards)} 片 / {total_feats:,} 条 / "
-        f"{total_bytes / 1e6:.1f}MB，空县 {len(empty)}，失败 {len(failed)}")
+        f"{total_bytes / 1e6:.1f}MB，空县 {len(empty)}，上游无片 {len(nopart)}，"
+        f"失败 {len(failed)}")
 
 
 def harvest_overture(fx: Fetcher) -> None:
