@@ -1,0 +1,105 @@
+name: ops
+
+# 机械处置（从本机 sentinel/agent_fix.py 迁来的「无需判断力」那部分）。
+#
+# 为什么搬：agent_fix 原先跑在本机，会自动改代码 + push，与本会话的改代码构成
+# 两条并行写线 —— 2026-10-22 一天交错出 9 个 commit（哨兵 5906bae/1d663c5，会话
+# 侧 0aee8e6/cf7675c/915c59f/da26c9b/70278a9/91d0d89/35dc065），没撞车是运气。
+# 铁律：机械动作（派跑 / 封印收尾 / 对账）放仓库；需要判断力的（改代码、诊根因）留在会话。
+#
+# 动作：
+#   dispatch   派某州（或数州）抓取，默认带 skip_state_ids=auto
+#   reheal     补 MANIFEST 账本 + 封印（只在数据齐、缺账本时用）
+#   audit      对该州跑内容对账（实物为准，不信 run 的 success）
+#   status     打印该州 Release 的 STATUS/资产概况
+on:
+  workflow_dispatch:
+    inputs:
+      action:
+        description: 处置动作
+        type: choice
+        options: [dispatch, reheal, audit, status]
+        default: status
+      state:
+        description: 州代码（多个用逗号，如 NY,OR；reheal/status 用单州）
+        default: ""
+      max_parallel:
+        description: dispatch 时的并发上限
+        default: "2"
+
+permissions:
+  contents: write
+  actions: write
+
+jobs:
+  act:
+    runs-on: ubuntu-latest
+    timeout-minutes: 90
+    steps:
+      - uses: actions/checkout@v4
+
+      - uses: actions/setup-python@v5
+        with:
+          python-version: "3.11"
+
+      - run: pip install --quiet pyyaml
+
+      - name: status —— 看账本
+        if: inputs.action == 'status'
+        env:
+          GH_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+        run: |
+          for s in $(echo "${{ inputs.state }}" | tr ',' ' '); do
+            echo "=== $s ==="
+            gh release view "raw-US-$s-v1" --repo "$GITHUB_REPOSITORY" --json assets \
+              -q '"资产=\(.assets|length) MANIFEST=\([.assets[].name|select(startswith("MANIFEST"))]|length)"' || true
+            gh release download "raw-US-$s-v1" -R "$GITHUB_REPOSITORY" \
+              --pattern STATUS.json -O "/tmp/st_$s.json" --clobber 2>/dev/null || true
+            python - "$s" <<'PY'
+          import json, sys
+          s = sys.argv[1]
+          try:
+              d = json.load(open(f"/tmp/st_{s}.json"))
+              print(f"  phase={d.get('phase')} done={len(d.get('done') or [])} "
+                    f"updated={d.get('updated_at')}")
+          except Exception:
+              print("  无 STATUS.json")
+          PY
+          done
+
+      - name: audit —— 实物对账
+        if: inputs.action == 'audit'
+        env:
+          GH_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+        run: |
+          for s in $(echo "${{ inputs.state }}" | tr ',' ' '); do
+            python scripts/content_audit.py --state "$s" || true
+          done
+
+      - name: reheal —— 补账本并封印
+        if: inputs.action == 'reheal'
+        env:
+          GH_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+        run: |
+          for s in $(echo "${{ inputs.state }}" | tr ',' ' '); do
+            echo "=== reheal $s（先预演） ==="
+            python scripts/manifest_reheal.py --state "$s" || true
+            echo "=== reheal $s（实补） ==="
+            python scripts/manifest_reheal.py --state "$s" --apply
+          done
+
+      - name: dispatch —— 派抓取（跳过州级枚举）
+        if: inputs.action == 'dispatch'
+        env:
+          GH_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+        run: |
+          gh workflow run fetch-states-matrix.yml \
+            -R "$GITHUB_REPOSITORY" \
+            -f tier=all \
+            -f states="${{ inputs.state }}" \
+            -f max_parallel="${{ inputs.max_parallel }}" \
+            -f publish_release=true \
+            -f skip_state_ids=auto \
+            -f nad_ids_batch=1000 \
+            -f nad_workers=2
+          echo "已派发：${{ inputs.state }}（skip_state_ids=auto）"
