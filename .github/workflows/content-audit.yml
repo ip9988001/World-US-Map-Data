@@ -1,0 +1,44 @@
+name: content-audit
+
+# 一仓内容体检（每 2 小时）—— **不信 run 的 success，只对账实物**。
+#
+# 存在理由（2026-10-20 实证）：MN 上游 66 个 OA 源只发了 60 个，而那次 run 是
+# **success**、gate 通过、哨兵一条告警都没收到。埋点永远会漏，所以必须有一层事后对账。
+#
+# 检查四项（逐州）：
+#   ① OA：Release 里 OA-*.zip 数 vs OpenAddresses 上游该州源数
+#   ② NAD：实物县片数 vs MANIFEST.shards 的 county 数 vs reference_check.counties_ok
+#   ③ 四源：NAD / OVERTURE / TIGER 资产是否都在
+#   ④ 账实：MANIFEST.assets 数 vs Release 实物数（允许差 3 = 三本账本文件）
+#
+# 铁律：全部流程在仓库里完成，不依赖本机常驻服务器。
+on:
+  schedule:
+    - cron: "0 */2 * * *"
+  workflow_dispatch:
+    inputs:
+      state:
+        description: 只体检单州（留空=全部）
+        default: ""
+
+permissions:
+  contents: read
+  actions: read
+
+jobs:
+  audit:
+    runs-on: ubuntu-latest
+    timeout-minutes: 40
+    steps:
+      - uses: actions/checkout@v4
+
+      - uses: actions/setup-python@v5
+        with:
+          python-version: "3.11"
+
+      - name: 内容体检
+        env:
+          GH_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+        run: |
+          python scripts/content_audit.py \
+            ${{ inputs.state != '' && format('--state {0}', inputs.state) || '' }}
