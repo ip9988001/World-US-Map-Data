@@ -71,8 +71,17 @@ def nad_count(bbox: list[float], tries: int = 3) -> int | None:
 
 def county_bboxes(state: str, tmp: Path, sample: int, run_all: bool) -> list[tuple[str, str, list[float]]]:
     tag = f"raw-US-{state}-v1"
-    sh(["gh", "release", "download", tag, "-R", REPO,
-        "--pattern", f"TIGER-US-{state}-county-*.geojson", "-D", str(tmp), "--clobber"])
+    # ★ 先列名再逐个下：一次性 --pattern 下 159 个县界在 runner 上会超时（实测 0 县），
+    #   而且我们本来就只需要抽样那几个。
+    names = sh(["gh", "release", "view", tag, "--repo", REPO,
+                "--json", "assets", "-q", ".assets[].name"]).split()
+    files = sorted(n for n in names if n.startswith(f"TIGER-US-{state}-county-"))
+    if not run_all and len(files) > sample:
+        step = max(1, len(files) // sample)
+        files = files[::step][:sample]
+    for n in files:
+        sh(["gh", "release", "download", tag, "-R", REPO, "-p", n,
+            "-O", str(tmp / n), "--clobber"], timeout=120)
     out = []
     for f in sorted(tmp.glob(f"TIGER-US-{state}-county-*.geojson")):
         fips = f.stem.rsplit("-", 1)[-1]
@@ -94,9 +103,6 @@ def county_bboxes(state: str, tmp: Path, sample: int, run_all: bool) -> list[tup
                                       max(xs) + 0.002, max(ys) + 0.002]))
         except Exception:  # noqa: BLE001
             continue
-    if not run_all and len(out) > sample:
-        step = max(1, len(out) // sample)
-        out = out[::step][:sample]
     return out
 
 
