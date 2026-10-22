@@ -117,6 +117,15 @@ def main() -> int:
             f.write(text + "\n")
     print(text)
     if find:
+        # ★ 投信：运行态异常全部归为 red（卡死/临限/失败无接管都需立即处理）
+        try:
+            sys.path.insert(0, str(Path(__file__).resolve().parent))
+            from sentinel_inbox import emit
+            for i, msg in enumerate(find):
+                emit("red", f"run:{msg[:28].replace(' ', '')}", msg,
+                     "看 run 日志定位；必要时 cancel 后用 ops.yml 重新派跑")
+        except Exception as e:  # noqa: BLE001
+            print(f"[inbox] 投信失败：{type(e).__name__}: {e}")
         print(f"::error::{len(find)} 项运行态异常")
         return 1
     return 0

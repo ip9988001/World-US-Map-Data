@@ -198,6 +198,22 @@ def main() -> int:
     print(md)
 
     reds = [f for f in findings if f["sev"] == "red"]
+
+    # ★ 投信（2026-10-22 定案）：哨兵不推企微，只把问题写进 Issue 信箱。
+    #   红线逐条（便于逐项 close），黄条合并一条（防刷屏）。
+    try:
+        sys.path.insert(0, str(Path(__file__).resolve().parent))
+        from sentinel_inbox import emit
+        for f in reds:
+            emit("red", f"audit:{f['code']}:{f['msg'][:32].replace(' ', '')}",
+                 f["msg"], f.get("fix") or "")
+        yl = [f for f in findings if f["sev"] == "yellow"]
+        if yl:
+            emit("yellow", "audit:warnings", f"账本巡检黄条 {len(yl)} 项",
+                 "\n".join(f"- {f['code']} {f['msg']} → {f.get('fix')}" for f in yl))
+    except Exception as e:  # noqa: BLE001
+        print(f"[inbox] 投信失败：{type(e).__name__}: {e}")
+
     if reds:
         print(f"::error::{len(reds)} 项红线（见 step summary）")
         return 1
