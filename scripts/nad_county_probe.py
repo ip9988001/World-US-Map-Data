@@ -90,13 +90,23 @@ def county_bboxes(state: str, tmp: Path, sample: int, run_all: bool) -> list[tup
             feats = doc.get("features") or []
             if not feats:
                 continue
+            geom = feats[0].get("geometry") or {}
             xs, ys = [], []
-            for ring in (feats[0].get("geometry") or {}).get("coordinates") or []:
-                pts = ring if isinstance(ring[0][0], (list, tuple)) else [ring]
-                for poly in pts:
-                    for pt in poly:
+            # ★ TIGER 县界资产实际是 **Esri JSON**（geometryType/rings/attributes），
+            #   不是标准 GeoJSON（type/coordinates/properties）—— 判错过一次，这里两种都吃。
+            rings = geom.get("rings")
+            if rings:
+                for ring in rings:
+                    for pt in ring:
                         xs.append(float(pt[0]))
                         ys.append(float(pt[1]))
+            else:
+                for ring in geom.get("coordinates") or []:
+                    pts = ring if isinstance(ring[0][0], (list, tuple)) else [ring]
+                    for poly in pts:
+                        for pt in poly:
+                            xs.append(float(pt[0]))
+                            ys.append(float(pt[1]))
             if not xs:
                 continue
             out.append((fips, f.stem, [min(xs) - 0.002, min(ys) - 0.002,
