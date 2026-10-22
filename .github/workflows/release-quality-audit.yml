@@ -1,0 +1,51 @@
+name: release-quality-audit
+
+# 全量发布物质量抽查（手动 / 每周一次）。
+#
+# 用户口径：不用每个发布物都仔细看 —— 看记录（STATUS/MANIFEST/资产数）+ 每州抽 3 个
+# 最小的可验资产（跳过 STATUS/MANIFEST/columns/metadata）验实物：
+#   .ndjson.gz → gzip 可解 / 行数>0 / 首行 JSON 可解析
+#   .zip       → 可打开 / testzip 无损 / 成员非空
+#   .parquet   → duckdb 可读 / schema 非空
+#   .geojson   → JSON 可解析 / features 非空
+#
+# 问题自动投 Issue 信箱（label=sentinel-alarm），run 本身不红。
+on:
+  workflow_dispatch:
+  schedule:
+    - cron: "30 3 * * 1"        # 每周一 03:30 UTC
+
+permissions:
+  contents: read
+  actions: read
+  issues: write
+
+jobs:
+  sweep:
+    runs-on: ubuntu-latest
+    timeout-minutes: 60
+    steps:
+      - uses: actions/checkout@v4
+
+      - uses: actions/setup-python@v5
+        with:
+          python-version: "3.11"
+
+      - name: 装依赖
+        run: pip install --quiet pyyaml duckdb
+
+      - name: 全量抽查
+        env:
+          GH_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+        run: python scripts/release_quality_audit.py
+
+      - name: 留档
+        if: always()
+        uses: actions/upload-artifact@v4
+        with:
+          name: quality-audit-${{ github.run_id }}
+          path: |
+            *.json
+            !audit_report.json
+          retention-days: 30
+          if-no-files-found: ignore
