@@ -103,8 +103,6 @@ jobs:
         env:
           GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
           RELEASE_TAG: ${{ inputs.tag }}
-          SENTINEL_URL: ${{ secrets.SENTINEL_URL }}
-          SENTINEL_TOKEN: ${{ secrets.SENTINEL_TOKEN }}
         run: |
           set -u
           ARGS="--state ${{ inputs.state }} --nad-max ${{ inputs.nad_max }} --overture-format ${{ inputs.overture_format }} --nad-mode ${{ inputs.nad_mode }} --nad-ids-batch ${{ inputs.nad_ids_batch }} --nad-shards ${{ inputs.nad_shards }} --nad-workers ${{ inputs.nad_workers }} --pack-mode ${{ inputs.pack_mode }} --nad-ids-slicing ${{ inputs.nad_ids_slicing }}"
