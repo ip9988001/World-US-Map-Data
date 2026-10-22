@@ -33,7 +33,7 @@ LABEL = "sentinel-alarm"
 
 # (workflow 文件, 容忍分钟数, 原定频率)
 CHECKS = [
-    ("run-watch.yml", 60, "每 15 分钟"),
+    ("run-watch.yml", 120, "每 15 分钟"),
     ("pipeline-audit.yml", 120, "每 30 分钟"),
     ("preflight-upstream.yml", 180, "每小时"),
     ("content-audit.yml", 300, "每 2 小时"),
@@ -61,14 +61,23 @@ def ensure_label() -> None:
         "--description", "哨兵/流水线异常，等待 pi 处理", "--force"])
 
 
-def last_run(wf: str) -> dict | None:
-    raw = sh(["gh", "run", "list", "--workflow", wf, "--repo", REPO, "--limit", "1",
-              "--json", "databaseId,status,conclusion,updatedAt,htmlUrl"])
+def last_run(wf: str) -> tuple[str, dict | None]:
+    """返回 (状态, run)。状态: ok / none / error
+    error 与 none 必须分开 —— 把「自己查不动」当成「对方停了」是假警报的根源。"""
     try:
-        rows = json.loads(raw)
-        return rows[0] if rows else None
+        r = subprocess.run(["gh", "run", "list", "--workflow", wf, "--repo", REPO, "--limit", "1",
+                            "--json", "databaseId,status,conclusion,updatedAt,url"],
+                           capture_output=True, text=True, timeout=120)
     except Exception:  # noqa: BLE001
-        return None
+        return "error", None
+    if r.returncode != 0:
+        print(f"[watchdog] {wf} 查询失败: {(r.stderr or '')[:200]}")
+        return "error", None
+    try:
+        rows = json.loads(r.stdout or "[]")
+    except Exception:  # noqa: BLE001
+        return "error", None
+    return ("ok", rows[0]) if rows else ("none", None)
 
 
 def wf_age_days(wf: str) -> float:
@@ -88,8 +97,12 @@ def main() -> int:
         if 0 <= age_days < 1:
             rows.append((wf, freq, f"🆕 建立 {age_days * 24:.1f}h", "🆕"))
             continue                            # 24h 宽限期
-        r = last_run(wf)
-        if not r:
+        st, r = last_run(wf)
+        if st == "error":
+            rows.append((wf, freq, "查询失败", "🟡"))
+            bad.append(f"{wf} 存活查询失败（看门狗自身故障，不是哨兵停摆）")
+            continue
+        if st == "none" or not r:
             rows.append((wf, freq, "从未运行", "🔴"))
             bad.append(f"{wf} 从未运行（原定{freq}）")
             continue
@@ -98,10 +111,12 @@ def main() -> int:
         flag = "🟢"
         if age > limit:
             flag = "🔴"
-            bad.append(f"{wf} 已 {age / 60:.1f}h 没跑（原定{freq}，容忍 {limit} 分钟）")
+            heal = sh(["gh", "workflow", "run", wf, "--repo", REPO])
+            bad.append(f"{wf} 已 {age / 60:.1f}h 没跑（原定{freq}，容忍 {limit} 分钟）"
+                       + ("，已自动补触发" if heal is not None else ""))
         elif con == "failure":
             flag = "🟡"
-            bad.append(f"{wf} 最近一次 failure（{age / 60:.1f}h 前）{r.get('htmlUrl', '')}")
+            bad.append(f"{wf} 最近一次 failure（{age / 60:.1f}h 前）{r.get('url', '')}")
         rows.append((wf, freq, f"{con} / {age / 60:.1f}h 前", flag))
 
     table = ["| workflow | 原定 | 最近一次 | 判定 |", "|---|---|---|---|"]
