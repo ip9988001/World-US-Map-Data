@@ -126,8 +126,8 @@ def main() -> int:
                      "看 run 日志定位；必要时 cancel 后用 ops.yml 重新派跑")
         except Exception as e:  # noqa: BLE001
             print(f"[inbox] 投信失败：{type(e).__name__}: {e}")
-        print(f"::error::{len(find)} 项运行态异常")
-        return 1
+        # 改语义：投信成功即算完成（Issue 已表达异常），不把 run 弄红
+        print(f"::notice::{len(find)} 项运行态异常已投信（本 run 不算失败）")
     return 0
 
 

@@ -151,8 +151,16 @@ def main() -> int:
         with open(summary, "a", encoding="utf-8") as f:
             f.write(f"## 内容体检（runner 侧）\n\n```\n{msg}\n```\n")
     if probs:
-        print(f"::error::内容体检发现 {len(probs)} 处问题")
-        return 1
+        # ★ 投信（2026-10-22 定案）：异常交给 Issue，不推企微、不 red 化 run
+        try:
+            import sys as _sys
+            _sys.path.insert(0, str(Path(__file__).resolve().parent))
+            from sentinel_inbox import emit
+            emit("red", "content:audit", f"内容体检 {len(probs)} 处问题",
+                 "\n".join(f"- {x}" for x in probs[:25]))
+        except Exception as e:  # noqa: BLE001
+            print(f"[inbox] 投信失败：{type(e).__name__}: {e}")
+        print(f"::notice::内容体检发现 {len(probs)} 处问题（已投信，本 run 不算失败）")
     return 0
 
 

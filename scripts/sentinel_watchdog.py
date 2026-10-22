@@ -71,9 +71,23 @@ def last_run(wf: str) -> dict | None:
         return None
 
 
+def wf_age_days(wf: str) -> float:
+    """workflow 自身建立多少天 —— 新建的给宽限期，否则第一次 schedule 还没到点就被判停摆。"""
+    raw = sh(["gh", "api", f"repos/{REPO}/actions/workflows/{wf}"])
+    try:
+        created = json.loads(raw).get("created_at") or ""
+        return mins(created) / 1440.0
+    except Exception:  # noqa: BLE001
+        return 99.0
+
+
 def main() -> int:
     rows, bad = [], []
     for wf, limit, freq in CHECKS:
+        age_days = wf_age_days(wf)
+        if 0 <= age_days < 1:
+            rows.append((wf, freq, f"🆕 建立 {age_days * 24:.1f}h", "🆕"))
+            continue                            # 24h 宽限期
         r = last_run(wf)
         if not r:
             rows.append((wf, freq, "从未运行", "🔴"))

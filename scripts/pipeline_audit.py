@@ -215,8 +215,9 @@ def main() -> int:
         print(f"[inbox] 投信失败：{type(e).__name__}: {e}")
 
     if reds:
-        print(f"::error::{len(reds)} 项红线（见 step summary）")
-        return 1
+        # ★ 2026-10-22 改语义：发现问题不算失败（Issue 已表达异常），否则 run 列表一片红，
+        #   分不清「发现了问题」和「哨兵自己崩了」。只有脚本异常/取数失败才该 exit≠0。
+        print(f"::notice::{len(reds)} 项红线已投 Issue 信箱（本 run 不算失败）")
     return 0
 
 

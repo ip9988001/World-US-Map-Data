@@ -139,8 +139,15 @@ def main() -> int:
               ensure_ascii=False, indent=1)
 
     if bad:
-        print(f"::error::上游异常：{', '.join(bad)}")
-        return 1                          # exit 1 → run 变红 → 本机 gh_watch 自动告警
+        try:
+            sys.path.insert(0, str(Path(__file__).resolve().parent))
+            from sentinel_inbox import emit
+            for k in bad:
+                emit("red", f"upstream:{k}", f"上游 {k.upper()} 异常",
+                     str(res.get(k, {}).get("note") or ""))
+        except Exception as e:  # noqa: BLE001
+            print(f"[inbox] 投信失败：{type(e).__name__}: {e}")
+        print(f"::notice::上游异常：{', '.join(bad)}（已投信，本 run 不算失败）")
     return 0
 
 
