@@ -1,0 +1,34 @@
+name: run-watch
+
+# 运行态巡检（每 15 分钟）—— 盯「正在动但动坏了」的 job。
+# 与 pipeline-audit 互补：那边管停下来的死状态，这边管跑着的卡死/临限/失败无接管。
+#
+# 铁律：全部流程在仓库里完成，不依赖本机常驻服务器。
+# 判活原则：只看 Release STATUS 账本进度，**不看 run.updatedAt**
+#   （GitHub 对长 step 不刷新 updatedAt，AZ 那轮因此误报 3 次）。
+on:
+  schedule:
+    - cron: "*/15 * * * *"
+  workflow_dispatch:
+
+permissions:
+  contents: read
+  actions: read
+
+jobs:
+  watch:
+    runs-on: ubuntu-latest
+    timeout-minutes: 20
+    steps:
+      - uses: actions/checkout@v4
+
+      - uses: actions/setup-python@v5
+        with:
+          python-version: "3.11"
+
+      - run: pip install --quiet pyyaml
+
+      - name: 运行态巡检
+        env:
+          GH_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+        run: python scripts/run_watch.py
