@@ -133,7 +133,7 @@ def main() -> int:
         ensure_label()
         title = "🔴 哨兵停摆：部分巡检 workflow 未按时运行"
         exists = sh(["gh", "issue", "list", "--repo", REPO, "--label", LABEL,
-                     "--state", "open", "--search", "哨兵停摆在", "--json", "number,title"])
+                     "--state", "open", "--search", "哨兵停摆", "--json", "number,title"])
         num = None
         try:
             for it in json.loads(exists) or []:
