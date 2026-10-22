@@ -1,0 +1,45 @@
+name: preflight-upstream
+
+# 上游健康探针（每小时）—— 化被动为主动：在派活之前就知道上游能不能用。
+#
+# 为什么必须跑在 runner 上：本机是香港 VPS，数据源全在美国。
+#   本机实测 TIGER 一律 403（同时刻 runner 正成功下 32 个资产）、NAD 冷启动 49.8s，
+#   这些全是本机网络假象。探针与干活的机器必须是同一台，结论才有意义。
+#
+# 告警通道：异常 → exit 1 → run 变红 → 本机 sentinel/gh_watch.py 的 failure 通道
+#   自动捕获并推送，不需要额外的推送管道。
+on:
+  schedule:
+    - cron: "20 * * * *"        # 每小时 20 分（避开整点高峰）
+  workflow_dispatch:
+
+permissions:
+  contents: read
+
+jobs:
+  probe:
+    runs-on: ubuntu-latest
+    timeout-minutes: 15
+    steps:
+      - uses: actions/checkout@v4
+
+      - uses: actions/setup-python@v5
+        with:
+          python-version: "3.11"
+
+      - name: 装 overturemaps（OVT 探针用；失败不影响其它探针）
+        continue-on-error: true
+        run: |
+          pip install --quiet overturemaps || true
+          python -c "import overturemaps" 2>/dev/null && echo "OVT CLI ready" || echo "OVT CLI 不可用，探针将跳过"
+
+      - name: 四项探针
+        run: python scripts/upstream_probe.py --step-summary
+
+      - name: 留档
+        if: always()
+        uses: actions/upload-artifact@v4
+        with:
+          name: upstream-probe-${{ github.run_id }}
+          path: upstream_probe.json
+          retention-days: 30
