@@ -18,30 +18,37 @@ def sh(a, timeout=3600):
 
 
 def count_overture(tag, st, tmp):
-    name = "OVERTURE-US-%s.parquet" % st
-    rc, o, e = sh(["gh", "release", "download", tag, "--repo", REPO, "--pattern", name, "--dir", tmp, "--clobber"])
-    p = os.path.join(tmp, name)
-    if not os.path.exists(p):
+    """Overture 可能是 1 个整州文件，也可能是按县拆的多个文件 → 全部统计后求和"""
+    _, out, _ = sh(["gh", "api", "repos/%s/releases/tags/%s" % (REPO, tag)])
+    names = [a["name"] for a in json.loads(out or "{}").get("assets", [])
+             if a["name"].upper().startswith("OVERTURE-")]
+    if not names:
         return None
     import pyarrow.parquet as pq
     import pyarrow.compute as pc
-    pf = pq.ParquetFile(p)
-    total = pf.metadata.num_rows
+    totals = 0
     inset = 0
-    try:
-        for i in range(pf.metadata.num_row_groups):
-            col = pf.read_row_group(i, columns=["address_levels"]).column(0)
-            flat = pc.list_flatten(col)
-            if len(flat) == 0:
-                continue
-            vals = pc.struct_field(flat, "value")
-            m = pc.equal(vals, st)
-            inset += int(pc.sum(pc.cast(m, "int64")).as_py() or 0)
-    except Exception as ex:
-        inset = -1
-        print("  州内统计失败:", repr(ex)[:120])
-    os.remove(p)
-    return {"file": name, "rows": total, "in_state_rows": inset}
+    for name in names:
+        sh(["gh", "release", "download", tag, "--repo", REPO, "--pattern", name, "--dir", tmp, "--clobber"])
+        p = os.path.join(tmp, name)
+        if not os.path.exists(p):
+            continue
+        pf = pq.ParquetFile(p)
+        totals += pf.metadata.num_rows
+        try:
+            for i in range(pf.metadata.num_row_groups):
+                col = pf.read_row_group(i, columns=["address_levels"]).column(0)
+                flat = pc.list_flatten(col)
+                if len(flat) == 0:
+                    continue
+                vals = pc.struct_field(flat, "value")
+                inset += int(pc.sum(pc.cast(pc.equal(vals, st), "int64")).as_py() or 0)
+        except Exception as ex:
+            inset = -1
+            print("  州内统计失败:", name, repr(ex)[:80])
+        os.remove(p)
+    return {"file": "%s (%d 个文件)" % (names[0] if len(names) == 1 else "OVERTURE-US-%s-*" % st, len(names)),
+            "files": len(names), "rows": totals, "in_state_rows": inset}
 
 
 def count_oa(tag, tmp):

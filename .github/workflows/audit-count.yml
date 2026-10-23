@@ -1,5 +1,10 @@
 name: audit-count
-on: { workflow_dispatch: }
+on:
+  workflow_dispatch:
+    inputs:
+      only:
+        description: "只数这些 tag（空格分隔，留空=全部）"
+        default: ""
 permissions: { contents: write }
 jobs:
   plan:
@@ -9,7 +14,11 @@ jobs:
       - id: g
         env: { GH_TOKEN: "${{ secrets.GITHUB_TOKEN }}" }
         run: |
-          TAGS=$(gh release list --repo "$GITHUB_REPOSITORY" --limit 200 --json tagName -q '[.[].tagName]|map(select(startswith("raw-US-")))|.[]')
+          if [ -n "${{ github.event.inputs.only }}" ]; then
+            TAGS="${{ github.event.inputs.only }}"
+          else
+            TAGS=$(gh release list --repo "$GITHUB_REPOSITORY" --limit 200 --json tagName -q '[.[].tagName]|map(select(startswith("raw-US-")))|.[]')
+          fi
           M=$(python3 -c "import json,sys;ts=[l.strip() for l in '''$TAGS'''.split() if l.strip()];print(json.dumps({'include':[{'tag':t} for t in ts]}))")
           echo "m=$M" >> $GITHUB_OUTPUT
   count:
