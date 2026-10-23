@@ -1,0 +1,27 @@
+name: audit-fix
+# 按实物核查结果修正自述文件（MANIFEST / RELEASE_NOTES / STATUS）
+on:
+  workflow_dispatch:
+    inputs:
+      only:
+        description: "只修某个 tag（留空=全部）"
+        default: ""
+permissions:
+  contents: write
+concurrency:
+  group: audit-fix
+  cancel-in-progress: false
+jobs:
+  fix:
+    runs-on: ubuntu-latest
+    timeout-minutes: 90
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-python@v5
+        with:
+          python-version: "3.11"
+      - name: 修正自述
+        env:
+          GH_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+        run: |
+          python3 tools/audit_fix_manifests.py ${{ github.event.inputs.only != '' && format('--only {0}', github.event.inputs.only) || '' }}
