@@ -6,6 +6,7 @@ on:
         description: "只数这些 tag（空格分隔，留空=全部）"
         default: ""
 permissions: { contents: write }
+concurrency: { group: audit-count, cancel-in-progress: false }
 jobs:
   plan:
     runs-on: ubuntu-latest
@@ -27,6 +28,7 @@ jobs:
     timeout-minutes: 120
     strategy:
       fail-fast: false
+      max-parallel: 8
       matrix: ${{ fromJson(needs.plan.outputs.matrix) }}
     steps:
       - uses: actions/checkout@v4
@@ -53,4 +55,6 @@ jobs:
         with: { path: counts, pattern: "cnt-*", merge-multiple: true }
       - name: 写回 MANIFEST
         env: { GH_TOKEN: "${{ secrets.GITHUB_TOKEN }}" }
-        run: python3 tools/write_counts.py
+        run: |
+          ls counts/manifests 2>/dev/null | head -3
+          python3 tools/write_counts.py
