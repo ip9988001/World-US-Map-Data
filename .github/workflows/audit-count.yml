@@ -1,0 +1,47 @@
+name: audit-count
+on: { workflow_dispatch: }
+permissions: { contents: write }
+jobs:
+  plan:
+    runs-on: ubuntu-latest
+    outputs: { matrix: "${{ steps.g.outputs.m }}" }
+    steps:
+      - id: g
+        env: { GH_TOKEN: "${{ secrets.GITHUB_TOKEN }}" }
+        run: |
+          TAGS=$(gh release list --repo "$GITHUB_REPOSITORY" --limit 200 --json tagName -q '[.[].tagName]|map(select(startswith("raw-US-")))|.[]')
+          M=$(python3 -c "import json,sys;ts=[l.strip() for l in '''$TAGS'''.split() if l.strip()];print(json.dumps({'include':[{'tag':t} for t in ts]}))")
+          echo "m=$M" >> $GITHUB_OUTPUT
+  count:
+    needs: plan
+    runs-on: ubuntu-latest
+    timeout-minutes: 120
+    strategy:
+      fail-fast: false
+      matrix: ${{ fromJson(needs.plan.outputs.matrix) }}
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-python@v5
+        with: { python-version: "3.11" }
+      - run: pip install -q pyarrow
+      - name: 数行 ${{ matrix.tag }}
+        env: { GH_TOKEN: "${{ secrets.GITHUB_TOKEN }}" }
+        run: python3 tools/count_sources.py "${{ matrix.tag }}"
+      - uses: actions/upload-artifact@v4
+        with:
+          name: cnt-${{ matrix.tag }}
+          path: counts/
+          retention-days: 7
+  merge:
+    needs: count
+    runs-on: ubuntu-latest
+    timeout-minutes: 30
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-python@v5
+        with: { python-version: "3.11" }
+      - uses: actions/download-artifact@v4
+        with: { path: counts, pattern: "cnt-*", merge-multiple: true }
+      - name: 写回 MANIFEST
+        env: { GH_TOKEN: "${{ secrets.GITHUB_TOKEN }}" }
+        run: python3 tools/write_counts.py
