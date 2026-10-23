@@ -8,7 +8,7 @@ on:
       only:
         description: "只跑这些 tag（空格分隔，留空=全部）"
         default: ""
-permissions: { contents: read }
+permissions: { contents: write }
 concurrency: { group: nad-local-matrix, cancel-in-progress: false }
 jobs:
   plan:
@@ -66,3 +66,8 @@ jobs:
           PY
       - uses: actions/upload-artifact@v4
         with: { name: nad-local-matrix, path: lm, retention-days: 30 }
+      - name: 写回 MANIFEST（只写事实）
+        env: { GH_TOKEN: "${{ secrets.GITHUB_TOKEN }}" }
+        run: |
+          mkdir -p counts_local && cp lm/*.json counts_local/
+          python3 tools/write_nad_truth.py
