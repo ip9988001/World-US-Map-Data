@@ -1,0 +1,68 @@
+name: nad-local-matrix
+
+# NAD 本地实物 × 县界 覆盖矩阵（不问上游 API）
+# 上游 ArcGIS 视图间歇降级（超时/返回空），改为一仓自己核对手里的实物。
+on:
+  workflow_dispatch:
+    inputs:
+      only:
+        description: "只跑这些 tag（空格分隔，留空=全部）"
+        default: ""
+permissions: { contents: read }
+concurrency: { group: nad-local-matrix, cancel-in-progress: false }
+jobs:
+  plan:
+    runs-on: ubuntu-latest
+    outputs: { matrix: "${{ steps.g.outputs.m }}" }
+    steps:
+      - id: g
+        env: { GH_TOKEN: "${{ secrets.GITHUB_TOKEN }}" }
+        run: |
+          if [ -n "${{ inputs.only }}" ]; then TAGS="${{ inputs.only }}"; else
+            TAGS=$(gh release list --repo "$GITHUB_REPOSITORY" --limit 200 --json tagName -q '[.[].tagName]|map(select(startswith("raw-US-")))|.[]')
+          fi
+          M=$(python3 -c "import json;ts=[l.strip() for l in '''$TAGS'''.split() if l.strip()];print(json.dumps({'include':[{'tag':t} for t in ts]}))")
+          echo "m=$M" >> $GITHUB_OUTPUT
+  scan:
+    needs: plan
+    runs-on: ubuntu-latest
+    timeout-minutes: 180
+    strategy:
+      fail-fast: false
+      max-parallel: 6
+      matrix: ${{ fromJson(needs.plan.outputs.matrix) }}
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-python@v5
+        with: { python-version: "3.11" }
+      - name: 本地矩阵 ${{ matrix.tag }}
+        env: { GH_TOKEN: "${{ secrets.GITHUB_TOKEN }}" }
+        run: python3 tools/nad_local_matrix.py "${{ matrix.tag }}"
+      - uses: actions/upload-artifact@v4
+        with:
+          name: loc-${{ matrix.tag }}
+          path: counts_local/
+          retention-days: 14
+  merge:
+    needs: scan
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-python@v5
+        with: { python-version: "3.11" }
+      - uses: actions/download-artifact@v4
+        with: { path: lm, pattern: "loc-*", merge-multiple: true }
+      - name: 汇总
+        run: |
+          python3 - <<'PY'
+          import json,glob
+          print("| 州 | NAD 总点 | 落在本州县界内 | 州内占比 | 有点的县 |")
+          print("|---|---|---|---|---|")
+          T=I=0
+          for f in sorted(glob.glob('lm/*.json')):
+              d=json.load(open(f)); T+=d['total_points']; I+=d['in_state_points']
+              print(f"| {d['state']} | {d['total_points']:,} | {d['in_state_points']:,} | {d['in_state_pct']}% | {d['counties_with_points']} |")
+          print(f"\n合计：{T:,} 点，落在本州县界内 {I:,}（{100*I/max(1,T):.2f}%）")
+          PY
+      - uses: actions/upload-artifact@v4
+        with: { name: nad-local-matrix, path: lm, retention-days: 30 }
