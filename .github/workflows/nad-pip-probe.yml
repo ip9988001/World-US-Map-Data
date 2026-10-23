@@ -1,0 +1,75 @@
+name: nad-pip-probe
+
+# NAD 逐县「真实覆盖」探针（PIP 版）—— 每县取样本点，按 TIGER 县界判定本县占比。
+# 为什么不用 returnCountOnly：2026-10-23 实测 NH Rockingham bbox 返回 110,783 行，
+# 样本全是 MA Essex 的点 → count 会混入邻州，完全不可信。
+on:
+  workflow_dispatch:
+    inputs:
+      only:
+        description: "只跑这些 tag（空格分隔，留空=全部 raw-US-*）"
+        default: ""
+      sample:
+        description: "每县样本点数"
+        default: "1500"
+permissions: { contents: write }
+concurrency: { group: nad-pip-probe, cancel-in-progress: false }
+jobs:
+  plan:
+    runs-on: ubuntu-latest
+    outputs: { matrix: "${{ steps.g.outputs.m }}" }
+    steps:
+      - id: g
+        env: { GH_TOKEN: "${{ secrets.GITHUB_TOKEN }}" }
+        run: |
+          if [ -n "${{ inputs.only }}" ]; then TAGS="${{ inputs.only }}"; else
+            TAGS=$(gh release list --repo "$GITHUB_REPOSITORY" --limit 200 --json tagName -q '[.[].tagName]|map(select(startswith("raw-US-")))|.[]')
+          fi
+          M=$(python3 -c "import json;ts=[l.strip() for l in '''$TAGS'''.split() if l.strip()];print(json.dumps({'include':[{'tag':t} for t in ts]}))")
+          echo "m=$M" >> $GITHUB_OUTPUT
+  probe:
+    needs: plan
+    runs-on: ubuntu-latest
+    timeout-minutes: 240
+    strategy:
+      fail-fast: false
+      max-parallel: 6
+      matrix: ${{ fromJson(needs.plan.outputs.matrix) }}
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-python@v5
+        with: { python-version: "3.11" }
+      - name: PIP 探针 ${{ matrix.tag }}
+        env:
+          GH_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+          PIP_SAMPLE: ${{ inputs.sample }}
+        run: python3 tools/nad_pip_probe.py "${{ matrix.tag }}"
+      - uses: actions/upload-artifact@v4
+        with:
+          name: pip-${{ matrix.tag }}
+          path: counts_pip/
+          retention-days: 14
+  merge:
+    needs: probe
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-python@v5
+        with: { python-version: "3.11" }
+      - uses: actions/download-artifact@v4
+        with: { path: pip, pattern: "pip-*", merge-multiple: true }
+      - name: 汇总覆盖矩阵
+        run: |
+          python3 - <<'PY'
+          import json,glob,os
+          tot=withd=empty=err=0
+          print("| 州 | 县总数 | 有本州点 | 全无本州点 | 错误 |")
+          print("|---|---|---|---|---|")
+          for f in sorted(glob.glob('pip/*.json')):
+              d=json.load(open(f)); s=d['summary']
+              tot+=s['counties_total']; withd+=s['with_data']; empty+=s['empty']; err+=s['errors']
+              print(f"| {d['state']} | {s['counties_total']} | {s['with_data']} | {s['empty']} | {s['errors']} |")
+          print(f"\n合计：县 {tot}｜有本州点 {withd}｜全无 {empty}｜错误 {err}")
+          PY
+      - uses: actions/upload-artifact@v4
+        with: { name: pip-matrix, path: pip, retention-days: 30 }
