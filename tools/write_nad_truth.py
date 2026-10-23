@@ -38,8 +38,8 @@ rows = []
 for f in sorted(glob.glob("counts_local/*.json")):
     c = json.load(open(f, encoding="utf-8"))
     tag, st = c["tag"], c["state"]
-    p = f"/tmp/mf/{tag}.json"
-    os.makedirs("/tmp/mf", exist_ok=True)
+    p = f"/tmp/mf/{tag}/MANIFEST.json"
+    os.makedirs(f"/tmp/mf/{tag}", exist_ok=True)
     if not fetch(f"https://github.com/{REPO}/releases/download/{tag}/MANIFEST.json", p):
         fail += 1; fails.append(tag); continue
     try:
@@ -67,7 +67,7 @@ for f in sorted(glob.glob("counts_local/*.json")):
             f"实测溢出包内落在本州县界内的点仅 {ins:,} / {tot:,}"
             f"（{c.get('in_state_pct')}%），故此值不可作为本州覆盖率解读")
     audit["nad_instate_checked_at"] = time.strftime("%Y-%m-%dT%H:%M:%SZ", time.gmtime())
-    out = f"/tmp/mf/out-{tag}.json"
+    out = f"/tmp/mf/{tag}/MANIFEST.json"
     json.dump(man, open(out, "w", encoding="utf-8"), ensure_ascii=False, indent=1)
     r1, o1, e1 = 1, "", ""
     for attempt in range(5):
