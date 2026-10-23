@@ -1,0 +1,51 @@
+{
+ "tag": "raw-US-NH-v1",
+ "state": "NH",
+ "total_points": 354804,
+ "in_state_points": 0,
+ "out_state_points": 354804,
+ "in_state_pct": 0.0,
+ "counties": [
+  {
+   "fips": "33001",
+   "points": 0
+  },
+  {
+   "fips": "33003",
+   "points": 0
+  },
+  {
+   "fips": "33005",
+   "points": 0
+  },
+  {
+   "fips": "33007",
+   "points": 0
+  },
+  {
+   "fips": "33009",
+   "points": 0
+  },
+  {
+   "fips": "33011",
+   "points": 0
+  },
+  {
+   "fips": "33013",
+   "points": 0
+  },
+  {
+   "fips": "33015",
+   "points": 0
+  },
+  {
+   "fips": "33017",
+   "points": 0
+  },
+  {
+   "fips": "33019",
+   "points": 0
+  }
+ ],
+ "counties_with_points": 0
+}

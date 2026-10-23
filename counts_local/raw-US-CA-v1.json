@@ -1,0 +1,243 @@
+{
+ "tag": "raw-US-CA-v1",
+ "state": "CA",
+ "total_points": 2417574,
+ "in_state_points": 2417574,
+ "out_state_points": 0,
+ "in_state_pct": 100.0,
+ "counties": [
+  {
+   "fips": "06001",
+   "points": 0
+  },
+  {
+   "fips": "06003",
+   "points": 0
+  },
+  {
+   "fips": "06005",
+   "points": 0
+  },
+  {
+   "fips": "06007",
+   "points": 0
+  },
+  {
+   "fips": "06009",
+   "points": 0
+  },
+  {
+   "fips": "06011",
+   "points": 0
+  },
+  {
+   "fips": "06013",
+   "points": 0
+  },
+  {
+   "fips": "06015",
+   "points": 0
+  },
+  {
+   "fips": "06017",
+   "points": 1
+  },
+  {
+   "fips": "06019",
+   "points": 0
+  },
+  {
+   "fips": "06021",
+   "points": 0
+  },
+  {
+   "fips": "06023",
+   "points": 0
+  },
+  {
+   "fips": "06025",
+   "points": 0
+  },
+  {
+   "fips": "06027",
+   "points": 12
+  },
+  {
+   "fips": "06029",
+   "points": 0
+  },
+  {
+   "fips": "06031",
+   "points": 0
+  },
+  {
+   "fips": "06033",
+   "points": 0
+  },
+  {
+   "fips": "06035",
+   "points": 0
+  },
+  {
+   "fips": "06037",
+   "points": 1
+  },
+  {
+   "fips": "06039",
+   "points": 0
+  },
+  {
+   "fips": "06041",
+   "points": 0
+  },
+  {
+   "fips": "06043",
+   "points": 0
+  },
+  {
+   "fips": "06045",
+   "points": 0
+  },
+  {
+   "fips": "06047",
+   "points": 102424
+  },
+  {
+   "fips": "06049",
+   "points": 0
+  },
+  {
+   "fips": "06051",
+   "points": 0
+  },
+  {
+   "fips": "06053",
+   "points": 0
+  },
+  {
+   "fips": "06055",
+   "points": 1
+  },
+  {
+   "fips": "06057",
+   "points": 0
+  },
+  {
+   "fips": "06059",
+   "points": 51623
+  },
+  {
+   "fips": "06061",
+   "points": 552
+  },
+  {
+   "fips": "06063",
+   "points": 0
+  },
+  {
+   "fips": "06065",
+   "points": 27
+  },
+  {
+   "fips": "06067",
+   "points": 703920
+  },
+  {
+   "fips": "06069",
+   "points": 0
+  },
+  {
+   "fips": "06071",
+   "points": 840205
+  },
+  {
+   "fips": "06073",
+   "points": 0
+  },
+  {
+   "fips": "06075",
+   "points": 0
+  },
+  {
+   "fips": "06077",
+   "points": 0
+  },
+  {
+   "fips": "06079",
+   "points": 0
+  },
+  {
+   "fips": "06081",
+   "points": 0
+  },
+  {
+   "fips": "06083",
+   "points": 56393
+  },
+  {
+   "fips": "06085",
+   "points": 4
+  },
+  {
+   "fips": "06087",
+   "points": 108882
+  },
+  {
+   "fips": "06089",
+   "points": 79417
+  },
+  {
+   "fips": "06091",
+   "points": 0
+  },
+  {
+   "fips": "06093",
+   "points": 0
+  },
+  {
+   "fips": "06095",
+   "points": 172315
+  },
+  {
+   "fips": "06097",
+   "points": 0
+  },
+  {
+   "fips": "06099",
+   "points": 0
+  },
+  {
+   "fips": "06101",
+   "points": 0
+  },
+  {
+   "fips": "06103",
+   "points": 0
+  },
+  {
+   "fips": "06105",
+   "points": 0
+  },
+  {
+   "fips": "06107",
+   "points": 0
+  },
+  {
+   "fips": "06109",
+   "points": 0
+  },
+  {
+   "fips": "06111",
+   "points": 301791
+  },
+  {
+   "fips": "06113",
+   "points": 6
+  },
+  {
+   "fips": "06115",
+   "points": 0
+  }
+ ],
+ "counties_with_points": 17
+}

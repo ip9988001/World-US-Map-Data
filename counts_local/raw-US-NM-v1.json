@@ -1,0 +1,143 @@
+{
+ "tag": "raw-US-NM-v1",
+ "state": "NM",
+ "total_points": 1297236,
+ "in_state_points": 1042258,
+ "out_state_points": 254978,
+ "in_state_pct": 80.34,
+ "counties": [
+  {
+   "fips": "35001",
+   "points": 247387
+  },
+  {
+   "fips": "35003",
+   "points": 5784
+  },
+  {
+   "fips": "35005",
+   "points": 27820
+  },
+  {
+   "fips": "35006",
+   "points": 13558
+  },
+  {
+   "fips": "35007",
+   "points": 11655
+  },
+  {
+   "fips": "35009",
+   "points": 21803
+  },
+  {
+   "fips": "35011",
+   "points": 1769
+  },
+  {
+   "fips": "35013",
+   "points": 110167
+  },
+  {
+   "fips": "35015",
+   "points": 29535
+  },
+  {
+   "fips": "35017",
+   "points": 15681
+  },
+  {
+   "fips": "35019",
+   "points": 3533
+  },
+  {
+   "fips": "35021",
+   "points": 975
+  },
+  {
+   "fips": "35023",
+   "points": 3391
+  },
+  {
+   "fips": "35025",
+   "points": 34473
+  },
+  {
+   "fips": "35027",
+   "points": 23907
+  },
+  {
+   "fips": "35028",
+   "points": 10422
+  },
+  {
+   "fips": "35029",
+   "points": 14942
+  },
+  {
+   "fips": "35031",
+   "points": 21840
+  },
+  {
+   "fips": "35033",
+   "points": 4403
+  },
+  {
+   "fips": "35035",
+   "points": 37824
+  },
+  {
+   "fips": "35037",
+   "points": 6771
+  },
+  {
+   "fips": "35039",
+   "points": 25348
+  },
+  {
+   "fips": "35041",
+   "points": 10078
+  },
+  {
+   "fips": "35043",
+   "points": 98028
+  },
+  {
+   "fips": "35045",
+   "points": 51653
+  },
+  {
+   "fips": "35047",
+   "points": 18117
+  },
+  {
+   "fips": "35049",
+   "points": 96495
+  },
+  {
+   "fips": "35051",
+   "points": 10015
+  },
+  {
+   "fips": "35053",
+   "points": 9089
+  },
+  {
+   "fips": "35055",
+   "points": 25845
+  },
+  {
+   "fips": "35057",
+   "points": 9493
+  },
+  {
+   "fips": "35059",
+   "points": 3130
+  },
+  {
+   "fips": "35061",
+   "points": 37327
+  }
+ ],
+ "counties_with_points": 33
+}

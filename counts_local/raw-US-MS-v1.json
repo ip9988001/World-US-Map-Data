@@ -1,0 +1,339 @@
+{
+ "tag": "raw-US-MS-v1",
+ "state": "MS",
+ "total_points": 470759,
+ "in_state_points": 3,
+ "out_state_points": 470756,
+ "in_state_pct": 0.0,
+ "counties": [
+  {
+   "fips": "28001",
+   "points": 0
+  },
+  {
+   "fips": "28003",
+   "points": 0
+  },
+  {
+   "fips": "28005",
+   "points": 0
+  },
+  {
+   "fips": "28007",
+   "points": 0
+  },
+  {
+   "fips": "28009",
+   "points": 0
+  },
+  {
+   "fips": "28011",
+   "points": 0
+  },
+  {
+   "fips": "28013",
+   "points": 0
+  },
+  {
+   "fips": "28015",
+   "points": 0
+  },
+  {
+   "fips": "28017",
+   "points": 0
+  },
+  {
+   "fips": "28019",
+   "points": 0
+  },
+  {
+   "fips": "28021",
+   "points": 0
+  },
+  {
+   "fips": "28023",
+   "points": 0
+  },
+  {
+   "fips": "28025",
+   "points": 0
+  },
+  {
+   "fips": "28027",
+   "points": 0
+  },
+  {
+   "fips": "28029",
+   "points": 0
+  },
+  {
+   "fips": "28031",
+   "points": 0
+  },
+  {
+   "fips": "28033",
+   "points": 0
+  },
+  {
+   "fips": "28035",
+   "points": 0
+  },
+  {
+   "fips": "28037",
+   "points": 0
+  },
+  {
+   "fips": "28039",
+   "points": 0
+  },
+  {
+   "fips": "28041",
+   "points": 0
+  },
+  {
+   "fips": "28043",
+   "points": 0
+  },
+  {
+   "fips": "28045",
+   "points": 0
+  },
+  {
+   "fips": "28047",
+   "points": 0
+  },
+  {
+   "fips": "28049",
+   "points": 0
+  },
+  {
+   "fips": "28051",
+   "points": 0
+  },
+  {
+   "fips": "28053",
+   "points": 0
+  },
+  {
+   "fips": "28055",
+   "points": 0
+  },
+  {
+   "fips": "28057",
+   "points": 0
+  },
+  {
+   "fips": "28059",
+   "points": 0
+  },
+  {
+   "fips": "28061",
+   "points": 0
+  },
+  {
+   "fips": "28063",
+   "points": 0
+  },
+  {
+   "fips": "28065",
+   "points": 0
+  },
+  {
+   "fips": "28067",
+   "points": 0
+  },
+  {
+   "fips": "28069",
+   "points": 0
+  },
+  {
+   "fips": "28071",
+   "points": 0
+  },
+  {
+   "fips": "28073",
+   "points": 0
+  },
+  {
+   "fips": "28075",
+   "points": 0
+  },
+  {
+   "fips": "28077",
+   "points": 0
+  },
+  {
+   "fips": "28079",
+   "points": 0
+  },
+  {
+   "fips": "28081",
+   "points": 0
+  },
+  {
+   "fips": "28083",
+   "points": 0
+  },
+  {
+   "fips": "28085",
+   "points": 0
+  },
+  {
+   "fips": "28087",
+   "points": 0
+  },
+  {
+   "fips": "28089",
+   "points": 0
+  },
+  {
+   "fips": "28091",
+   "points": 0
+  },
+  {
+   "fips": "28093",
+   "points": 0
+  },
+  {
+   "fips": "28095",
+   "points": 0
+  },
+  {
+   "fips": "28097",
+   "points": 0
+  },
+  {
+   "fips": "28099",
+   "points": 0
+  },
+  {
+   "fips": "28101",
+   "points": 0
+  },
+  {
+   "fips": "28103",
+   "points": 0
+  },
+  {
+   "fips": "28105",
+   "points": 0
+  },
+  {
+   "fips": "28107",
+   "points": 0
+  },
+  {
+   "fips": "28109",
+   "points": 0
+  },
+  {
+   "fips": "28111",
+   "points": 0
+  },
+  {
+   "fips": "28113",
+   "points": 0
+  },
+  {
+   "fips": "28115",
+   "points": 0
+  },
+  {
+   "fips": "28117",
+   "points": 0
+  },
+  {
+   "fips": "28119",
+   "points": 0
+  },
+  {
+   "fips": "28121",
+   "points": 0
+  },
+  {
+   "fips": "28123",
+   "points": 0
+  },
+  {
+   "fips": "28125",
+   "points": 0
+  },
+  {
+   "fips": "28127",
+   "points": 0
+  },
+  {
+   "fips": "28129",
+   "points": 0
+  },
+  {
+   "fips": "28131",
+   "points": 0
+  },
+  {
+   "fips": "28133",
+   "points": 0
+  },
+  {
+   "fips": "28135",
+   "points": 0
+  },
+  {
+   "fips": "28137",
+   "points": 0
+  },
+  {
+   "fips": "28139",
+   "points": 0
+  },
+  {
+   "fips": "28141",
+   "points": 0
+  },
+  {
+   "fips": "28143",
+   "points": 3
+  },
+  {
+   "fips": "28145",
+   "points": 0
+  },
+  {
+   "fips": "28147",
+   "points": 0
+  },
+  {
+   "fips": "28149",
+   "points": 0
+  },
+  {
+   "fips": "28151",
+   "points": 0
+  },
+  {
+   "fips": "28153",
+   "points": 0
+  },
+  {
+   "fips": "28155",
+   "points": 0
+  },
+  {
+   "fips": "28157",
+   "points": 0
+  },
+  {
+   "fips": "28159",
+   "points": 0
+  },
+  {
+   "fips": "28161",
+   "points": 0
+  },
+  {
+   "fips": "28163",
+   "points": 0
+  }
+ ],
+ "counties_with_points": 1
+}

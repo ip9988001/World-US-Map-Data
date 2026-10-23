@@ -1,0 +1,359 @@
+{
+ "tag": "raw-US-MN-v1",
+ "state": "MN",
+ "total_points": 2920349,
+ "in_state_points": 2062744,
+ "out_state_points": 857605,
+ "in_state_pct": 70.63,
+ "counties": [
+  {
+   "fips": "27001",
+   "points": 17431
+  },
+  {
+   "fips": "27003",
+   "points": 158982
+  },
+  {
+   "fips": "27005",
+   "points": 23671
+  },
+  {
+   "fips": "27007",
+   "points": 0
+  },
+  {
+   "fips": "27009",
+   "points": 15240
+  },
+  {
+   "fips": "27011",
+   "points": 3700
+  },
+  {
+   "fips": "27013",
+   "points": 0
+  },
+  {
+   "fips": "27015",
+   "points": 0
+  },
+  {
+   "fips": "27017",
+   "points": 17023
+  },
+  {
+   "fips": "27019",
+   "points": 46680
+  },
+  {
+   "fips": "27021",
+   "points": 29493
+  },
+  {
+   "fips": "27023",
+   "points": 6087
+  },
+  {
+   "fips": "27025",
+   "points": 24027
+  },
+  {
+   "fips": "27027",
+   "points": 34535
+  },
+  {
+   "fips": "27029",
+   "points": 5623
+  },
+  {
+   "fips": "27031",
+   "points": 6856
+  },
+  {
+   "fips": "27033",
+   "points": 0
+  },
+  {
+   "fips": "27035",
+   "points": 46831
+  },
+  {
+   "fips": "27037",
+   "points": 182844
+  },
+  {
+   "fips": "27039",
+   "points": 0
+  },
+  {
+   "fips": "27041",
+   "points": 23579
+  },
+  {
+   "fips": "27043",
+   "points": 0
+  },
+  {
+   "fips": "27045",
+   "points": 11091
+  },
+  {
+   "fips": "27047",
+   "points": 0
+  },
+  {
+   "fips": "27049",
+   "points": 482
+  },
+  {
+   "fips": "27051",
+   "points": 3774
+  },
+  {
+   "fips": "27053",
+   "points": 408414
+  },
+  {
+   "fips": "27055",
+   "points": 9402
+  },
+  {
+   "fips": "27057",
+   "points": 0
+  },
+  {
+   "fips": "27059",
+   "points": 17734
+  },
+  {
+   "fips": "27061",
+   "points": 29801
+  },
+  {
+   "fips": "27063",
+   "points": 6034
+  },
+  {
+   "fips": "27065",
+   "points": 0
+  },
+  {
+   "fips": "27067",
+   "points": 0
+  },
+  {
+   "fips": "27069",
+   "points": 0
+  },
+  {
+   "fips": "27071",
+   "points": 9004
+  },
+  {
+   "fips": "27073",
+   "points": 4205
+  },
+  {
+   "fips": "27075",
+   "points": 8445
+  },
+  {
+   "fips": "27077",
+   "points": 4512
+  },
+  {
+   "fips": "27079",
+   "points": 13908
+  },
+  {
+   "fips": "27081",
+   "points": 0
+  },
+  {
+   "fips": "27083",
+   "points": 11157
+  },
+  {
+   "fips": "27085",
+   "points": 16303
+  },
+  {
+   "fips": "27087",
+   "points": 0
+  },
+  {
+   "fips": "27089",
+   "points": 5233
+  },
+  {
+   "fips": "27091",
+   "points": 0
+  },
+  {
+   "fips": "27093",
+   "points": 0
+  },
+  {
+   "fips": "27095",
+   "points": 0
+  },
+  {
+   "fips": "27097",
+   "points": 17899
+  },
+  {
+   "fips": "27099",
+   "points": 17158
+  },
+  {
+   "fips": "27101",
+   "points": 5292
+  },
+  {
+   "fips": "27103",
+   "points": 0
+  },
+  {
+   "fips": "27105",
+   "points": 58
+  },
+  {
+   "fips": "27107",
+   "points": 0
+  },
+  {
+   "fips": "27109",
+   "points": 0
+  },
+  {
+   "fips": "27111",
+   "points": 41096
+  },
+  {
+   "fips": "27113",
+   "points": 0
+  },
+  {
+   "fips": "27115",
+   "points": 0
+  },
+  {
+   "fips": "27117",
+   "points": 5280
+  },
+  {
+   "fips": "27119",
+   "points": 14973
+  },
+  {
+   "fips": "27121",
+   "points": 8259
+  },
+  {
+   "fips": "27123",
+   "points": 220995
+  },
+  {
+   "fips": "27125",
+   "points": 0
+  },
+  {
+   "fips": "27127",
+   "points": 0
+  },
+  {
+   "fips": "27129",
+   "points": 7968
+  },
+  {
+   "fips": "27131",
+   "points": 0
+  },
+  {
+   "fips": "27133",
+   "points": 4783
+  },
+  {
+   "fips": "27135",
+   "points": 0
+  },
+  {
+   "fips": "27137",
+   "points": 102307
+  },
+  {
+   "fips": "27139",
+   "points": 63748
+  },
+  {
+   "fips": "27141",
+   "points": 39569
+  },
+  {
+   "fips": "27143",
+   "points": 0
+  },
+  {
+   "fips": "27145",
+   "points": 60326
+  },
+  {
+   "fips": "27147",
+   "points": 0
+  },
+  {
+   "fips": "27149",
+   "points": 4361
+  },
+  {
+   "fips": "27151",
+   "points": 5816
+  },
+  {
+   "fips": "27153",
+   "points": 0
+  },
+  {
+   "fips": "27155",
+   "points": 0
+  },
+  {
+   "fips": "27157",
+   "points": 11652
+  },
+  {
+   "fips": "27159",
+   "points": 0
+  },
+  {
+   "fips": "27161",
+   "points": 7963
+  },
+  {
+   "fips": "27163",
+   "points": 124824
+  },
+  {
+   "fips": "27165",
+   "points": 0
+  },
+  {
+   "fips": "27167",
+   "points": 0
+  },
+  {
+   "fips": "27169",
+   "points": 19800
+  },
+  {
+   "fips": "27171",
+   "points": 71387
+  },
+  {
+   "fips": "27173",
+   "points": 5129
+  }
+ ],
+ "counties_with_points": 55
+}

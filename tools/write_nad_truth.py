@@ -48,7 +48,7 @@ for f in sorted(glob.glob("counts_local/*.json")):
         print("[fail] MANIFEST 解析失败", tag, repr(e)[:80]); fail += 1; fails.append(tag); continue
     tot, ins = c["total_points"], c["in_state_points"]
     pct = c.get("in_state_pct") or 0.0
-    verdict = ("nad_instate_missing" if ins == 0
+    verdict = ("nad_instate_missing" if ins == 0 or pct < 1
                else ("nad_instate_partial" if pct < 80 else "nad_instate_ok"))
     audit = man.setdefault("audit", {})
     a = audit.setdefault("by_source", {}).setdefault("nad", {})

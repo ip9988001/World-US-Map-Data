@@ -1,0 +1,223 @@
+{
+ "tag": "raw-US-ND-v1",
+ "state": "ND",
+ "total_points": 471543,
+ "in_state_points": 432847,
+ "out_state_points": 38696,
+ "in_state_pct": 91.79,
+ "counties": [
+  {
+   "fips": "38001",
+   "points": 1473
+  },
+  {
+   "fips": "38003",
+   "points": 5870
+  },
+  {
+   "fips": "38005",
+   "points": 4095
+  },
+  {
+   "fips": "38007",
+   "points": 945
+  },
+  {
+   "fips": "38009",
+   "points": 5225
+  },
+  {
+   "fips": "38011",
+   "points": 2259
+  },
+  {
+   "fips": "38013",
+   "points": 2454
+  },
+  {
+   "fips": "38015",
+   "points": 51854
+  },
+  {
+   "fips": "38017",
+   "points": 110608
+  },
+  {
+   "fips": "38019",
+   "points": 2603
+  },
+  {
+   "fips": "38021",
+   "points": 2640
+  },
+  {
+   "fips": "38023",
+   "points": 1989
+  },
+  {
+   "fips": "38025",
+   "points": 4116
+  },
+  {
+   "fips": "38027",
+   "points": 1640
+  },
+  {
+   "fips": "38029",
+   "points": 2519
+  },
+  {
+   "fips": "38031",
+   "points": 2218
+  },
+  {
+   "fips": "38033",
+   "points": 1369
+  },
+  {
+   "fips": "38035",
+   "points": 25224
+  },
+  {
+   "fips": "38037",
+   "points": 2259
+  },
+  {
+   "fips": "38039",
+   "points": 1710
+  },
+  {
+   "fips": "38041",
+   "points": 1714
+  },
+  {
+   "fips": "38043",
+   "points": 2255
+  },
+  {
+   "fips": "38045",
+   "points": 2633
+  },
+  {
+   "fips": "38047",
+   "points": 1390
+  },
+  {
+   "fips": "38049",
+   "points": 3531
+  },
+  {
+   "fips": "38051",
+   "points": 2319
+  },
+  {
+   "fips": "38053",
+   "points": 15923
+  },
+  {
+   "fips": "38055",
+   "points": 8080
+  },
+  {
+   "fips": "38057",
+   "points": 5745
+  },
+  {
+   "fips": "38059",
+   "points": 15690
+  },
+  {
+   "fips": "38061",
+   "points": 6116
+  },
+  {
+   "fips": "38063",
+   "points": 2826
+  },
+  {
+   "fips": "38065",
+   "points": 1278
+  },
+  {
+   "fips": "38067",
+   "points": 3983
+  },
+  {
+   "fips": "38069",
+   "points": 2448
+  },
+  {
+   "fips": "38071",
+   "points": 6902
+  },
+  {
+   "fips": "38073",
+   "points": 2754
+  },
+  {
+   "fips": "38075",
+   "points": 1545
+  },
+  {
+   "fips": "38077",
+   "points": 7949
+  },
+  {
+   "fips": "38079",
+   "points": 7286
+  },
+  {
+   "fips": "38081",
+   "points": 2195
+  },
+  {
+   "fips": "38083",
+   "points": 895
+  },
+  {
+   "fips": "38085",
+   "points": 1585
+  },
+  {
+   "fips": "38087",
+   "points": 565
+  },
+  {
+   "fips": "38089",
+   "points": 16232
+  },
+  {
+   "fips": "38091",
+   "points": 1428
+  },
+  {
+   "fips": "38093",
+   "points": 9602
+  },
+  {
+   "fips": "38095",
+   "points": 1782
+  },
+  {
+   "fips": "38097",
+   "points": 4395
+  },
+  {
+   "fips": "38099",
+   "points": 6155
+  },
+  {
+   "fips": "38101",
+   "points": 32252
+  },
+  {
+   "fips": "38103",
+   "points": 2609
+  },
+  {
+   "fips": "38105",
+   "points": 17715
+  }
+ ],
+ "counties_with_points": 53
+}

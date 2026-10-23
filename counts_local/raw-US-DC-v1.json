@@ -1,0 +1,15 @@
+{
+ "tag": "raw-US-DC-v1",
+ "state": "DC",
+ "total_points": 633331,
+ "in_state_points": 429637,
+ "out_state_points": 203694,
+ "in_state_pct": 67.84,
+ "counties": [
+  {
+   "fips": "11001",
+   "points": 429637
+  }
+ ],
+ "counties_with_points": 1
+}

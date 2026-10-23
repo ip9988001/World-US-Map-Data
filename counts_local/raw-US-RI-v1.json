@@ -1,0 +1,31 @@
+{
+ "tag": "raw-US-RI-v1",
+ "state": "RI",
+ "total_points": 569222,
+ "in_state_points": 389689,
+ "out_state_points": 179533,
+ "in_state_pct": 68.46,
+ "counties": [
+  {
+   "fips": "44001",
+   "points": 18640
+  },
+  {
+   "fips": "44003",
+   "points": 66234
+  },
+  {
+   "fips": "44005",
+   "points": 38658
+  },
+  {
+   "fips": "44007",
+   "points": 204087
+  },
+  {
+   "fips": "44009",
+   "points": 62070
+  }
+ ],
+ "counties_with_points": 5
+}

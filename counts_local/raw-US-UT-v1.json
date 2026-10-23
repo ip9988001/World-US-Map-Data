@@ -1,0 +1,127 @@
+{
+ "tag": "raw-US-UT-v1",
+ "state": "UT",
+ "total_points": 1505689,
+ "in_state_points": 1477148,
+ "out_state_points": 28541,
+ "in_state_pct": 98.1,
+ "counties": [
+  {
+   "fips": "49001",
+   "points": 3318
+  },
+  {
+   "fips": "49003",
+   "points": 25094
+  },
+  {
+   "fips": "49005",
+   "points": 58113
+  },
+  {
+   "fips": "49007",
+   "points": 11158
+  },
+  {
+   "fips": "49009",
+   "points": 2431
+  },
+  {
+   "fips": "49011",
+   "points": 140615
+  },
+  {
+   "fips": "49013",
+   "points": 8450
+  },
+  {
+   "fips": "49015",
+   "points": 6656
+  },
+  {
+   "fips": "49017",
+   "points": 8990
+  },
+  {
+   "fips": "49019",
+   "points": 6696
+  },
+  {
+   "fips": "49021",
+   "points": 35637
+  },
+  {
+   "fips": "49023",
+   "points": 4790
+  },
+  {
+   "fips": "49025",
+   "points": 8731
+  },
+  {
+   "fips": "49027",
+   "points": 5763
+  },
+  {
+   "fips": "49029",
+   "points": 5339
+  },
+  {
+   "fips": "49031",
+   "points": 1214
+  },
+  {
+   "fips": "49033",
+   "points": 6586
+  },
+  {
+   "fips": "49035",
+   "points": 534335
+  },
+  {
+   "fips": "49037",
+   "points": 5305
+  },
+  {
+   "fips": "49039",
+   "points": 8851
+  },
+  {
+   "fips": "49041",
+   "points": 11603
+  },
+  {
+   "fips": "49043",
+   "points": 33331
+  },
+  {
+   "fips": "49045",
+   "points": 31066
+  },
+  {
+   "fips": "49047",
+   "points": 16051
+  },
+  {
+   "fips": "49049",
+   "points": 244193
+  },
+  {
+   "fips": "49051",
+   "points": 28308
+  },
+  {
+   "fips": "49053",
+   "points": 106645
+  },
+  {
+   "fips": "49055",
+   "points": 2379
+  },
+  {
+   "fips": "49057",
+   "points": 115500
+  }
+ ],
+ "counties_with_points": 29
+}

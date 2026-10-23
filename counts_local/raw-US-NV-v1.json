@@ -1,0 +1,79 @@
+{
+ "tag": "raw-US-NV-v1",
+ "state": "NV",
+ "total_points": 65424,
+ "in_state_points": 0,
+ "out_state_points": 65424,
+ "in_state_pct": 0.0,
+ "counties": [
+  {
+   "fips": "32001",
+   "points": 0
+  },
+  {
+   "fips": "32003",
+   "points": 0
+  },
+  {
+   "fips": "32005",
+   "points": 0
+  },
+  {
+   "fips": "32007",
+   "points": 0
+  },
+  {
+   "fips": "32009",
+   "points": 0
+  },
+  {
+   "fips": "32011",
+   "points": 0
+  },
+  {
+   "fips": "32013",
+   "points": 0
+  },
+  {
+   "fips": "32015",
+   "points": 0
+  },
+  {
+   "fips": "32017",
+   "points": 0
+  },
+  {
+   "fips": "32019",
+   "points": 0
+  },
+  {
+   "fips": "32021",
+   "points": 0
+  },
+  {
+   "fips": "32023",
+   "points": 0
+  },
+  {
+   "fips": "32027",
+   "points": 0
+  },
+  {
+   "fips": "32029",
+   "points": 0
+  },
+  {
+   "fips": "32031",
+   "points": 0
+  },
+  {
+   "fips": "32033",
+   "points": 0
+  },
+  {
+   "fips": "32510",
+   "points": 0
+  }
+ ],
+ "counties_with_points": 0
+}

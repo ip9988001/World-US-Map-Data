@@ -1,0 +1,23 @@
+{
+ "tag": "raw-US-DE-v1",
+ "state": "DE",
+ "total_points": 751212,
+ "in_state_points": 562290,
+ "out_state_points": 188922,
+ "in_state_pct": 74.85,
+ "counties": [
+  {
+   "fips": "10001",
+   "points": 85080
+  },
+  {
+   "fips": "10003",
+   "points": 275961
+  },
+  {
+   "fips": "10005",
+   "points": 201249
+  }
+ ],
+ "counties_with_points": 3
+}

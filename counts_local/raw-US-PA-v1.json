@@ -1,0 +1,279 @@
+{
+ "tag": "raw-US-PA-v1",
+ "state": "PA",
+ "total_points": 2437907,
+ "in_state_points": 1053974,
+ "out_state_points": 1383933,
+ "in_state_pct": 43.23,
+ "counties": [
+  {
+   "fips": "42001",
+   "points": 4
+  },
+  {
+   "fips": "42003",
+   "points": 3
+  },
+  {
+   "fips": "42005",
+   "points": 5
+  },
+  {
+   "fips": "42007",
+   "points": 0
+  },
+  {
+   "fips": "42009",
+   "points": 0
+  },
+  {
+   "fips": "42011",
+   "points": 28
+  },
+  {
+   "fips": "42013",
+   "points": 67757
+  },
+  {
+   "fips": "42015",
+   "points": 0
+  },
+  {
+   "fips": "42017",
+   "points": 1080
+  },
+  {
+   "fips": "42019",
+   "points": 0
+  },
+  {
+   "fips": "42021",
+   "points": 0
+  },
+  {
+   "fips": "42023",
+   "points": 0
+  },
+  {
+   "fips": "42025",
+   "points": 0
+  },
+  {
+   "fips": "42027",
+   "points": 58774
+  },
+  {
+   "fips": "42029",
+   "points": 252
+  },
+  {
+   "fips": "42031",
+   "points": 0
+  },
+  {
+   "fips": "42033",
+   "points": 0
+  },
+  {
+   "fips": "42035",
+   "points": 0
+  },
+  {
+   "fips": "42037",
+   "points": 0
+  },
+  {
+   "fips": "42039",
+   "points": 0
+  },
+  {
+   "fips": "42041",
+   "points": 111997
+  },
+  {
+   "fips": "42043",
+   "points": 0
+  },
+  {
+   "fips": "42045",
+   "points": 119
+  },
+  {
+   "fips": "42047",
+   "points": 0
+  },
+  {
+   "fips": "42049",
+   "points": 0
+  },
+  {
+   "fips": "42051",
+   "points": 67750
+  },
+  {
+   "fips": "42053",
+   "points": 0
+  },
+  {
+   "fips": "42055",
+   "points": 4
+  },
+  {
+   "fips": "42057",
+   "points": 0
+  },
+  {
+   "fips": "42059",
+   "points": 3
+  },
+  {
+   "fips": "42061",
+   "points": 0
+  },
+  {
+   "fips": "42063",
+   "points": 45334
+  },
+  {
+   "fips": "42065",
+   "points": 0
+  },
+  {
+   "fips": "42067",
+   "points": 0
+  },
+  {
+   "fips": "42069",
+   "points": 0
+  },
+  {
+   "fips": "42071",
+   "points": 0
+  },
+  {
+   "fips": "42073",
+   "points": 43633
+  },
+  {
+   "fips": "42075",
+   "points": 0
+  },
+  {
+   "fips": "42077",
+   "points": 0
+  },
+  {
+   "fips": "42079",
+   "points": 0
+  },
+  {
+   "fips": "42081",
+   "points": 0
+  },
+  {
+   "fips": "42083",
+   "points": 0
+  },
+  {
+   "fips": "42085",
+   "points": 0
+  },
+  {
+   "fips": "42087",
+   "points": 0
+  },
+  {
+   "fips": "42089",
+   "points": 0
+  },
+  {
+   "fips": "42091",
+   "points": 357112
+  },
+  {
+   "fips": "42093",
+   "points": 0
+  },
+  {
+   "fips": "42095",
+   "points": 0
+  },
+  {
+   "fips": "42097",
+   "points": 0
+  },
+  {
+   "fips": "42099",
+   "points": 1
+  },
+  {
+   "fips": "42101",
+   "points": 104
+  },
+  {
+   "fips": "42103",
+   "points": 0
+  },
+  {
+   "fips": "42105",
+   "points": 0
+  },
+  {
+   "fips": "42107",
+   "points": 0
+  },
+  {
+   "fips": "42109",
+   "points": 0
+  },
+  {
+   "fips": "42111",
+   "points": 2
+  },
+  {
+   "fips": "42113",
+   "points": 0
+  },
+  {
+   "fips": "42115",
+   "points": 0
+  },
+  {
+   "fips": "42117",
+   "points": 24136
+  },
+  {
+   "fips": "42119",
+   "points": 0
+  },
+  {
+   "fips": "42121",
+   "points": 0
+  },
+  {
+   "fips": "42123",
+   "points": 0
+  },
+  {
+   "fips": "42125",
+   "points": 100293
+  },
+  {
+   "fips": "42127",
+   "points": 0
+  },
+  {
+   "fips": "42129",
+   "points": 175571
+  },
+  {
+   "fips": "42131",
+   "points": 0
+  },
+  {
+   "fips": "42133",
+   "points": 12
+  }
+ ],
+ "counties_with_points": 23
+}

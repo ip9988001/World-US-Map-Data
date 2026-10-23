@@ -1,0 +1,235 @@
+{
+ "tag": "raw-US-MT-v1",
+ "state": "MT",
+ "total_points": 660136,
+ "in_state_points": 644458,
+ "out_state_points": 15678,
+ "in_state_pct": 97.63,
+ "counties": [
+  {
+   "fips": "30001",
+   "points": 5365
+  },
+  {
+   "fips": "30003",
+   "points": 6072
+  },
+  {
+   "fips": "30005",
+   "points": 3697
+  },
+  {
+   "fips": "30007",
+   "points": 4187
+  },
+  {
+   "fips": "30009",
+   "points": 8203
+  },
+  {
+   "fips": "30011",
+   "points": 1187
+  },
+  {
+   "fips": "30013",
+   "points": 47844
+  },
+  {
+   "fips": "30015",
+   "points": 3994
+  },
+  {
+   "fips": "30017",
+   "points": 6518
+  },
+  {
+   "fips": "30019",
+   "points": 1436
+  },
+  {
+   "fips": "30021",
+   "points": 4601
+  },
+  {
+   "fips": "30023",
+   "points": 6448
+  },
+  {
+   "fips": "30025",
+   "points": 2278
+  },
+  {
+   "fips": "30027",
+   "points": 8435
+  },
+  {
+   "fips": "30029",
+   "points": 74562
+  },
+  {
+   "fips": "30031",
+   "points": 72527
+  },
+  {
+   "fips": "30033",
+   "points": 1126
+  },
+  {
+   "fips": "30035",
+   "points": 11064
+  },
+  {
+   "fips": "30037",
+   "points": 652
+  },
+  {
+   "fips": "30039",
+   "points": 3766
+  },
+  {
+   "fips": "30041",
+   "points": 6837
+  },
+  {
+   "fips": "30043",
+   "points": 7232
+  },
+  {
+   "fips": "30045",
+   "points": 1730
+  },
+  {
+   "fips": "30047",
+   "points": 19471
+  },
+  {
+   "fips": "30049",
+   "points": 44368
+  },
+  {
+   "fips": "30051",
+   "points": 687
+  },
+  {
+   "fips": "30053",
+   "points": 14268
+  },
+  {
+   "fips": "30055",
+   "points": 1481
+  },
+  {
+   "fips": "30057",
+   "points": 10080
+  },
+  {
+   "fips": "30059",
+   "points": 2071
+  },
+  {
+   "fips": "30061",
+   "points": 3690
+  },
+  {
+   "fips": "30063",
+   "points": 52613
+  },
+  {
+   "fips": "30065",
+   "points": 2103
+  },
+  {
+   "fips": "30067",
+   "points": 12474
+  },
+  {
+   "fips": "30069",
+   "points": 458
+  },
+  {
+   "fips": "30071",
+   "points": 2898
+  },
+  {
+   "fips": "30073",
+   "points": 3718
+  },
+  {
+   "fips": "30075",
+   "points": 1344
+  },
+  {
+   "fips": "30077",
+   "points": 4430
+  },
+  {
+   "fips": "30079",
+   "points": 945
+  },
+  {
+   "fips": "30081",
+   "points": 26288
+  },
+  {
+   "fips": "30083",
+   "points": 5965
+  },
+  {
+   "fips": "30085",
+   "points": 5271
+  },
+  {
+   "fips": "30087",
+   "points": 4766
+  },
+  {
+   "fips": "30089",
+   "points": 9718
+  },
+  {
+   "fips": "30091",
+   "points": 2621
+  },
+  {
+   "fips": "30093",
+   "points": 17215
+  },
+  {
+   "fips": "30095",
+   "points": 6001
+  },
+  {
+   "fips": "30097",
+   "points": 2512
+  },
+  {
+   "fips": "30099",
+   "points": 3819
+  },
+  {
+   "fips": "30101",
+   "points": 3740
+  },
+  {
+   "fips": "30103",
+   "points": 566
+  },
+  {
+   "fips": "30105",
+   "points": 6463
+  },
+  {
+   "fips": "30107",
+   "points": 1616
+  },
+  {
+   "fips": "30109",
+   "points": 768
+  },
+  {
+   "fips": "30111",
+   "points": 80269
+  }
+ ],
+ "counties_with_points": 56
+}

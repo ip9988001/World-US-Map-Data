@@ -1,0 +1,67 @@
+{
+ "tag": "raw-US-VT-v1",
+ "state": "VT",
+ "total_points": 366638,
+ "in_state_points": 333610,
+ "out_state_points": 33028,
+ "in_state_pct": 90.99,
+ "counties": [
+  {
+   "fips": "50001",
+   "points": 19677
+  },
+  {
+   "fips": "50003",
+   "points": 21880
+  },
+  {
+   "fips": "50005",
+   "points": 17491
+  },
+  {
+   "fips": "50007",
+   "points": 61933
+  },
+  {
+   "fips": "50009",
+   "points": 5915
+  },
+  {
+   "fips": "50011",
+   "points": 24567
+  },
+  {
+   "fips": "50013",
+   "points": 7003
+  },
+  {
+   "fips": "50015",
+   "points": 14678
+  },
+  {
+   "fips": "50017",
+   "points": 17180
+  },
+  {
+   "fips": "50019",
+   "points": 18126
+  },
+  {
+   "fips": "50021",
+   "points": 32479
+  },
+  {
+   "fips": "50023",
+   "points": 28857
+  },
+  {
+   "fips": "50025",
+   "points": 29375
+  },
+  {
+   "fips": "50027",
+   "points": 34449
+  }
+ ],
+ "counties_with_points": 14
+}

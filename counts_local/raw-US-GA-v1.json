@@ -1,0 +1,647 @@
+{
+ "tag": "raw-US-GA-v1",
+ "state": "GA",
+ "total_points": 700572,
+ "in_state_points": 205071,
+ "out_state_points": 495501,
+ "in_state_pct": 29.27,
+ "counties": [
+  {
+   "fips": "13001",
+   "points": 0
+  },
+  {
+   "fips": "13003",
+   "points": 0
+  },
+  {
+   "fips": "13005",
+   "points": 0
+  },
+  {
+   "fips": "13007",
+   "points": 0
+  },
+  {
+   "fips": "13009",
+   "points": 0
+  },
+  {
+   "fips": "13011",
+   "points": 0
+  },
+  {
+   "fips": "13013",
+   "points": 0
+  },
+  {
+   "fips": "13015",
+   "points": 0
+  },
+  {
+   "fips": "13017",
+   "points": 0
+  },
+  {
+   "fips": "13019",
+   "points": 0
+  },
+  {
+   "fips": "13021",
+   "points": 0
+  },
+  {
+   "fips": "13023",
+   "points": 0
+  },
+  {
+   "fips": "13025",
+   "points": 0
+  },
+  {
+   "fips": "13027",
+   "points": 0
+  },
+  {
+   "fips": "13029",
+   "points": 0
+  },
+  {
+   "fips": "13031",
+   "points": 0
+  },
+  {
+   "fips": "13033",
+   "points": 0
+  },
+  {
+   "fips": "13035",
+   "points": 0
+  },
+  {
+   "fips": "13037",
+   "points": 0
+  },
+  {
+   "fips": "13039",
+   "points": 0
+  },
+  {
+   "fips": "13043",
+   "points": 0
+  },
+  {
+   "fips": "13045",
+   "points": 0
+  },
+  {
+   "fips": "13047",
+   "points": 0
+  },
+  {
+   "fips": "13049",
+   "points": 0
+  },
+  {
+   "fips": "13051",
+   "points": 0
+  },
+  {
+   "fips": "13053",
+   "points": 0
+  },
+  {
+   "fips": "13055",
+   "points": 0
+  },
+  {
+   "fips": "13057",
+   "points": 0
+  },
+  {
+   "fips": "13059",
+   "points": 0
+  },
+  {
+   "fips": "13061",
+   "points": 0
+  },
+  {
+   "fips": "13063",
+   "points": 0
+  },
+  {
+   "fips": "13065",
+   "points": 0
+  },
+  {
+   "fips": "13067",
+   "points": 0
+  },
+  {
+   "fips": "13069",
+   "points": 0
+  },
+  {
+   "fips": "13071",
+   "points": 0
+  },
+  {
+   "fips": "13073",
+   "points": 0
+  },
+  {
+   "fips": "13075",
+   "points": 0
+  },
+  {
+   "fips": "13077",
+   "points": 0
+  },
+  {
+   "fips": "13079",
+   "points": 0
+  },
+  {
+   "fips": "13081",
+   "points": 0
+  },
+  {
+   "fips": "13083",
+   "points": 0
+  },
+  {
+   "fips": "13085",
+   "points": 0
+  },
+  {
+   "fips": "13087",
+   "points": 0
+  },
+  {
+   "fips": "13089",
+   "points": 16995
+  },
+  {
+   "fips": "13091",
+   "points": 0
+  },
+  {
+   "fips": "13093",
+   "points": 0
+  },
+  {
+   "fips": "13095",
+   "points": 0
+  },
+  {
+   "fips": "13097",
+   "points": 0
+  },
+  {
+   "fips": "13099",
+   "points": 0
+  },
+  {
+   "fips": "13101",
+   "points": 0
+  },
+  {
+   "fips": "13103",
+   "points": 0
+  },
+  {
+   "fips": "13105",
+   "points": 0
+  },
+  {
+   "fips": "13107",
+   "points": 0
+  },
+  {
+   "fips": "13109",
+   "points": 0
+  },
+  {
+   "fips": "13111",
+   "points": 0
+  },
+  {
+   "fips": "13113",
+   "points": 0
+  },
+  {
+   "fips": "13115",
+   "points": 0
+  },
+  {
+   "fips": "13117",
+   "points": 0
+  },
+  {
+   "fips": "13119",
+   "points": 0
+  },
+  {
+   "fips": "13121",
+   "points": 188076
+  },
+  {
+   "fips": "13123",
+   "points": 0
+  },
+  {
+   "fips": "13125",
+   "points": 0
+  },
+  {
+   "fips": "13127",
+   "points": 0
+  },
+  {
+   "fips": "13129",
+   "points": 0
+  },
+  {
+   "fips": "13131",
+   "points": 0
+  },
+  {
+   "fips": "13133",
+   "points": 0
+  },
+  {
+   "fips": "13135",
+   "points": 0
+  },
+  {
+   "fips": "13137",
+   "points": 0
+  },
+  {
+   "fips": "13139",
+   "points": 0
+  },
+  {
+   "fips": "13141",
+   "points": 0
+  },
+  {
+   "fips": "13143",
+   "points": 0
+  },
+  {
+   "fips": "13145",
+   "points": 0
+  },
+  {
+   "fips": "13147",
+   "points": 0
+  },
+  {
+   "fips": "13149",
+   "points": 0
+  },
+  {
+   "fips": "13151",
+   "points": 0
+  },
+  {
+   "fips": "13153",
+   "points": 0
+  },
+  {
+   "fips": "13155",
+   "points": 0
+  },
+  {
+   "fips": "13157",
+   "points": 0
+  },
+  {
+   "fips": "13159",
+   "points": 0
+  },
+  {
+   "fips": "13161",
+   "points": 0
+  },
+  {
+   "fips": "13163",
+   "points": 0
+  },
+  {
+   "fips": "13165",
+   "points": 0
+  },
+  {
+   "fips": "13167",
+   "points": 0
+  },
+  {
+   "fips": "13169",
+   "points": 0
+  },
+  {
+   "fips": "13171",
+   "points": 0
+  },
+  {
+   "fips": "13173",
+   "points": 0
+  },
+  {
+   "fips": "13175",
+   "points": 0
+  },
+  {
+   "fips": "13177",
+   "points": 0
+  },
+  {
+   "fips": "13179",
+   "points": 0
+  },
+  {
+   "fips": "13181",
+   "points": 0
+  },
+  {
+   "fips": "13183",
+   "points": 0
+  },
+  {
+   "fips": "13185",
+   "points": 0
+  },
+  {
+   "fips": "13187",
+   "points": 0
+  },
+  {
+   "fips": "13189",
+   "points": 0
+  },
+  {
+   "fips": "13191",
+   "points": 0
+  },
+  {
+   "fips": "13193",
+   "points": 0
+  },
+  {
+   "fips": "13195",
+   "points": 0
+  },
+  {
+   "fips": "13197",
+   "points": 0
+  },
+  {
+   "fips": "13199",
+   "points": 0
+  },
+  {
+   "fips": "13201",
+   "points": 0
+  },
+  {
+   "fips": "13205",
+   "points": 0
+  },
+  {
+   "fips": "13207",
+   "points": 0
+  },
+  {
+   "fips": "13209",
+   "points": 0
+  },
+  {
+   "fips": "13211",
+   "points": 0
+  },
+  {
+   "fips": "13213",
+   "points": 0
+  },
+  {
+   "fips": "13215",
+   "points": 0
+  },
+  {
+   "fips": "13217",
+   "points": 0
+  },
+  {
+   "fips": "13219",
+   "points": 0
+  },
+  {
+   "fips": "13221",
+   "points": 0
+  },
+  {
+   "fips": "13223",
+   "points": 0
+  },
+  {
+   "fips": "13225",
+   "points": 0
+  },
+  {
+   "fips": "13227",
+   "points": 0
+  },
+  {
+   "fips": "13229",
+   "points": 0
+  },
+  {
+   "fips": "13231",
+   "points": 0
+  },
+  {
+   "fips": "13233",
+   "points": 0
+  },
+  {
+   "fips": "13235",
+   "points": 0
+  },
+  {
+   "fips": "13237",
+   "points": 0
+  },
+  {
+   "fips": "13239",
+   "points": 0
+  },
+  {
+   "fips": "13241",
+   "points": 0
+  },
+  {
+   "fips": "13243",
+   "points": 0
+  },
+  {
+   "fips": "13245",
+   "points": 0
+  },
+  {
+   "fips": "13247",
+   "points": 0
+  },
+  {
+   "fips": "13249",
+   "points": 0
+  },
+  {
+   "fips": "13251",
+   "points": 0
+  },
+  {
+   "fips": "13253",
+   "points": 0
+  },
+  {
+   "fips": "13255",
+   "points": 0
+  },
+  {
+   "fips": "13257",
+   "points": 0
+  },
+  {
+   "fips": "13259",
+   "points": 0
+  },
+  {
+   "fips": "13261",
+   "points": 0
+  },
+  {
+   "fips": "13263",
+   "points": 0
+  },
+  {
+   "fips": "13265",
+   "points": 0
+  },
+  {
+   "fips": "13267",
+   "points": 0
+  },
+  {
+   "fips": "13269",
+   "points": 0
+  },
+  {
+   "fips": "13271",
+   "points": 0
+  },
+  {
+   "fips": "13273",
+   "points": 0
+  },
+  {
+   "fips": "13275",
+   "points": 0
+  },
+  {
+   "fips": "13277",
+   "points": 0
+  },
+  {
+   "fips": "13279",
+   "points": 0
+  },
+  {
+   "fips": "13281",
+   "points": 0
+  },
+  {
+   "fips": "13283",
+   "points": 0
+  },
+  {
+   "fips": "13285",
+   "points": 0
+  },
+  {
+   "fips": "13287",
+   "points": 0
+  },
+  {
+   "fips": "13289",
+   "points": 0
+  },
+  {
+   "fips": "13291",
+   "points": 0
+  },
+  {
+   "fips": "13293",
+   "points": 0
+  },
+  {
+   "fips": "13295",
+   "points": 0
+  },
+  {
+   "fips": "13297",
+   "points": 0
+  },
+  {
+   "fips": "13299",
+   "points": 0
+  },
+  {
+   "fips": "13301",
+   "points": 0
+  },
+  {
+   "fips": "13303",
+   "points": 0
+  },
+  {
+   "fips": "13305",
+   "points": 0
+  },
+  {
+   "fips": "13307",
+   "points": 0
+  },
+  {
+   "fips": "13309",
+   "points": 0
+  },
+  {
+   "fips": "13311",
+   "points": 0
+  },
+  {
+   "fips": "13313",
+   "points": 0
+  },
+  {
+   "fips": "13315",
+   "points": 0
+  },
+  {
+   "fips": "13317",
+   "points": 0
+  },
+  {
+   "fips": "13319",
+   "points": 0
+  },
+  {
+   "fips": "13321",
+   "points": 0
+  }
+ ],
+ "counties_with_points": 2
+}

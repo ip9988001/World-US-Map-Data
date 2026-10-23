@@ -1,0 +1,155 @@
+{
+ "tag": "raw-US-OR-v1",
+ "state": "OR",
+ "total_points": 2322905,
+ "in_state_points": 1942239,
+ "out_state_points": 380666,
+ "in_state_pct": 83.61,
+ "counties": [
+  {
+   "fips": "41001",
+   "points": 8783
+  },
+  {
+   "fips": "41003",
+   "points": 41471
+  },
+  {
+   "fips": "41005",
+   "points": 185575
+  },
+  {
+   "fips": "41007",
+   "points": 23532
+  },
+  {
+   "fips": "41009",
+   "points": 23951
+  },
+  {
+   "fips": "41011",
+   "points": 30717
+  },
+  {
+   "fips": "41013",
+   "points": 14099
+  },
+  {
+   "fips": "41015",
+   "points": 13646
+  },
+  {
+   "fips": "41017",
+   "points": 128176
+  },
+  {
+   "fips": "41019",
+   "points": 58172
+  },
+  {
+   "fips": "41021",
+   "points": 1450
+  },
+  {
+   "fips": "41023",
+   "points": 4660
+  },
+  {
+   "fips": "41025",
+   "points": 4317
+  },
+  {
+   "fips": "41027",
+   "points": 12644
+  },
+  {
+   "fips": "41029",
+   "points": 117542
+  },
+  {
+   "fips": "41031",
+   "points": 10536
+  },
+  {
+   "fips": "41033",
+   "points": 45990
+  },
+  {
+   "fips": "41035",
+   "points": 30084
+  },
+  {
+   "fips": "41037",
+   "points": 4451
+  },
+  {
+   "fips": "41039",
+   "points": 191336
+  },
+  {
+   "fips": "41041",
+   "points": 36215
+  },
+  {
+   "fips": "41043",
+   "points": 57532
+  },
+  {
+   "fips": "41045",
+   "points": 11463
+  },
+  {
+   "fips": "41047",
+   "points": 162946
+  },
+  {
+   "fips": "41049",
+   "points": 5831
+  },
+  {
+   "fips": "41051",
+   "points": 276532
+  },
+  {
+   "fips": "41053",
+   "points": 40163
+  },
+  {
+   "fips": "41055",
+   "points": 1300
+  },
+  {
+   "fips": "41057",
+   "points": 21651
+  },
+  {
+   "fips": "41059",
+   "points": 34144
+  },
+  {
+   "fips": "41061",
+   "points": 11700
+  },
+  {
+   "fips": "41063",
+   "points": 4807
+  },
+  {
+   "fips": "41065",
+   "points": 13774
+  },
+  {
+   "fips": "41067",
+   "points": 272094
+  },
+  {
+   "fips": "41069",
+   "points": 1196
+  },
+  {
+   "fips": "41071",
+   "points": 39759
+  }
+ ],
+ "counties_with_points": 36
+}

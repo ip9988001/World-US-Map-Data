@@ -1,0 +1,47 @@
+{
+ "tag": "raw-US-CT-v1",
+ "state": "CT",
+ "total_points": 1396945,
+ "in_state_points": 1188645,
+ "out_state_points": 208300,
+ "in_state_pct": 85.09,
+ "counties": [
+  {
+   "fips": "09110",
+   "points": 330608
+  },
+  {
+   "fips": "09120",
+   "points": 98660
+  },
+  {
+   "fips": "09130",
+   "points": 69032
+  },
+  {
+   "fips": "09140",
+   "points": 142991
+  },
+  {
+   "fips": "09150",
+   "points": 39989
+  },
+  {
+   "fips": "09160",
+   "points": 48361
+  },
+  {
+   "fips": "09170",
+   "points": 180711
+  },
+  {
+   "fips": "09180",
+   "points": 103707
+  },
+  {
+   "fips": "09190",
+   "points": 174586
+  }
+ ],
+ "counties_with_points": 9
+}

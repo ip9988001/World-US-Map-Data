@@ -1,0 +1,187 @@
+{
+ "tag": "raw-US-ID-v1",
+ "state": "ID",
+ "total_points": 614754,
+ "in_state_points": 88631,
+ "out_state_points": 526123,
+ "in_state_pct": 14.42,
+ "counties": [
+  {
+   "fips": "16001",
+   "points": 0
+  },
+  {
+   "fips": "16003",
+   "points": 0
+  },
+  {
+   "fips": "16005",
+   "points": 0
+  },
+  {
+   "fips": "16007",
+   "points": 6120
+  },
+  {
+   "fips": "16009",
+   "points": 0
+  },
+  {
+   "fips": "16011",
+   "points": 0
+  },
+  {
+   "fips": "16013",
+   "points": 17105
+  },
+  {
+   "fips": "16015",
+   "points": 0
+  },
+  {
+   "fips": "16017",
+   "points": 0
+  },
+  {
+   "fips": "16019",
+   "points": 4
+  },
+  {
+   "fips": "16021",
+   "points": 0
+  },
+  {
+   "fips": "16023",
+   "points": 0
+  },
+  {
+   "fips": "16025",
+   "points": 0
+  },
+  {
+   "fips": "16027",
+   "points": 0
+  },
+  {
+   "fips": "16029",
+   "points": 7
+  },
+  {
+   "fips": "16031",
+   "points": 0
+  },
+  {
+   "fips": "16033",
+   "points": 0
+  },
+  {
+   "fips": "16035",
+   "points": 0
+  },
+  {
+   "fips": "16037",
+   "points": 0
+  },
+  {
+   "fips": "16039",
+   "points": 0
+  },
+  {
+   "fips": "16041",
+   "points": 0
+  },
+  {
+   "fips": "16043",
+   "points": 0
+  },
+  {
+   "fips": "16045",
+   "points": 0
+  },
+  {
+   "fips": "16047",
+   "points": 6425
+  },
+  {
+   "fips": "16049",
+   "points": 11497
+  },
+  {
+   "fips": "16051",
+   "points": 0
+  },
+  {
+   "fips": "16053",
+   "points": 9566
+  },
+  {
+   "fips": "16055",
+   "points": 0
+  },
+  {
+   "fips": "16057",
+   "points": 8962
+  },
+  {
+   "fips": "16059",
+   "points": 0
+  },
+  {
+   "fips": "16061",
+   "points": 0
+  },
+  {
+   "fips": "16063",
+   "points": 0
+  },
+  {
+   "fips": "16065",
+   "points": 0
+  },
+  {
+   "fips": "16067",
+   "points": 0
+  },
+  {
+   "fips": "16069",
+   "points": 18768
+  },
+  {
+   "fips": "16071",
+   "points": 0
+  },
+  {
+   "fips": "16073",
+   "points": 5433
+  },
+  {
+   "fips": "16075",
+   "points": 0
+  },
+  {
+   "fips": "16077",
+   "points": 0
+  },
+  {
+   "fips": "16079",
+   "points": 0
+  },
+  {
+   "fips": "16081",
+   "points": 0
+  },
+  {
+   "fips": "16083",
+   "points": 0
+  },
+  {
+   "fips": "16085",
+   "points": 0
+  },
+  {
+   "fips": "16087",
+   "points": 4744
+  }
+ ],
+ "counties_with_points": 11
+}

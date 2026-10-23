@@ -1,0 +1,71 @@
+{
+ "tag": "raw-US-AZ-v1",
+ "state": "AZ",
+ "total_points": 3698184,
+ "in_state_points": 3697040,
+ "out_state_points": 1144,
+ "in_state_pct": 99.97,
+ "counties": [
+  {
+   "fips": "04001",
+   "points": 21943
+  },
+  {
+   "fips": "04003",
+   "points": 62835
+  },
+  {
+   "fips": "04005",
+   "points": 91292
+  },
+  {
+   "fips": "04007",
+   "points": 38586
+  },
+  {
+   "fips": "04009",
+   "points": 13158
+  },
+  {
+   "fips": "04011",
+   "points": 4999
+  },
+  {
+   "fips": "04012",
+   "points": 13897
+  },
+  {
+   "fips": "04013",
+   "points": 2182139
+  },
+  {
+   "fips": "04015",
+   "points": 154937
+  },
+  {
+   "fips": "04017",
+   "points": 64276
+  },
+  {
+   "fips": "04019",
+   "points": 466212
+  },
+  {
+   "fips": "04021",
+   "points": 283871
+  },
+  {
+   "fips": "04023",
+   "points": 23082
+  },
+  {
+   "fips": "04025",
+   "points": 170591
+  },
+  {
+   "fips": "04027",
+   "points": 105222
+  }
+ ],
+ "counties_with_points": 15
+}

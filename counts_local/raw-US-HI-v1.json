@@ -1,0 +1,31 @@
+{
+ "tag": "raw-US-HI-v1",
+ "state": "HI",
+ "total_points": 0,
+ "in_state_points": 0,
+ "out_state_points": 0,
+ "in_state_pct": null,
+ "counties": [
+  {
+   "fips": "15001",
+   "points": 0
+  },
+  {
+   "fips": "15003",
+   "points": 0
+  },
+  {
+   "fips": "15005",
+   "points": 0
+  },
+  {
+   "fips": "15007",
+   "points": 0
+  },
+  {
+   "fips": "15009",
+   "points": 0
+  }
+ ],
+ "counties_with_points": 0
+}

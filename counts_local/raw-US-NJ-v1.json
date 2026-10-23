@@ -1,0 +1,95 @@
+{
+ "tag": "raw-US-NJ-v1",
+ "state": "NJ",
+ "total_points": 3704152,
+ "in_state_points": 3704152,
+ "out_state_points": 0,
+ "in_state_pct": 100.0,
+ "counties": [
+  {
+   "fips": "34001",
+   "points": 135781
+  },
+  {
+   "fips": "34003",
+   "points": 362081
+  },
+  {
+   "fips": "34005",
+   "points": 155083
+  },
+  {
+   "fips": "34007",
+   "points": 223764
+  },
+  {
+   "fips": "34009",
+   "points": 102259
+  },
+  {
+   "fips": "34011",
+   "points": 63263
+  },
+  {
+   "fips": "34013",
+   "points": 364704
+  },
+  {
+   "fips": "34015",
+   "points": 116837
+  },
+  {
+   "fips": "34017",
+   "points": 209244
+  },
+  {
+   "fips": "34019",
+   "points": 54420
+  },
+  {
+   "fips": "34021",
+   "points": 143807
+  },
+  {
+   "fips": "34023",
+   "points": 326829
+  },
+  {
+   "fips": "34025",
+   "points": 244501
+  },
+  {
+   "fips": "34027",
+   "points": 197806
+  },
+  {
+   "fips": "34029",
+   "points": 292690
+  },
+  {
+   "fips": "34031",
+   "points": 194132
+  },
+  {
+   "fips": "34033",
+   "points": 29543
+  },
+  {
+   "fips": "34035",
+   "points": 136756
+  },
+  {
+   "fips": "34037",
+   "points": 69540
+  },
+  {
+   "fips": "34039",
+   "points": 231000
+  },
+  {
+   "fips": "34041",
+   "points": 50112
+  }
+ ],
+ "counties_with_points": 21
+}

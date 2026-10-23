@@ -1,0 +1,75 @@
+{
+ "tag": "raw-US-ME-v1",
+ "state": "ME",
+ "total_points": 772912,
+ "in_state_points": 772912,
+ "out_state_points": 0,
+ "in_state_pct": 100.0,
+ "counties": [
+  {
+   "fips": "23001",
+   "points": 55337
+  },
+  {
+   "fips": "23003",
+   "points": 38673
+  },
+  {
+   "fips": "23005",
+   "points": 173846
+  },
+  {
+   "fips": "23007",
+   "points": 23867
+  },
+  {
+   "fips": "23009",
+   "points": 39276
+  },
+  {
+   "fips": "23011",
+   "points": 54478
+  },
+  {
+   "fips": "23013",
+   "points": 26696
+  },
+  {
+   "fips": "23015",
+   "points": 25976
+  },
+  {
+   "fips": "23017",
+   "points": 39668
+  },
+  {
+   "fips": "23019",
+   "points": 63960
+  },
+  {
+   "fips": "23021",
+   "points": 11309
+  },
+  {
+   "fips": "23023",
+   "points": 19056
+  },
+  {
+   "fips": "23025",
+   "points": 32834
+  },
+  {
+   "fips": "23027",
+   "points": 20509
+  },
+  {
+   "fips": "23029",
+   "points": 20113
+  },
+  {
+   "fips": "23031",
+   "points": 127314
+  }
+ ],
+ "counties_with_points": 16
+}

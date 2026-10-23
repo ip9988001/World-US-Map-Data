@@ -1,0 +1,267 @@
+{
+ "tag": "raw-US-CO-v1",
+ "state": "CO",
+ "total_points": 2497535,
+ "in_state_points": 2492945,
+ "out_state_points": 4590,
+ "in_state_pct": 99.82,
+ "counties": [
+  {
+   "fips": "08001",
+   "points": 200397
+  },
+  {
+   "fips": "08003",
+   "points": 7814
+  },
+  {
+   "fips": "08005",
+   "points": 261594
+  },
+  {
+   "fips": "08007",
+   "points": 14329
+  },
+  {
+   "fips": "08009",
+   "points": 1
+  },
+  {
+   "fips": "08011",
+   "points": 1892
+  },
+  {
+   "fips": "08013",
+   "points": 134740
+  },
+  {
+   "fips": "08014",
+   "points": 49139
+  },
+  {
+   "fips": "08015",
+   "points": 0
+  },
+  {
+   "fips": "08017",
+   "points": 0
+  },
+  {
+   "fips": "08019",
+   "points": 5705
+  },
+  {
+   "fips": "08021",
+   "points": 4832
+  },
+  {
+   "fips": "08023",
+   "points": 2114
+  },
+  {
+   "fips": "08025",
+   "points": 0
+  },
+  {
+   "fips": "08027",
+   "points": 6567
+  },
+  {
+   "fips": "08029",
+   "points": 20008
+  },
+  {
+   "fips": "08031",
+   "points": 392947
+  },
+  {
+   "fips": "08033",
+   "points": 1950
+  },
+  {
+   "fips": "08035",
+   "points": 185215
+  },
+  {
+   "fips": "08037",
+   "points": 37996
+  },
+  {
+   "fips": "08039",
+   "points": 15397
+  },
+  {
+   "fips": "08041",
+   "points": 339351
+  },
+  {
+   "fips": "08043",
+   "points": 0
+  },
+  {
+   "fips": "08045",
+   "points": 22148
+  },
+  {
+   "fips": "08047",
+   "points": 3994
+  },
+  {
+   "fips": "08049",
+   "points": 22749
+  },
+  {
+   "fips": "08051",
+   "points": 15273
+  },
+  {
+   "fips": "08053",
+   "points": 1859
+  },
+  {
+   "fips": "08055",
+   "points": 0
+  },
+  {
+   "fips": "08057",
+   "points": 0
+  },
+  {
+   "fips": "08059",
+   "points": 228602
+  },
+  {
+   "fips": "08061",
+   "points": 0
+  },
+  {
+   "fips": "08063",
+   "points": 0
+  },
+  {
+   "fips": "08065",
+   "points": 7494
+  },
+  {
+   "fips": "08067",
+   "points": 33456
+  },
+  {
+   "fips": "08069",
+   "points": 7
+  },
+  {
+   "fips": "08071",
+   "points": 11
+  },
+  {
+   "fips": "08073",
+   "points": 0
+  },
+  {
+   "fips": "08075",
+   "points": 9672
+  },
+  {
+   "fips": "08077",
+   "points": 97142
+  },
+  {
+   "fips": "08079",
+   "points": 1422
+  },
+  {
+   "fips": "08081",
+   "points": 0
+  },
+  {
+   "fips": "08083",
+   "points": 16911
+  },
+  {
+   "fips": "08085",
+   "points": 24521
+  },
+  {
+   "fips": "08087",
+   "points": 0
+  },
+  {
+   "fips": "08089",
+   "points": 0
+  },
+  {
+   "fips": "08091",
+   "points": 4168
+  },
+  {
+   "fips": "08093",
+   "points": 19960
+  },
+  {
+   "fips": "08095",
+   "points": 0
+  },
+  {
+   "fips": "08097",
+   "points": 0
+  },
+  {
+   "fips": "08099",
+   "points": 0
+  },
+  {
+   "fips": "08101",
+   "points": 87215
+  },
+  {
+   "fips": "08103",
+   "points": 0
+  },
+  {
+   "fips": "08105",
+   "points": 9551
+  },
+  {
+   "fips": "08107",
+   "points": 15211
+  },
+  {
+   "fips": "08109",
+   "points": 7175
+  },
+  {
+   "fips": "08111",
+   "points": 490
+  },
+  {
+   "fips": "08113",
+   "points": 6166
+  },
+  {
+   "fips": "08115",
+   "points": 1318
+  },
+  {
+   "fips": "08117",
+   "points": 0
+  },
+  {
+   "fips": "08119",
+   "points": 21487
+  },
+  {
+   "fips": "08121",
+   "points": 0
+  },
+  {
+   "fips": "08123",
+   "points": 152955
+  },
+  {
+   "fips": "08125",
+   "points": 0
+  }
+ ],
+ "counties_with_points": 45
+}

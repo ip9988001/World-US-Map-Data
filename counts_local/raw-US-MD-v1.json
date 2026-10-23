@@ -1,0 +1,103 @@
+{
+ "tag": "raw-US-MD-v1",
+ "state": "MD",
+ "total_points": 2502298,
+ "in_state_points": 2502298,
+ "out_state_points": 0,
+ "in_state_pct": 100.0,
+ "counties": [
+  {
+   "fips": "24001",
+   "points": 0
+  },
+  {
+   "fips": "24003",
+   "points": 276394
+  },
+  {
+   "fips": "24005",
+   "points": 557660
+  },
+  {
+   "fips": "24009",
+   "points": 42022
+  },
+  {
+   "fips": "24011",
+   "points": 15735
+  },
+  {
+   "fips": "24013",
+   "points": 66410
+  },
+  {
+   "fips": "24015",
+   "points": 51167
+  },
+  {
+   "fips": "24017",
+   "points": 75389
+  },
+  {
+   "fips": "24019",
+   "points": 21178
+  },
+  {
+   "fips": "24021",
+   "points": 118808
+  },
+  {
+   "fips": "24023",
+   "points": 21950
+  },
+  {
+   "fips": "24025",
+   "points": 116532
+  },
+  {
+   "fips": "24027",
+   "points": 106554
+  },
+  {
+   "fips": "24029",
+   "points": 11669
+  },
+  {
+   "fips": "24031",
+   "points": 297806
+  },
+  {
+   "fips": "24033",
+   "points": 421027
+  },
+  {
+   "fips": "24035",
+   "points": 27017
+  },
+  {
+   "fips": "24037",
+   "points": 48380
+  },
+  {
+   "fips": "24039",
+   "points": 12396
+  },
+  {
+   "fips": "24041",
+   "points": 23906
+  },
+  {
+   "fips": "24043",
+   "points": 71747
+  },
+  {
+   "fips": "24045",
+   "points": 51742
+  },
+  {
+   "fips": "24047",
+   "points": 66809
+  }
+ ],
+ "counties_with_points": 22
+}

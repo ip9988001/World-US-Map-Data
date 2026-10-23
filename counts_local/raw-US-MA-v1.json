@@ -1,0 +1,67 @@
+{
+ "tag": "raw-US-MA-v1",
+ "state": "MA",
+ "total_points": 3642513,
+ "in_state_points": 3603463,
+ "out_state_points": 39050,
+ "in_state_pct": 98.93,
+ "counties": [
+  {
+   "fips": "25001",
+   "points": 195911
+  },
+  {
+   "fips": "25003",
+   "points": 82733
+  },
+  {
+   "fips": "25005",
+   "points": 297143
+  },
+  {
+   "fips": "25007",
+   "points": 20821
+  },
+  {
+   "fips": "25009",
+   "points": 396636
+  },
+  {
+   "fips": "25011",
+   "points": 40969
+  },
+  {
+   "fips": "25013",
+   "points": 226692
+  },
+  {
+   "fips": "25015",
+   "points": 76599
+  },
+  {
+   "fips": "25017",
+   "points": 815264
+  },
+  {
+   "fips": "25019",
+   "points": 13294
+  },
+  {
+   "fips": "25021",
+   "points": 304741
+  },
+  {
+   "fips": "25023",
+   "points": 253798
+  },
+  {
+   "fips": "25025",
+   "points": 455018
+  },
+  {
+   "fips": "25027",
+   "points": 423844
+  }
+ ],
+ "counties_with_points": 14
+}

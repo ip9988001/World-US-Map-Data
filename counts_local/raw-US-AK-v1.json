@@ -1,0 +1,131 @@
+{
+ "tag": "raw-US-AK-v1",
+ "state": "AK",
+ "total_points": 325379,
+ "in_state_points": 324256,
+ "out_state_points": 1123,
+ "in_state_pct": 99.65,
+ "counties": [
+  {
+   "fips": "02013",
+   "points": 523
+  },
+  {
+   "fips": "02016",
+   "points": 0
+  },
+  {
+   "fips": "02020",
+   "points": 128962
+  },
+  {
+   "fips": "02050",
+   "points": 776
+  },
+  {
+   "fips": "02060",
+   "points": 928
+  },
+  {
+   "fips": "02063",
+   "points": 3575
+  },
+  {
+   "fips": "02066",
+   "points": 0
+  },
+  {
+   "fips": "02068",
+   "points": 704
+  },
+  {
+   "fips": "02070",
+   "points": 1158
+  },
+  {
+   "fips": "02090",
+   "points": 43286
+  },
+  {
+   "fips": "02100",
+   "points": 2048
+  },
+  {
+   "fips": "02105",
+   "points": 0
+  },
+  {
+   "fips": "02110",
+   "points": 14303
+  },
+  {
+   "fips": "02122",
+   "points": 44445
+  },
+  {
+   "fips": "02130",
+   "points": 4706
+  },
+  {
+   "fips": "02150",
+   "points": 4843
+  },
+  {
+   "fips": "02158",
+   "points": 636
+  },
+  {
+   "fips": "02164",
+   "points": 0
+  },
+  {
+   "fips": "02170",
+   "points": 65747
+  },
+  {
+   "fips": "02180",
+   "points": 1920
+  },
+  {
+   "fips": "02185",
+   "points": 0
+  },
+  {
+   "fips": "02188",
+   "points": 0
+  },
+  {
+   "fips": "02195",
+   "points": 0
+  },
+  {
+   "fips": "02198",
+   "points": 0
+  },
+  {
+   "fips": "02220",
+   "points": 3311
+  },
+  {
+   "fips": "02230",
+   "points": 880
+  },
+  {
+   "fips": "02240",
+   "points": 1
+  },
+  {
+   "fips": "02275",
+   "points": 753
+  },
+  {
+   "fips": "02282",
+   "points": 751
+  },
+  {
+   "fips": "02290",
+   "points": 0
+  }
+ ],
+ "counties_with_points": 21
+}

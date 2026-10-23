@@ -1,0 +1,343 @@
+{
+ "tag": "raw-US-MI-v1",
+ "state": "MI",
+ "total_points": 0,
+ "in_state_points": 0,
+ "out_state_points": 0,
+ "in_state_pct": null,
+ "counties": [
+  {
+   "fips": "26001",
+   "points": 0
+  },
+  {
+   "fips": "26003",
+   "points": 0
+  },
+  {
+   "fips": "26005",
+   "points": 0
+  },
+  {
+   "fips": "26007",
+   "points": 0
+  },
+  {
+   "fips": "26009",
+   "points": 0
+  },
+  {
+   "fips": "26011",
+   "points": 0
+  },
+  {
+   "fips": "26013",
+   "points": 0
+  },
+  {
+   "fips": "26015",
+   "points": 0
+  },
+  {
+   "fips": "26017",
+   "points": 0
+  },
+  {
+   "fips": "26019",
+   "points": 0
+  },
+  {
+   "fips": "26021",
+   "points": 0
+  },
+  {
+   "fips": "26023",
+   "points": 0
+  },
+  {
+   "fips": "26025",
+   "points": 0
+  },
+  {
+   "fips": "26027",
+   "points": 0
+  },
+  {
+   "fips": "26029",
+   "points": 0
+  },
+  {
+   "fips": "26031",
+   "points": 0
+  },
+  {
+   "fips": "26033",
+   "points": 0
+  },
+  {
+   "fips": "26035",
+   "points": 0
+  },
+  {
+   "fips": "26037",
+   "points": 0
+  },
+  {
+   "fips": "26039",
+   "points": 0
+  },
+  {
+   "fips": "26041",
+   "points": 0
+  },
+  {
+   "fips": "26043",
+   "points": 0
+  },
+  {
+   "fips": "26045",
+   "points": 0
+  },
+  {
+   "fips": "26047",
+   "points": 0
+  },
+  {
+   "fips": "26049",
+   "points": 0
+  },
+  {
+   "fips": "26051",
+   "points": 0
+  },
+  {
+   "fips": "26053",
+   "points": 0
+  },
+  {
+   "fips": "26055",
+   "points": 0
+  },
+  {
+   "fips": "26057",
+   "points": 0
+  },
+  {
+   "fips": "26059",
+   "points": 0
+  },
+  {
+   "fips": "26061",
+   "points": 0
+  },
+  {
+   "fips": "26063",
+   "points": 0
+  },
+  {
+   "fips": "26065",
+   "points": 0
+  },
+  {
+   "fips": "26067",
+   "points": 0
+  },
+  {
+   "fips": "26069",
+   "points": 0
+  },
+  {
+   "fips": "26071",
+   "points": 0
+  },
+  {
+   "fips": "26073",
+   "points": 0
+  },
+  {
+   "fips": "26075",
+   "points": 0
+  },
+  {
+   "fips": "26077",
+   "points": 0
+  },
+  {
+   "fips": "26079",
+   "points": 0
+  },
+  {
+   "fips": "26081",
+   "points": 0
+  },
+  {
+   "fips": "26083",
+   "points": 0
+  },
+  {
+   "fips": "26085",
+   "points": 0
+  },
+  {
+   "fips": "26087",
+   "points": 0
+  },
+  {
+   "fips": "26089",
+   "points": 0
+  },
+  {
+   "fips": "26091",
+   "points": 0
+  },
+  {
+   "fips": "26093",
+   "points": 0
+  },
+  {
+   "fips": "26095",
+   "points": 0
+  },
+  {
+   "fips": "26097",
+   "points": 0
+  },
+  {
+   "fips": "26099",
+   "points": 0
+  },
+  {
+   "fips": "26101",
+   "points": 0
+  },
+  {
+   "fips": "26103",
+   "points": 0
+  },
+  {
+   "fips": "26105",
+   "points": 0
+  },
+  {
+   "fips": "26107",
+   "points": 0
+  },
+  {
+   "fips": "26109",
+   "points": 0
+  },
+  {
+   "fips": "26111",
+   "points": 0
+  },
+  {
+   "fips": "26113",
+   "points": 0
+  },
+  {
+   "fips": "26115",
+   "points": 0
+  },
+  {
+   "fips": "26117",
+   "points": 0
+  },
+  {
+   "fips": "26119",
+   "points": 0
+  },
+  {
+   "fips": "26121",
+   "points": 0
+  },
+  {
+   "fips": "26123",
+   "points": 0
+  },
+  {
+   "fips": "26125",
+   "points": 0
+  },
+  {
+   "fips": "26127",
+   "points": 0
+  },
+  {
+   "fips": "26129",
+   "points": 0
+  },
+  {
+   "fips": "26131",
+   "points": 0
+  },
+  {
+   "fips": "26133",
+   "points": 0
+  },
+  {
+   "fips": "26135",
+   "points": 0
+  },
+  {
+   "fips": "26137",
+   "points": 0
+  },
+  {
+   "fips": "26139",
+   "points": 0
+  },
+  {
+   "fips": "26141",
+   "points": 0
+  },
+  {
+   "fips": "26143",
+   "points": 0
+  },
+  {
+   "fips": "26145",
+   "points": 0
+  },
+  {
+   "fips": "26147",
+   "points": 0
+  },
+  {
+   "fips": "26149",
+   "points": 0
+  },
+  {
+   "fips": "26151",
+   "points": 0
+  },
+  {
+   "fips": "26153",
+   "points": 0
+  },
+  {
+   "fips": "26155",
+   "points": 0
+  },
+  {
+   "fips": "26157",
+   "points": 0
+  },
+  {
+   "fips": "26159",
+   "points": 0
+  },
+  {
+   "fips": "26161",
+   "points": 0
+  },
+  {
+   "fips": "26163",
+   "points": 0
+  },
+  {
+   "fips": "26165",
+   "points": 0
+  }
+ ],
+ "counties_with_points": 0
+}

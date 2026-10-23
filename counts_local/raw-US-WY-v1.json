@@ -1,0 +1,103 @@
+{
+ "tag": "raw-US-WY-v1",
+ "state": "WY",
+ "total_points": 233703,
+ "in_state_points": 233411,
+ "out_state_points": 292,
+ "in_state_pct": 99.88,
+ "counties": [
+  {
+   "fips": "56001",
+   "points": 20318
+  },
+  {
+   "fips": "56003",
+   "points": 6550
+  },
+  {
+   "fips": "56005",
+   "points": 27150
+  },
+  {
+   "fips": "56007",
+   "points": 7
+  },
+  {
+   "fips": "56009",
+   "points": 4
+  },
+  {
+   "fips": "56011",
+   "points": 5441
+  },
+  {
+   "fips": "56013",
+   "points": 21566
+  },
+  {
+   "fips": "56015",
+   "points": 0
+  },
+  {
+   "fips": "56017",
+   "points": 0
+  },
+  {
+   "fips": "56019",
+   "points": 0
+  },
+  {
+   "fips": "56021",
+   "points": 44931
+  },
+  {
+   "fips": "56023",
+   "points": 7008
+  },
+  {
+   "fips": "56025",
+   "points": 50430
+  },
+  {
+   "fips": "56027",
+   "points": 0
+  },
+  {
+   "fips": "56029",
+   "points": 15
+  },
+  {
+   "fips": "56031",
+   "points": 3
+  },
+  {
+   "fips": "56033",
+   "points": 0
+  },
+  {
+   "fips": "56035",
+   "points": 6516
+  },
+  {
+   "fips": "56037",
+   "points": 23113
+  },
+  {
+   "fips": "56039",
+   "points": 14456
+  },
+  {
+   "fips": "56041",
+   "points": 5896
+  },
+  {
+   "fips": "56043",
+   "points": 1
+  },
+  {
+   "fips": "56045",
+   "points": 6
+  }
+ ],
+ "counties_with_points": 18
+}

@@ -1,0 +1,167 @@
+{
+ "tag": "raw-US-WA-v1",
+ "state": "WA",
+ "total_points": 3059341,
+ "in_state_points": 3028655,
+ "out_state_points": 30686,
+ "in_state_pct": 99.0,
+ "counties": [
+  {
+   "fips": "53001",
+   "points": 7395
+  },
+  {
+   "fips": "53003",
+   "points": 10132
+  },
+  {
+   "fips": "53005",
+   "points": 76503
+  },
+  {
+   "fips": "53007",
+   "points": 51663
+  },
+  {
+   "fips": "53009",
+   "points": 19660
+  },
+  {
+   "fips": "53011",
+   "points": 173512
+  },
+  {
+   "fips": "53013",
+   "points": 3567
+  },
+  {
+   "fips": "53015",
+   "points": 51994
+  },
+  {
+   "fips": "53017",
+   "points": 23434
+  },
+  {
+   "fips": "53019",
+   "points": 6358
+  },
+  {
+   "fips": "53021",
+   "points": 29779
+  },
+  {
+   "fips": "53023",
+   "points": 1254
+  },
+  {
+   "fips": "53025",
+   "points": 38287
+  },
+  {
+   "fips": "53027",
+   "points": 43833
+  },
+  {
+   "fips": "53029",
+   "points": 43849
+  },
+  {
+   "fips": "53031",
+   "points": 22845
+  },
+  {
+   "fips": "53033",
+   "points": 656206
+  },
+  {
+   "fips": "53035",
+   "points": 108375
+  },
+  {
+   "fips": "53037",
+   "points": 40000
+  },
+  {
+   "fips": "53039",
+   "points": 10227
+  },
+  {
+   "fips": "53041",
+   "points": 2702
+  },
+  {
+   "fips": "53043",
+   "points": 8960
+  },
+  {
+   "fips": "53045",
+   "points": 41166
+  },
+  {
+   "fips": "53047",
+   "points": 25577
+  },
+  {
+   "fips": "53049",
+   "points": 14213
+  },
+  {
+   "fips": "53051",
+   "points": 10568
+  },
+  {
+   "fips": "53053",
+   "points": 459124
+  },
+  {
+   "fips": "53055",
+   "points": 15289
+  },
+  {
+   "fips": "53057",
+   "points": 69538
+  },
+  {
+   "fips": "53059",
+   "points": 6085
+  },
+  {
+   "fips": "53061",
+   "points": 313514
+  },
+  {
+   "fips": "53063",
+   "points": 233398
+  },
+  {
+   "fips": "53065",
+   "points": 29972
+  },
+  {
+   "fips": "53067",
+   "points": 141333
+  },
+  {
+   "fips": "53069",
+   "points": 3292
+  },
+  {
+   "fips": "53071",
+   "points": 29149
+  },
+  {
+   "fips": "53073",
+   "points": 88773
+  },
+  {
+   "fips": "53075",
+   "points": 16384
+  },
+  {
+   "fips": "53077",
+   "points": 100745
+  }
+ ],
+ "counties_with_points": 39
+}

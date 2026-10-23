@@ -1,0 +1,195 @@
+{
+ "tag": "raw-US-SC-v1",
+ "state": "SC",
+ "total_points": 1069405,
+ "in_state_points": 212291,
+ "out_state_points": 857114,
+ "in_state_pct": 19.85,
+ "counties": [
+  {
+   "fips": "45001",
+   "points": 0
+  },
+  {
+   "fips": "45003",
+   "points": 0
+  },
+  {
+   "fips": "45005",
+   "points": 0
+  },
+  {
+   "fips": "45007",
+   "points": 11
+  },
+  {
+   "fips": "45009",
+   "points": 0
+  },
+  {
+   "fips": "45011",
+   "points": 0
+  },
+  {
+   "fips": "45013",
+   "points": 0
+  },
+  {
+   "fips": "45015",
+   "points": 0
+  },
+  {
+   "fips": "45017",
+   "points": 0
+  },
+  {
+   "fips": "45019",
+   "points": 0
+  },
+  {
+   "fips": "45021",
+   "points": 0
+  },
+  {
+   "fips": "45023",
+   "points": 0
+  },
+  {
+   "fips": "45025",
+   "points": 0
+  },
+  {
+   "fips": "45027",
+   "points": 0
+  },
+  {
+   "fips": "45029",
+   "points": 0
+  },
+  {
+   "fips": "45031",
+   "points": 0
+  },
+  {
+   "fips": "45033",
+   "points": 0
+  },
+  {
+   "fips": "45035",
+   "points": 0
+  },
+  {
+   "fips": "45037",
+   "points": 0
+  },
+  {
+   "fips": "45039",
+   "points": 0
+  },
+  {
+   "fips": "45041",
+   "points": 0
+  },
+  {
+   "fips": "45043",
+   "points": 0
+  },
+  {
+   "fips": "45045",
+   "points": 0
+  },
+  {
+   "fips": "45047",
+   "points": 0
+  },
+  {
+   "fips": "45049",
+   "points": 0
+  },
+  {
+   "fips": "45051",
+   "points": 0
+  },
+  {
+   "fips": "45053",
+   "points": 0
+  },
+  {
+   "fips": "45055",
+   "points": 0
+  },
+  {
+   "fips": "45057",
+   "points": 0
+  },
+  {
+   "fips": "45059",
+   "points": 0
+  },
+  {
+   "fips": "45061",
+   "points": 0
+  },
+  {
+   "fips": "45063",
+   "points": 0
+  },
+  {
+   "fips": "45065",
+   "points": 0
+  },
+  {
+   "fips": "45067",
+   "points": 0
+  },
+  {
+   "fips": "45069",
+   "points": 0
+  },
+  {
+   "fips": "45071",
+   "points": 0
+  },
+  {
+   "fips": "45073",
+   "points": 55655
+  },
+  {
+   "fips": "45075",
+   "points": 0
+  },
+  {
+   "fips": "45077",
+   "points": 0
+  },
+  {
+   "fips": "45079",
+   "points": 0
+  },
+  {
+   "fips": "45081",
+   "points": 0
+  },
+  {
+   "fips": "45083",
+   "points": 0
+  },
+  {
+   "fips": "45085",
+   "points": 0
+  },
+  {
+   "fips": "45087",
+   "points": 0
+  },
+  {
+   "fips": "45089",
+   "points": 0
+  },
+  {
+   "fips": "45091",
+   "points": 156625
+  }
+ ],
+ "counties_with_points": 3
+}
