@@ -152,3 +152,18 @@ python3 tools/make_nad_coverage_report.py          # 生成本报告
 ```
 
 旧的 `completeness.nad.coverage_pct` 保留原值，但附 `coverage_pct_superseded_note` 说明它为何不可作为覆盖率解读。
+
+## 八、附：72 个「小分片」的最终定性（同日完成）
+
+上一轮把「<2KB」直接判成「空壳」，这个判据太粗。逐个查完后：
+
+| 类别 | 数量 | 定性 |
+|---|---|---|
+| `NAD-*-OUTOFSTATE.ndjson.gz` | 47 | **设计如此**：外州溢出包在本州无溢出时本就为空 |
+| NAD 县片（CA 6 / PA 8 / MO 5 / WY 5 / CO 3 / ID 2 / LA 2 / AK 1 / KS 1 / MS 1 / SC 1 / WI 1） | 36 | **上游真无数据**：CA 州内占比 100% 仍有 6 县 0 点，证明不是错放；NAD 是自愿申报制 |
+| `OA-US-AK-matanuska_susitna_borough.zip` | 1 | **真实小数据集**：解压后 csv 3 行 |
+| `OA-US-VA-city_of_rural_retreat.zip` | 1 | **真实小数据集**：46 行（Rural Retreat 镇，人口数百） |
+| `OA-US-VA-rockbridge.zip` | 1 | **真实小数据集**：17 行 |
+
+结论：**72 个「小分片」里没有一个是我们造成的缺陷。** 3 个 OA 文件已在 MANIFEST 里加
+`audit.by_source.oa.tiny_files_verified` 备注，避免下游把「文件小」误读成「数据坏」。
