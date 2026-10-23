@@ -9,7 +9,6 @@ on:
         description: "只跑这些 tag（空格分隔，留空=全部）"
         default: ""
 permissions: { contents: write }
-concurrency: { group: nad-local-matrix, cancel-in-progress: false }
 jobs:
   plan:
     runs-on: ubuntu-latest
