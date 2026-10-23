@@ -1,6 +1,6 @@
 # 04 · Census TIGER（县界 + 地址号段）
 
-> 生成时间：2026-10-23T20:45:05Z　｜　数据快照：52 个 Release（最近自述时间 2026-10-23T10:11:39Z）
+> 生成时间：2026-10-23T21:00:41Z　｜　数据快照：52 个 Release（最近自述时间 2026-10-23T10:11:39Z）
 > 事实来源：Release 里的**实际文件**；`MANIFEST.json` 为自述（可能与实物冲突）；本文档仅为聚合视图。
 > 本文档所有数字由 `tools/make_source_profiles.py` 生成，**禁止手改**。
 
@@ -23,6 +23,10 @@
 3. 几何质量：rings 是否闭合、坐标是否 4326、面积是否合理（防退化多边形）
 4. 输出 `county-coverage.csv`：县 × 边界/号段/对账
 5. 预计成本：3 GB，约 20~30 分钟
+
+```bash
+gh workflow run source-audit.yml -f source=tiger -f only="raw-US-DE-v1 raw-US-RI-v1"
+```
 
 ## 为什么优先做它
 

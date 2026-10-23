@@ -1,0 +1,112 @@
+name: source-audit
+
+# 三源产出物核查（TIGER / OpenAddresses / Overture）
+# ============================================================================
+# 为什么在 runner 上跑：一仓铁律「GB 级数据不落本地服务器」（本机仅 2 GB 内存）。
+# 本机只允许做几 MB 级的小样本验证（--limit 参数）。
+#
+# 分批发之所以必要：52 州大矩阵在 GitHub 队列里会长期 queued/pending（2026-10-23 实测三次）。
+# 用 only 输入小批量 dispatch，跑完一批再发下一批。
+#
+# 用法：
+#   gh workflow run source-audit.yml -f source=tiger  -f only="raw-US-DE-v1 raw-US-RI-v1"
+#   gh workflow run source-audit.yml -f source=oa     -f only="raw-US-DE-v1" -f limit=5
+#   gh workflow run source-audit.yml -f source=overture -f only="" -f batch=6
+on:
+  workflow_dispatch:
+    inputs:
+      source:
+        description: "哪个源（tiger / oa / overture）"
+        type: choice
+        options: [tiger, oa, overture]
+        default: tiger
+      only:
+        description: "只跑这些 tag（空格分隔，留空=全部 raw-US-*）"
+        default: ""
+      limit:
+        description: "每州只处理前 N 个资产（0=全部，小样本验证用）"
+        default: "0"
+      batch:
+        description: "分批大小（0=一次性全上；建议 6，避免队列堵死）"
+        default: "0"
+permissions: { contents: write }
+jobs:
+  plan:
+    runs-on: ubuntu-latest
+    outputs:
+      matrix: ${{ steps.g.outputs.m }}
+      source: ${{ steps.g.outputs.source }}
+    steps:
+      - id: g
+        env: { GH_TOKEN: "${{ secrets.GITHUB_TOKEN }}" }
+        run: |
+          if [ -n "${{ inputs.only }}" ]; then TAGS="${{ inputs.only }}"; else
+            TAGS=$(gh release list --repo "$GITHUB_REPOSITORY" --limit 200 --json tagName -q '[.[].tagName]|map(select(startswith("raw-US-")))|.[]')
+          fi
+          B="${{ inputs.batch }}"
+          M=$(python3 -c "
+          import json
+          ts=[l.strip() for l in '''$TAGS'''.split() if l.strip()]
+          b=int('$B' or 0)
+          if b>0: ts=ts[:b]
+          print(json.dumps({'include':[{'tag':t} for t in ts]}))
+          ")
+          echo "m=$M" >> $GITHUB_OUTPUT
+          echo "source=${{ inputs.source }}" >> $GITHUB_OUTPUT
+          echo "本批 $M" | head -c 400
+  audit:
+    needs: plan
+    runs-on: ubuntu-latest
+    timeout-minutes: 240
+    strategy:
+      fail-fast: false
+      max-parallel: 4
+      matrix: ${{ fromJson(needs.plan.outputs.matrix) }}
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-python@v5
+        with: { python-version: "3.11" }
+      - name: 装依赖
+        run: pip install -q pyarrow shapely numpy
+      - name: 核查 ${{ inputs.source }} / ${{ matrix.tag }}
+        env: { GH_TOKEN: "${{ secrets.GITHUB_TOKEN }}" }
+        run: |
+          python3 tools/source_audit.py --source "${{ inputs.source }}" \
+            --tag "${{ matrix.tag }}" --limit "${{ inputs.limit }}"
+      - uses: actions/upload-artifact@v4
+        with:
+          name: audit-${{ inputs.source }}-${{ matrix.tag }}
+          path: counts_audit/
+          retention-days: 30
+  merge:
+    needs: audit
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-python@v5
+        with: { python-version: "3.11" }
+      - uses: actions/download-artifact@v4
+        with: { path: counts_audit, pattern: "audit-*", merge-multiple: true }
+      - name: 汇总本批
+        run: |
+          python3 - <<'PY'
+          import json, glob
+          for src in ("tiger", "oa", "overture"):
+              fs = sorted(glob.glob(f"counts_audit/{src}/*.json"))
+              if not fs:
+                  continue
+              print(f"\n### {src}（{len(fs)} 州）")
+              for f in fs:
+                  d = json.load(open(f))
+                  if src == "tiger":
+                      print(f"  {d['state']}: 县界 {d['county_geojson']} / 号段包 {d['addrfeat']} "
+                            f"| 坏几何 {len(d['geojson_bad'])} | 对账失败 {len(d['addrfeat_bad'])}")
+                  else:
+                      print(f"  {d['state']}: {d['total_rows']:,} 行 | 州内 {d['in_state_points']:,} "
+                            f"({d['in_state_pct']}%) | 有点的县 {d['counties_with_points']}/{d['county_total']}")
+          PY
+      - uses: actions/upload-artifact@v4
+        with:
+          name: source-audit-${{ inputs.source }}-${{ github.run_id }}
+          path: counts_audit
+          retention-days: 90

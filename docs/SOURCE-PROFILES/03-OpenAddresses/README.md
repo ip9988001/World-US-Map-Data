@@ -1,6 +1,6 @@
 # 03 · OpenAddresses
 
-> 生成时间：2026-10-23T20:45:05Z　｜　数据快照：52 个 Release（最近自述时间 2026-10-23T10:11:39Z）
+> 生成时间：2026-10-23T21:00:41Z　｜　数据快照：52 个 Release（最近自述时间 2026-10-23T10:11:39Z）
 > 事实来源：Release 里的**实际文件**；`MANIFEST.json` 为自述（可能与实物冲突）；本文档仅为聚合视图。
 > 本文档所有数字由 `tools/make_source_profiles.py` 生成，**禁止手改**。
 
@@ -22,6 +22,11 @@
 2. 点 × TIGER 县界几何判定
 3. 输出 `source-matrix.csv`：source × 类型（县级/市级）× 行数 × 州内%
 4. 预计成本：5 GB，约 30~40 分钟
+
+```bash
+gh workflow run source-audit.yml -f source=oa -f only="raw-US-DE-v1" -f limit=5   # 先验列名
+python3 tools/source_audit.py --source oa --tag raw-US-DE-v1 --limit 5           # 本机小样本
+```
 
 ## 已确认无缺陷
 
