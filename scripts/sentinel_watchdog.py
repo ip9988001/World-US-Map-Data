@@ -33,7 +33,7 @@ LABEL = "sentinel-alarm"
 
 # (workflow 文件, 容忍分钟数, 原定频率)
 CHECKS = [
-    ("run-watch.yml", 120, "每 15 分钟"),
+    ("run-watch.yml", 300, "每 3 小时"),
     ("pipeline-audit.yml", 120, "每 30 分钟"),
     ("preflight-upstream.yml", 180, "每小时"),
     ("content-audit.yml", 300, "每 2 小时"),
