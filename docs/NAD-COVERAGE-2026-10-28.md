@@ -55,3 +55,35 @@ GA 实抽 20 县有 6 县 count>0 → 6 ≥ 6 刚好踩线。**方向判对了�
 要正确判定，必须补一步：从 Release 资产名 `NAD-US-<ST>-<fips>-<name>.ndjson.gz`
 提取已有 fips 集合，与探针结果求差集。差集为空才算覆盖充分。
 在那之前，本探针的任何「上游真无覆盖」结论都不可采信。
+
+## 终局（2026-10-28 夜）：Issue #4 是假红，NAD 无漏抓
+
+多边形版规划器（`scripts/nad_gap_plan.py`）用 TIGER 县界 rings + `esriGeometryPolygon` 重算 GA：
+
+```
+counties_total: 159
+have_n: 2            # DeKalb + Fulton，正是我们已有的两个片
+need_n: 0            # 上游有数据且我们缺的县：0
+bbox_false_positive_n: 32   # bbox 说有数据、多边形说是 0 的县：32
+```
+
+一锤定音的对照实验（Clayton County GA）：
+
+| 查询方式 | count |
+|---|---|
+| 县 bbox（外扩 0.002°） | 235 |
+| 县真实边界多边形 | 0 |
+
+那 235 条落在相邻的 DeKalb / Fulton 境内。**县是不规则形状，bbox 面积远大于真实县界，
+用 bbox 判「点落在这个县」等于系统性把邻县数据算成本县。**
+
+## 作废声明
+
+本文前两版的所有数字（「GA 34 县有数据」「GA 缺 32 县」「2/34≈6%」）**全部作废**，
+它们来自 bbox 判据。结论更正为：**GA 的 NAD 覆盖完整，Issue #4 为方法性假红。**
+
+## 铁律（新增）
+
+1. 凡「点落在哪个县」的判断，必须用多边形；**bbox 只能粗筛，不得用于结论**。
+2. 同一个错误已在 `nad_county_probe.py` 与 `scripts/nad_gap_plan.py` 各犯一次 ——
+   探针的 `⬜ 上游真无覆盖` 与 `🔴 我们漏抓` 两种判定**都不可信**，需按多边形重写后才可再用。
