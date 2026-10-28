@@ -147,8 +147,13 @@ def main() -> int:
 
     md = ["| 州 | 抽查县数 | 有数据 | 无数据 | 查询失败 | 判定 |", "|---|---|---|---|---|---|"]
     for st, t, h, z, f in rows:
-        verdict = ("🔴 我们漏抓（需修县查询）" if h >= max(1, (t - f) * 0.3)
-                   else "⬜ 上游真无覆盖" if f < t / 2 else "❓ 查询失败太多，结论不可信")
+        # 2026-10-28 收紧：0.3 太松（GA 6/20 刚好踩线喊红）。且抽样模式不下判定，
+        # 必须 --all（抽全州每一县）才允许说「漏抓」——否则只是猜。
+        verdict = ("🔴 我们漏抓（需修县查询）" if (args.all and h >= max(1, (t - f) * 0.6))
+                   else "⬜ 上游真无覆盖" if f < t / 2
+                   else "❓ 查询失败太多，结论不可信")
+        if not args.all:
+            verdict = "📊 抽样数据（不下判定，需 --all）"
         md.append(f"| {st} | {t} | {h} | {z} | {f} | {verdict} |")
     body = "## NAD 逐县覆盖探针\n\n" + "\n".join(md)
     if os.environ.get("GITHUB_STEP_SUMMARY"):
@@ -156,7 +161,7 @@ def main() -> int:
             f.write(body + "\n")
     print("\n" + body)
 
-    if any(h >= max(1, (t - f) * 0.3) for _, t, h, _, f in rows):
+    if args.all and any(h >= max(1, (t - f) * 0.6) for _, t, h, _, f in rows):
         try:
             import sys
             sys.path.insert(0, str(Path(__file__).resolve().parent))
