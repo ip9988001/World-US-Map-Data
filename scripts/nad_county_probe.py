@@ -147,13 +147,12 @@ def main() -> int:
 
     md = ["| 州 | 抽查县数 | 有数据 | 无数据 | 查询失败 | 判定 |", "|---|---|---|---|---|---|"]
     for st, t, h, z, f in rows:
-        # 2026-10-28 收紧：0.3 太松（GA 6/20 刚好踩线喊红）。且抽样模式不下判定，
-        # 必须 --all（抽全州每一县）才允许说「漏抓」——否则只是猜。
-        verdict = ("🔴 我们漏抓（需修县查询）" if (args.all and h >= max(1, (t - f) * 0.6))
-                   else "⬜ 上游真无覆盖" if f < t / 2
-                   else "❓ 查询失败太多，结论不可信")
-        if not args.all:
-            verdict = "📊 抽样数据（不下判定，需 --all）"
+        # 2026-10-28 更正：原判据拿「全州县数」当分母是错的 —— GA 全量 34/159=21%
+        # 会被判成「上游真无覆盖」，把真漏抓掩盖掉（实际我们只抓了 2/34 个有数据的县）。
+        # 正确分母是「上游有数据的县数」，分子是「我们 Release 里实际存在的县片」。
+        # 后半个数据本脚本还算不出来（需要读 Release 资产名提 fips），故一律不下判定。
+        verdict = ("❓ 查询失败太多，结论不可信" if f >= t / 2
+                   else "📊 仅供数据（覆盖判定需与我方县片求差，暂未实现）")
         md.append(f"| {st} | {t} | {h} | {z} | {f} | {verdict} |")
     body = "## NAD 逐县覆盖探针\n\n" + "\n".join(md)
     if os.environ.get("GITHUB_STEP_SUMMARY"):
@@ -161,7 +160,7 @@ def main() -> int:
             f.write(body + "\n")
     print("\n" + body)
 
-    if args.all and any(h >= max(1, (t - f) * 0.6) for _, t, h, _, f in rows):
+    if False and any(h >= max(1, (t - f) * 0.6) for _, t, h, _, f in rows):  # 2026-10-28 停用：判据方向错，见 docs/NAD-COVERAGE
         try:
             import sys
             sys.path.insert(0, str(Path(__file__).resolve().parent))
