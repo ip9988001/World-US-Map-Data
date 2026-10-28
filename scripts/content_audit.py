@@ -58,7 +58,9 @@ def oa_upstream() -> dict[str, int]:
         home = urllib.request.urlopen(req, timeout=45).read().decode("utf-8", "replace")
         found = re.findall(
             r"https://data\.openaddresses\.io/runs/(\d+)/us/([a-z]{2})/([a-z0-9_]+)\.zip", home)
-        return dict(collections.Counter(st for _r, st, _n in found))
+        # ★ 必须按 (州, 源名) 去重：上游页面同一源可能重复出现（OR 的 washington 就出现 2 次），
+        #   按州裸计数会把重复条目算成「上游多 1 个源」，导致误报「OA 缺 1 个源」。
+        return dict(collections.Counter(st for _r, st, _n in set(found)))
     except Exception as exc:  # noqa: BLE001
         print(f"[audit] ⚠️ 上游 OA 源数获取失败（跳过 OA 检查）：{exc}")
         return {}

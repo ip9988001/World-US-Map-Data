@@ -8,7 +8,7 @@ name: run-watch
 #   （GitHub 对长 step 不刷新 updatedAt，AZ 那轮因此误报 3 次）。
 on:
   schedule:
-    - cron: "*/15 * * * *"
+    - cron: "0 */3 * * *"
   workflow_dispatch:
 
 permissions:
