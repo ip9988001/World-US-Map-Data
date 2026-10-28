@@ -46,7 +46,10 @@ jobs:
       - env: { GH_TOKEN: "${{ secrets.GITHUB_TOKEN }}" }
         run: python3 scripts/nad_gap_plan.py --state ${{ matrix.state }} --out gap/${{ matrix.state }}.json
       - uses: actions/upload-artifact@v4
-        with: { name: gap-${{ matrix.state }}, path: gap/, retention-days: 30 }
+        with:
+          name: gap-${{ matrix.state }}
+          path: gap/
+          retention-days: 30
   assemble:
     if: ${{ inputs.mode == 'full' }}
     needs: scan
@@ -95,4 +98,7 @@ jobs:
           echo "${{ matrix.state }} need=${{ matrix.n }} fips=${{ matrix.fips }}" >> result-${{ matrix.state }}.txt
       - uses: actions/upload-artifact@v4
         if: always()
-        with: { name: res-${{ matrix.state }}, path: "result-*.txt", retention-days: 30 }
+        with:
+          name: res-${{ matrix.state }}
+          path: "result-*.txt"
+          retention-days: 30
