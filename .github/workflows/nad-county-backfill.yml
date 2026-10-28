@@ -1,0 +1,98 @@
+name: nad-county-backfill
+
+# 按县增量补采 NAD —— 只补「上游有数据但我们没片」的县。
+# 铁律：绝不允许不带 --county-fips 的整州重跑；已有资产 clobber=false 不覆盖。
+on:
+  workflow_dispatch:
+    inputs:
+      states:
+        description: "只跑这些州（空格分隔，留空=全部）"
+        default: ""
+      mode:
+        description: "plan=只算差集 / backfill=只补采（用上次 plan）/ full=算+补"
+        default: "full"
+        type: choice
+        options: [plan, backfill, full]
+permissions: { contents: write, actions: write }
+jobs:
+  plan:
+    if: ${{ inputs.mode == 'plan' || inputs.mode == 'full' }}
+    runs-on: ubuntu-latest
+    outputs: { matrix: "${{ steps.m.outputs.m }}" }
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-python@v5
+        with: { python-version: "3.11" }
+      - id: m
+        env: { GH_TOKEN: "${{ secrets.GITHUB_TOKEN }}" }
+        run: |
+          if [ -n "${{ inputs.states }}" ]; then STS="${{ inputs.states }}"
+          else STS=$(gh release list -R "$GITHUB_REPOSITORY" --limit 200 --json tagName -q '.[].tagName' \
+                     | grep '^raw-US-' | sed -E 's/^raw-US-([A-Z]{2}).*/\1/' | sort -u | tr '\n' ' '); fi
+          M=$(python3 -c "import json,sys;print(json.dumps({'include':[{'state':s} for s in '''$STS'''.split()]}))")
+          echo "m=$M" >> $GITHUB_OUTPUT
+  scan:
+    needs: plan
+    runs-on: ubuntu-latest
+    timeout-minutes: 120
+    strategy:
+      fail-fast: false
+      max-parallel: 6
+      matrix: ${{ fromJson(needs.plan.outputs.matrix) }}
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-python@v5
+        with: { python-version: "3.11" }
+      - env: { GH_TOKEN: "${{ secrets.GITHUB_TOKEN }}" }
+        run: python3 scripts/nad_gap_plan.py --state ${{ matrix.state }} --out gap/${{ matrix.state }}.json
+      - uses: actions/upload-artifact@v4
+        with: { name: gap-${{ matrix.state }}, path: gap/, retention-days: 30 }
+  assemble:
+    if: ${{ inputs.mode == 'full' }}
+    needs: scan
+    runs-on: ubuntu-latest
+    outputs: { matrix: "${{ steps.a.outputs.m }}" }
+    steps:
+      - uses: actions/download-artifact@v4
+        with: { path: gaps, pattern: "gap-*", merge-multiple: true }
+      - id: a
+        run: |
+          M=$(python3 - <<'PY'
+          import json,glob
+          inc=[]
+          for f in sorted(glob.glob('gaps/*.json')):
+              d=json.load(open(f))
+              if d.get('need_fips'):
+                  inc.append({'state':d['state'],'fips':','.join(d['need_fips']),'n':len(d['need_fips'])})
+          print(json.dumps({'include':inc}))
+          PY
+          )
+          echo "m=$M" >> $GITHUB_OUTPUT
+          echo "$M" | head -c 400
+  backfill:
+    needs: assemble
+    runs-on: ubuntu-latest
+    timeout-minutes: 300
+    strategy:
+      fail-fast: false
+      max-parallel: 4
+      matrix: ${{ fromJson(needs.assemble.outputs.matrix) }}
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-python@v5
+        with: { python-version: "3.11" }
+      - name: 补采 ${{ matrix.state }}（${{ matrix.n }} 县，只补差集）
+        env: { GH_TOKEN: "${{ secrets.GITHUB_TOKEN }}" }
+        run: |
+          python3 bots/fetch_state_raw.py \
+            --state ${{ matrix.state }} --only nad \
+            --county-fips "${{ matrix.fips }}" \
+            --pack-mode county_shards --nad-mode ids \
+            --tag raw-US-${{ matrix.state }}-v1 --publish-release
+      - name: 记录本州结果
+        if: always()
+        run: |
+          echo "${{ matrix.state }} need=${{ matrix.n }} fips=${{ matrix.fips }}" >> result-${{ matrix.state }}.txt
+      - uses: actions/upload-artifact@v4
+        if: always()
+        with: { name: res-${{ matrix.state }}, path: "result-*.txt", retention-days: 30 }
