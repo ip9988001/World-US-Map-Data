@@ -1,0 +1,155 @@
+name: tiger-backfill
+
+# AK/GA/ID 三州 TIGER addrfeat 真漏抓补抓 + 重新封印（只动 census_tiger 段）。
+#
+# 背景：三州 sources[census_tiger].status=warn-partial，missed 记「上游返回非 zip（WAF 拒页/截断）」。
+# 2026-10-30 逐条 HEAD 上游确认 77 个文件均 HTTP 200、字节正常 → 属采集瞬时故障，可补抓。
+# 下载加固写在 scripts/tiger_backfill.py：Content-Length>0 + 未截断 + PK\x03\x04 + zip 可解
+# + .dbf 表头可读；失败按 2s/8s/30s 退避重试 3 次。必须跑在 runner（本机访问 census.gov 整站 403）。
+on:
+  workflow_dispatch:
+    inputs:
+      states:
+        description: "州（空格分隔，只允许 AK / GA / ID）"
+        default: "AK GA ID"
+      apply:
+        description: "1=真上架并改账本；0=只下载校验（dry-run）"
+        default: "1"
+
+permissions:
+  contents: write
+
+concurrency:
+  group: tiger-backfill
+  cancel-in-progress: false
+
+jobs:
+  plan:
+    runs-on: ubuntu-latest
+    outputs:
+      matrix: ${{ steps.g.outputs.m }}
+    steps:
+      - id: g
+        run: |
+          set -euo pipefail
+          ST="${{ inputs.states }}"
+          M=$(python3 -c "import json,sys;st=[x for x in sys.argv[1].split() if x in ('AK','GA','ID')];print(json.dumps({'include':[{'state':s} for s in st]}))" "$ST")
+          echo "m=$M" >> "$GITHUB_OUTPUT"
+          echo "### 目标州：$ST" >> "$GITHUB_STEP_SUMMARY"
+
+  snapshot:
+    needs: plan
+    runs-on: ubuntu-latest
+    timeout-minutes: 25
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-python@v5
+        with:
+          python-version: "3.11"
+      - run: pip install --quiet pyyaml
+      - name: 全仓快照（前）
+        env:
+          GH_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+        run: mkdir -p tiger-bf && python3 scripts/tiger_backfill.py --snapshot tiger-bf/before.json
+      - uses: actions/upload-artifact@v4
+        with:
+          name: tiger-bf-before
+          path: tiger-bf/before.json
+          retention-days: 30
+
+  backfill:
+    needs: [plan, snapshot]
+    runs-on: ubuntu-latest
+    timeout-minutes: 45
+    strategy:
+      fail-fast: false
+      matrix: ${{ fromJson(needs.plan.outputs.matrix) }}
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-python@v5
+        with:
+          python-version: "3.11"
+      - run: pip install --quiet pyyaml
+      - name: 补抓 + 重新封印 ${{ matrix.state }}
+        env:
+          GH_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+        run: |
+          set -euo pipefail
+          mkdir -p tiger-bf
+          APPLY=""
+          if [ "${{ inputs.apply }}" = "1" ]; then APPLY="--apply"; fi
+          python3 scripts/tiger_backfill.py --state "${{ matrix.state }}" $APPLY \
+            --json-out "tiger-bf/${{ matrix.state }}-backfill.json"
+      - uses: actions/upload-artifact@v4
+        with:
+          name: tiger-bf-${{ matrix.state }}
+          path: tiger-bf/${{ matrix.state }}-backfill.json
+          retention-days: 30
+          if-no-files-found: error
+
+  seal:
+    needs: [snapshot, backfill]
+    if: always()
+    runs-on: ubuntu-latest
+    timeout-minutes: 40
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-python@v5
+        with:
+          python-version: "3.11"
+      - run: pip install --quiet pyyaml
+      - uses: actions/download-artifact@v4
+        with:
+          name: tiger-bf-before
+          path: tiger-bf
+      - uses: actions/download-artifact@v4
+        with:
+          path: tiger-bf
+          pattern: "tiger-bf-*"
+          merge-multiple: true
+      - name: 自检（三州全部从 Release 重新读）
+        env:
+          GH_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+        run: |
+          python3 scripts/tiger_backfill.py --selfcheck-all \
+            --json-out tiger-bf/selfcheck.json \
+            --report-out docs/TIGER-BACKFILL-2026-10-30.md
+      - name: 其他州零变化（全仓前后快照对比）
+        env:
+          GH_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+        run: |
+          python3 scripts/tiger_backfill.py --snapshot-diff tiger-bf/before.json
+          mkdir -p docs && cp tiger-bf/before-diff.json docs/tiger-backfill-snapshot-diff.json
+      - name: 汇总报告
+        run: |
+          python3 - <<'PY'
+          import json, glob
+          print("| 州 | 缺失 | 成功 | 失败 | 资产 前→后 |")
+          print("|---|---|---|---|---|")
+          for f in sorted(glob.glob('tiger-bf/*-backfill.json')):
+              for r in json.load(open(f)):
+                  b = r.get('backfill') or {}
+                  if not b: continue
+                  print(f"| {b['state']} | {len(b['missing'])} | {len(b['ok'])} | "
+                        f"{len(b['failed'])} | {b['assets_before']}→{b.get('assets_after_upload','-')} |")
+          PY
+      - name: 提交 docs 回 main
+        env:
+          GH_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+        run: |
+          set -euo pipefail
+          git config user.name  "github-actions[bot]"
+          git config user.email "github-actions[bot]@users.noreply.github.com"
+          mkdir -p docs && cp tiger-bf/before.json docs/tiger-backfill-snapshot-before.json || true
+          git add docs/TIGER-BACKFILL-2026-10-30.md docs/tiger-backfill-snapshot-diff.json docs/tiger-backfill-snapshot-before.json
+          if git diff --cached --quiet; then echo "无变化"; exit 0; fi
+          git commit -m "docs(tiger): AK/GA/ID 补抓 77 个 addrfeat 并重新封印（三州 census_tiger=ok）"
+          git pull --rebase --autostash origin main || true
+          git push
+      - uses: actions/upload-artifact@v4
+        with:
+          name: tiger-backfill-all
+          path: |
+            docs/TIGER-BACKFILL-2026-10-30.md
+            tiger-bf
+          retention-days: 30

@@ -140,6 +140,15 @@ def http_get(url: str, *, timeout: int = 60, retries: int = 3, headers: dict | N
             with urllib.request.urlopen(req, timeout=timeout) as resp:
                 body = resp.read()
                 enc = (resp.headers.get("Content-Encoding") or "").lower()
+                clen = resp.headers.get("Content-Length")
+            # ★ 2026-10-30：截断检测。Census/TIGER 偶发 200 + 半个包（连接被掐），
+            #   urllib 不一定报错，落盘就是坏 zip → 这里按 Content-Length 硬对一次。
+            if clen and not enc and body[:2] != b"\x1f\x8b":
+                try:
+                    if int(clen) != len(body):
+                        raise RuntimeError(f"截断：{len(body)}B != Content-Length {clen}B")
+                except ValueError:
+                    pass
             if enc == "gzip" or body[:2] == b"\x1f\x8b":
                 try:
                     body = gzip.decompress(body)

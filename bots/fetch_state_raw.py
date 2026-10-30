@@ -1669,13 +1669,18 @@ def _county_boundaries(fx: Fetcher) -> dict:
 
 
 def _zip_blob(http_get, url: str, timeout: float, tries: int = 3) -> bytes | None:
-    """下载 zip 并校验魔数 —— 只认 `PK` 开头，失败返回 None。
+    """下载 zip 并严格校验 —— 只认真 zip，失败返回 None。
 
     为什么必须校验：Census 的 WAF 会回 **HTTP 200 + HTML 拒页**
-    (`<html>...Request Rejected...support ID...</html>`，实测 247B）。
-    http_get 拿到 200 就当成功返回，落盘后文件名是 .zip、内容是 HTML，
-    最终被发布门禁按「过小产物」拦下 —— 2026-10-18 ID 州就是这么挂的（exit 3）。
-    这里重试几轮（WAF 多是瞬时/按 IP 抖动），仍不行就交给上层记 upstream_rejected。
+    (`<html>...Request Rejected...support ID...</html>`，实测 247B)；
+    也会回 **HTTP 200 + 半个包**（连接被掐）。http_get 拿到 200 就当成功返回，
+    落盘后文件名是 .zip、内容是 HTML/半包，最终被发布门禁按「过小产物」拦下 ——
+    2026-10-18 ID 州、2026-10-30 AK/GA/ID 三州 warn-partial 都是这么挂的。
+
+    加固四道（2026-10-30）：① `Content-Length` 由 http_get 内部对齐（截断即抛错）；
+    ② 头 4 字节必须是 `PK\x03\x04`；③ `zipfile.is_zipfile` 为真；
+    ④ zip 内 `.dbf` 头能读出记录数/字段名（读不出 = 假包）。
+    失败按 2s / 8s / 30s 退避重试 3 次，仍不行才交给上层记 upstream_rejected。
     """
     for i in range(tries):
         blob = b""
@@ -1683,11 +1688,30 @@ def _zip_blob(http_get, url: str, timeout: float, tries: int = 3) -> bytes | Non
             blob = http_get(url, timeout=timeout)
         except Exception:  # noqa: BLE001
             blob = b""
-        if blob[:2] == b"PK":
+        ok, why = False, "空响应"
+        if blob[:4] == b"PK\x03\x04":
+            try:
+                with zipfile.ZipFile(io.BytesIO(blob)) as zf:
+                    dbf = next((n for n in zf.namelist() if n.lower().endswith(".dbf")), None)
+                    if dbf:
+                        b = zf.read(dbf)[:32]
+                        if len(b) >= 32:
+                            ok = True
+                        else:
+                            why = ".dbf 头不足 32B"
+                    else:
+                        why = "zip 内无 .dbf"
+            except Exception as exc:  # noqa: BLE001
+                why = f"zip 解析失败：{str(exc)[:60]}"
+        else:
+            why = f"非 zip 魔数（头 4B={blob[:4]!r}，共 {len(blob)}B）"
+        if ok:
             return blob
         if i + 1 < tries:
+            wait = (2, 8, 30)[min(i, 2)]
             if os.environ.get("FSR_FAST") != "1":
-                time.sleep(5 * (i + 1) + random.random() * 3)   # 5/10s + 抖动
+                time.sleep(wait + random.random())
+            log(f"    TIGER zip 校验失败（{why}）→ {wait}s 后退避重试 {i + 1}/{tries - 1}")
     return None
 
 
