@@ -22,6 +22,7 @@ from __future__ import annotations
 
 import json
 import os
+import re
 import subprocess
 import sys
 from datetime import datetime, timezone
@@ -56,15 +57,23 @@ def gql(query: str) -> dict:
         return {}
 
 
-def has_manifest(state: str) -> bool:
-    raw = sh(["gh", "release", "view", f"raw-US-{state}-v1", "--repo", REPO,
+# ★ A1（2026-10-30）：tag 不再是写死的 raw-US-{ST}-v1 —— TX 真实 tag 是 -p1/-p2，
+#   写死会让 TX 永远 release not found → 每轮假红「665 资产但无 STATUS」。
+#   正则解析卷号，同州多卷合并计资产数，MANIFEST / STATUS 一律按**实际 tag** 逐个查。
+TAG_RE = re.compile(r"^raw-US-([A-Z]{2})-v1(-p\d+)?$")
+
+
+def has_manifest(tag: str) -> bool:
+    raw = sh(["gh", "release", "view", tag, "--repo", REPO,
               "--json", "assets", "-q", ".assets[].name"])
     return any(x.startswith("MANIFEST") for x in raw.split())
 
 
-def status_of(state: str) -> dict | None:
-    tmp = Path(f"/tmp/_audit_{state}.json")
-    sh(["gh", "release", "download", f"raw-US-{state}-v1", "-R", REPO,
+def status_of(tag: str) -> dict | None:
+    """按**实际 tag** 取 STATUS.json（卷号原样带进去）。"""
+    safe = re.sub(r"[^A-Za-z0-9._-]", "_", tag)
+    tmp = Path(f"/tmp/_audit_{safe}.json")
+    sh(["gh", "release", "download", tag, "-R", REPO,
         "--pattern", "STATUS.json", "-O", str(tmp), "--clobber"])
     try:
         return json.loads(tmp.read_text(encoding="utf-8"))
@@ -87,16 +96,36 @@ def main() -> int:
     repos = gql('query{repository(owner:"%s",name:"%s"){releases(first:80){nodes{'
                 'tagName releaseAssets(first:100){totalCount nodes{name}}}}}}'
                 % tuple(REPO.split("/")))
+
+    # ★ A2（2026-10-30）：取数失败必须显式失败，绝不被静默吞成「所有州都没开工」。
+    #   历史事故：gql 偶发返回 {} → rel 空 → 51 条假 B1（issue #5 的 41 条评论就在
+    #   「51 项 / 1 项」之间来回摆）。这里改成硬拦：roster 非空而 nodes 为空 = 查询失败。
+    nodes = ((repos or {}).get("releases") or {}).get("nodes") or []
+    if not nodes and states:
+        print("::error::GitHub GraphQL 查询失败或返回空（releases.nodes 为空）——"
+              "这是取数失败，不是『未开工』；本轮禁止产出任何 B1，直接退出",
+              file=sys.stderr)
+        return 1
+
     rel: dict[str, dict] = {}
-    for n in repos.get("releases", {}).get("nodes") or []:
+    for n in nodes:
         tag = n.get("tagName") or ""
-        if not tag.startswith("raw-US-"):
-            continue
-        st = tag.split("-")[2]
+        m = TAG_RE.match(tag)
+        if not m:
+            continue                      # 非 raw-US-XX-v1[-pN] 的 release 不参与账本巡检
+        st = m.group(1)
         ra = n.get("releaseAssets") or {}
         names = [x.get("name") or "" for x in (ra.get("nodes") or [])]
-        rel[st] = {"n": int(ra.get("totalCount") or 0),
-                   "man": any(x.startswith("MANIFEST") for x in names)}
+        cnt = int(ra.get("totalCount") or 0)
+        e = rel.setdefault(st, {"n": 0, "tags": []})
+        e["n"] += cnt                    # 同州多卷（TX p1/p2）合并计资产
+        e["tags"].append({"tag": tag, "n": cnt,
+                          "man": any(x.startswith("MANIFEST") for x in names)})
+
+    if not rel and states:
+        print("::error::GraphQL 返回了 releases 但没有任何 raw-US-* 命中 —— 同上按取数失败处理",
+              file=sys.stderr)
+        return 1
 
     runs = []
     try:
@@ -126,21 +155,38 @@ def main() -> int:
 
     for st, info in sorted(rel.items()):
         n = info["n"]
-        man = info["man"] or (n > 100 and has_manifest(st))
         busy = st in running
         if n == 0:
             if not busy:
                 add("red", "A1", f"{st} 空壳：Release 存在但资产 0（无 STATUS）",
                     f"states={st} → 全量重跑")
             continue
-        if man:
-            if n >= ASSET_CAP * 0.9:
-                add("yellow", "A5", f"{st} 资产 {n} 个逼近上限 {ASSET_CAP}", "该州需分卷")
+
+        # A5 按**单卷**判（TX p1=665 / p2=667 各自没顶到 1000，合并成 1332 会误报）
+        for t in info["tags"]:
+            if t["n"] >= ASSET_CAP * 0.9:
+                add("yellow", "A5",
+                    f"{st}（{t['tag']}）资产 {t['n']} 个逼近上限 {ASSET_CAP}",
+                    "该卷需再分卷")
+
+        # ★ A3（2026-10-30）：有 MANIFEST 也照样查 STATUS —— 旧代码 `if man: continue`
+        #   让「有 MANIFEST 的 Release 永不被检查 STATUS」，MI 就是靠这条漏了 A6。
+        docs: dict[str, dict] = {}
+        for t in info["tags"]:
+            man = t["man"] or has_manifest(t["tag"])   # names 只取前 100，MANIFEST 未必在内
+            doc = status_of(t["tag"])
+            if doc is None:
+                add("yellow", "A6",
+                    f"{st}（{t['tag']}）有 {t['n']} 资产"
+                    f"{'且有 MANIFEST' if man else ''}但无 STATUS.json",
+                    "查上轮是否写 STATUS 前被 kill"
+                    + ("；账本需按 manifest_reheal 口径补 STATUS" if man else ""))
+            else:
+                docs[t["tag"]] = doc
+        if not docs:
             continue
-        doc = status_of(st)
-        if not doc:
-            add("yellow", "A6", f"{st} 有 {n} 资产但无 STATUS.json", "查上轮是否写 STATUS 前被 kill")
-            continue
+        # 多卷时取最近更新的那份账本做进度判定
+        doc = max(docs.values(), key=lambda d: str(d.get("updated_at") or ""))
         if doc.get("phase") == "complete" or busy:
             continue
         age = hrs(str(doc.get("updated_at") or ""))
