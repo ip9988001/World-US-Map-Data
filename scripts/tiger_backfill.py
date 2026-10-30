@@ -57,6 +57,9 @@ STATES = ("AK", "GA", "ID")
 ADDRFEAT_RE = re.compile(r"^TIGER-US-([A-Z]{2})-(\d{5})-addrfeat\.zip$")   # 第七把锁
 PLACES_RE = re.compile(r"^TIGER-US-([A-Z]{2})-places\.zip$")
 COUNTY_RE = re.compile(r"^TIGER-US-([A-Z]{2})-county-(\d{5})\.geojson$")
+# 州界/普查区等非县级边界（契约允许：TIGER-US-<ST>-<layer>.geojson）
+BOUNDARY_RE = re.compile(r"^TIGER-US-([A-Z]{2})-(state|tract|zcta|place|places|bg|roads)"
+                         r"\.(geojson|zip)$")
 
 
 def log(m: str) -> None:
@@ -234,7 +237,7 @@ def patch_ledger(st: str, tag: str, tmp: Path, new_meta: dict[str, dict],
     tiger["missed"] = []
     tiger["upstream_rejected"] = 0
     tiger["backfilled_at"] = now()
-    tiger["backfilled_files"] = sorted(verified)
+    tiger["backfilled_files"] = sorted(set(tiger.get("backfilled_files") or []) | set(verified))
     tiger["backfill_note"] = ("2026-10-30 补抓：原 missed 记录的「上游返回非 zip（WAF 拒页/截断）」"
                               "经 HEAD 核对上游均 200，已在 runner 上带 PK 魔数+Content-Length 校验重抓并上架；"
                               "下载加固与退避重试见 scripts/tiger_backfill.py")
@@ -304,7 +307,8 @@ def check_names(st: str, names: list[str]) -> list[str]:
     bad = []
     for n in names:
         if n.startswith("TIGER"):
-            if not (ADDRFEAT_RE.match(n) or PLACES_RE.match(n) or COUNTY_RE.match(n)):
+            if not (ADDRFEAT_RE.match(n) or PLACES_RE.match(n) or COUNTY_RE.match(n)
+                    or BOUNDARY_RE.match(n)):
                 bad.append(n)
     return bad
 
