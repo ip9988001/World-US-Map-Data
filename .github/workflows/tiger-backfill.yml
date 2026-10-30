@@ -107,6 +107,12 @@ jobs:
           path: tiger-bf
           pattern: "tiger-bf-*"
           merge-multiple: true
+      - name: 其他州零变化（全仓前后快照对比）
+        env:
+          GH_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+        run: |
+          python3 scripts/tiger_backfill.py --snapshot-diff tiger-bf/before.json
+          mkdir -p docs && cp tiger-bf/before-diff.json docs/tiger-backfill-snapshot-diff.json
       - name: 自检（三州全部从 Release 重新读）
         env:
           GH_TOKEN: ${{ secrets.GITHUB_TOKEN }}
@@ -114,12 +120,6 @@ jobs:
           python3 scripts/tiger_backfill.py --selfcheck-all \
             --json-out tiger-bf/selfcheck.json \
             --report-out docs/TIGER-BACKFILL-2026-10-30.md
-      - name: 其他州零变化（全仓前后快照对比）
-        env:
-          GH_TOKEN: ${{ secrets.GITHUB_TOKEN }}
-        run: |
-          python3 scripts/tiger_backfill.py --snapshot-diff tiger-bf/before.json
-          mkdir -p docs && cp tiger-bf/before-diff.json docs/tiger-backfill-snapshot-diff.json
       - name: 汇总报告
         run: |
           python3 - <<'PY'

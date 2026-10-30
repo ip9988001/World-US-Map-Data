@@ -1,14 +1,7 @@
 {
- "ts": "2026-10-30T03:40:19+00:00",
+ "ts": "2026-10-30T04:24:13+00:00",
  "releases": 51,
  "rosted": 51,
  "running": [],
- "findings": [
-  {
-   "sev": "yellow",
-   "code": "A6",
-   "msg": "TX 有 665 资产但无 STATUS.json",
-   "fix": "查上轮是否写 STATUS 前被 kill"
-  }
- ]
+ "findings": []
 }
