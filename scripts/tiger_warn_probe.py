@@ -104,6 +104,8 @@ def main() -> int:
                 mm = re.search(r"tl_2024_(\d{5})_addrfeat", m["file"])
                 if mm:
                     fips = mm.group(1)
+                elif re.search(r"tl_2024_[0-9]{2}_", m["file"]):
+                    fips = ""
                 rec = {"state": st, "file": m["file"], "fips": fips,
                        "county": nm.get(fips, ""), "url": m["url"],
                        "reason": m.get("reason", "")}
@@ -146,7 +148,7 @@ def main() -> int:
         L.append("| FIPS | 县 | 上游 HTTP | 字节 | 结论 | 采集器记录 |")
         L.append("|---|---|---|---|---|---|")
         for r in sorted(rs, key=lambda x: x["fips"]):
-            L.append(f"| {r['fips'] or '?'} | {r['county'] or '?'} | {r['http']} | {r['size']} | "
+            L.append(f"| {r['fips'] or '—'} | {r['county'] or ('（州级 place 文件，非县级）' if not r['fips'] else '?')} | {r['http']} | {r['size']} | "
                      f"{r['verdict']} | {(r['reason'] or '')[:40]} |")
         L.append("")
     L.append("## 说明")

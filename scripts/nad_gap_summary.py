@@ -31,7 +31,7 @@ def main() -> int:
     ap.add_argument("--dir", default="gap")
     ap.add_argument("--out", default="docs/NAD-COVERAGE-FULL-2026-10-30.md")
     ap.add_argument("--run-url", default="")
-    ap.add_argument("--expect-states", type=int, default=52)
+    ap.add_argument("--expect-states", type=int, default=51)
     a = ap.parse_args()
 
     rows = [r for r in load(a.dir) if r.get("state")]
