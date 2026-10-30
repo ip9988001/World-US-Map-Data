@@ -1,0 +1,123 @@
+name: nad-gap-matrix
+
+# NAD 逐县多边形差集（全量）：每州一 job，判据用 TIGER 县界 rings + esriGeometryPolygon。
+# 输出：artifact（每州一个 json）→ 汇总 job 合并成 docs/NAD-COVERAGE-FULL-2026-10-30.md 并提交回 main。
+# 断点续跑：merge 把每州 gap/<ST>.json 提交回 main；再跑时 reuse_existing=1 可直接复用已提交结果。
+on:
+  workflow_dispatch:
+    inputs:
+      states:
+        description: "只跑这些州（空格分隔，留空=全部 51 州 + DC）"
+        default: ""
+      reuse_existing:
+        description: "复用仓库里已提交的 gap/<ST>.json（1=跳过该州）"
+        default: "0"
+      workers:
+        description: "每州并发县数"
+        default: "16"
+
+permissions:
+  contents: write
+
+concurrency:
+  group: nad-gap-matrix
+  cancel-in-progress: false
+
+jobs:
+  plan:
+    runs-on: ubuntu-latest
+    outputs:
+      matrix: ${{ steps.g.outputs.m }}
+    steps:
+      - id: g
+        env:
+          GH_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+        run: |
+          set -euo pipefail
+          if [ -n "${{ inputs.states }}" ]; then
+            ST="${{ inputs.states }}"
+          else
+            # 州清单从 Release tag 推导（raw-US-XX-v1、raw-US-TX-v1-pN）
+            ST=$(gh release list --repo "$GITHUB_REPOSITORY" --limit 200 --json tagName \
+                 -q '.[].tagName' \
+                 | sed -n 's/^raw-US-\([A-Z][A-Z]\)-v1.*/\1/p' | sort -u | tr '\n' ' ')
+          fi
+          echo "states: $ST"
+          M=$(python3 -c "import json,sys;st=sys.argv[1].split();print(json.dumps({'include':[{'state':s} for s in st]}))" "$ST")
+          echo "m=$M" >> "$GITHUB_OUTPUT"
+          echo "### 计划州数：$(echo $ST | wc -w)" >> "$GITHUB_STEP_SUMMARY"
+
+  gap:
+    needs: plan
+    runs-on: ubuntu-latest
+    timeout-minutes: 60
+    strategy:
+      fail-fast: false
+      max-parallel: 10
+      matrix: ${{ fromJson(needs.plan.outputs.matrix) }}
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-python@v5
+        with:
+          python-version: "3.11"
+      - name: 差集 ${{ matrix.state }}
+        env:
+          GH_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+        run: |
+          set -euo pipefail
+          ST="${{ matrix.state }}"
+          OUT="gap/$ST.json"
+          mkdir -p gap
+          if [ "${{ inputs.reuse_existing }}" = "1" ] && [ -s "$OUT" ]; then
+            echo "复用已提交的 $OUT"
+            exit 0
+          fi
+          python3 scripts/nad_gap_plan.py --state "$ST" --out "$OUT" \
+            --workers "${{ inputs.workers }}" | tail -1
+          test -s "$OUT"
+      - uses: actions/upload-artifact@v4
+        with:
+          name: gap-${{ matrix.state }}
+          path: gap/${{ matrix.state }}.json
+          retention-days: 30
+          if-no-files-found: error
+
+  merge:
+    needs: gap
+    if: always()
+    runs-on: ubuntu-latest
+    timeout-minutes: 20
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-python@v5
+        with:
+          python-version: "3.11"
+      - uses: actions/download-artifact@v4
+        with:
+          path: gap
+          pattern: "gap-*"
+          merge-multiple: true
+      - name: 汇总成 docs
+        run: |
+          set -euo pipefail
+          mkdir -p gap
+          python3 scripts/nad_gap_summary.py --dir gap \
+            --out docs/NAD-COVERAGE-FULL-2026-10-30.md \
+            --run-url "$GITHUB_SERVER_URL/$GITHUB_REPOSITORY/actions/runs/$GITHUB_RUN_ID"
+      - name: 提交回 main
+        env:
+          GH_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+        run: |
+          set -euo pipefail
+          git config user.name  "github-actions[bot]"
+          git config user.email "github-actions[bot]@users.noreply.github.com"
+          git add docs/NAD-COVERAGE-FULL-2026-10-30.md gap
+          if git diff --cached --quiet; then echo "无变化"; exit 0; fi
+          git commit -m "docs(nad): 全量县覆盖多边形差集 $(date -u +%Y-%m-%dT%H:%MZ)"
+          git pull --rebase --autostash origin main || true
+          git push
+      - uses: actions/upload-artifact@v4
+        with:
+          name: nad-gap-matrix-all
+          path: gap
+          retention-days: 30

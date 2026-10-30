@@ -16,6 +16,14 @@
 用法：
   python3 scripts/nad_gap_plan.py --state GA --out gap/GA.json
   python3 scripts/nad_gap_plan.py --state GA --sample 10
+  python3 scripts/nad_gap_plan.py --state GA --out gap/GA.json --workers 8
+
+输出（结构化，供 nad-gap-matrix.yml 汇总）：
+  state / counties_total / have_n / have_fips
+  need_n / need[] = {fips, county, upstream_count}
+  bbox_false_positive_n / bbox_false_positive[] = {fips, county, bbox_count}
+  query_failed_n / query_failed[] = {fips, county}
+  status: ok | partial（query_failed 非空即 partial）
 """
 from __future__ import annotations
 
@@ -30,6 +38,7 @@ import tempfile
 import time
 import urllib.parse
 import urllib.request
+from concurrent.futures import ThreadPoolExecutor, as_completed
 from pathlib import Path
 
 REPO = os.environ.get("GITHUB_REPOSITORY") or "ip9988001/World-US-Map-Data"
@@ -99,7 +108,7 @@ def have_fips(state):
 
 
 def county_rings(state, tmp):
-    """TIGER 县界 rings（Esri JSON）。TX 这类拆 p1/p2 的州逐个 tag 试。"""
+    """TIGER 县界 rings + 县名（Esri JSON attributes.BASENAME）。TX 这类拆 p1/p2 的州逐个 tag 试。"""
     for tag in [t for t in release_tags() if t.startswith(f"raw-US-{state}")]:
         sh(["gh", "release", "download", tag, "-R", REPO,
             "-p", f"TIGER-US-{state}-county-*.geojson", "-D", str(tmp)])
@@ -107,13 +116,30 @@ def county_rings(state, tmp):
     for f in sorted(tmp.glob(f"TIGER-US-{state}-county-*.geojson")):
         fips = f.name.rsplit("-", 1)[-1].split(".")[0]
         try:
-            g = json.load(open(f, encoding="utf-8"))["features"][0]["geometry"]
-            rings = g.get("rings") or []
+            ft = json.load(open(f, encoding="utf-8"))["features"][0]
+            rings = (ft.get("geometry") or {}).get("rings") or []
             if rings:
-                out[fips.zfill(5)] = rings
+                attrs = ft.get("attributes") or {}
+                name = (attrs.get("BASENAME") or attrs.get("NAME") or "").strip()
+                out[fips.zfill(5)] = {"rings": rings, "county": name}
         except Exception:  # noqa: BLE001
             pass
     return out
+
+
+def probe_one(fips, info):
+    """单县：真实多边形查一次；无数据再补 bbox 对照（仅诊断）。"""
+    pc = poly_count(info["rings"])
+    if pc is None:
+        return {"kind": "failed", "fips": fips, "county": info["county"]}
+    if pc > 0:
+        return {"kind": "need", "fips": fips, "county": info["county"],
+                "upstream_count": pc}
+    bc = bbox_count(info["rings"])
+    if bc and bc > 0:
+        return {"kind": "bbox_fp", "fips": fips, "county": info["county"],
+                "bbox_count": bc}
+    return {"kind": "empty", "fips": fips, "county": info["county"]}
 
 
 def main() -> int:
@@ -121,6 +147,7 @@ def main() -> int:
     ap.add_argument("--state", required=True)
     ap.add_argument("--out", default="")
     ap.add_argument("--sample", type=int, default=0)
+    ap.add_argument("--workers", type=int, default=8)
     a = ap.parse_args()
     st = a.state.upper()
     have = set(have_fips(st))
@@ -129,36 +156,45 @@ def main() -> int:
     fips_list = sorted(rings_map)
     if a.sample:
         fips_list = fips_list[: a.sample]
-    need, hit, failed, false_pos = [], [], [], []
-    for fips in fips_list:
-        if fips in have:
-            continue
-        rings = rings_map[fips]
-        pc = poly_count(rings)
-        if pc is None:
-            failed.append(fips); continue
-        if pc > 0:
-            hit.append({"fips": fips, "upstream_count": pc}); need.append(fips)
-        else:
-            bc = bbox_count(rings)
-            if bc and bc > 0:
-                false_pos.append({"fips": fips, "bbox_count": bc})
+    todo = [f for f in fips_list if f not in have]
+    res = []
+    if todo:
+        with ThreadPoolExecutor(max_workers=max(1, a.workers)) as ex:
+            futs = {ex.submit(probe_one, f, rings_map[f]): f for f in todo}
+            for fu in as_completed(futs):
+                res.append(fu.result())
+    need = sorted([r for r in res if r["kind"] == "need"], key=lambda x: x["fips"])
+    failed = sorted([r for r in res if r["kind"] == "failed"], key=lambda x: x["fips"])
+    false_pos = sorted([r for r in res if r["kind"] == "bbox_fp"], key=lambda x: x["fips"])
+    empty = sorted([r for r in res if r["kind"] == "empty"], key=lambda x: x["fips"])
+    for r in need + failed + false_pos + empty:
+        r.pop("kind", None)
     out = {
         "state": st,
+        "status": "partial" if failed else "ok",
         "method": "polygon（TIGER rings）—— bbox 会系统性假阳性，勿用",
         "counties_total": len(rings_map),
         "have_fips": sorted(have), "have_n": len(have),
-        "upstream_hit_detail": hit, "need_fips": need, "need_n": len(need),
-        "query_failed": failed,
+        "probed_n": len(todo),
+        "need_fips": [r["fips"] for r in need], "need_n": len(need),
+        "need": need,
+        "upstream_hit_detail": need,
         "bbox_false_positive": false_pos,
         "bbox_false_positive_n": len(false_pos),
-        "note": "只出事实：need = 上游有数据（真实县界）且我们无片的县。",
+        "upstream_empty_n": len(empty), "upstream_empty": empty,
+        "query_failed": failed, "query_failed_n": len(failed),
+        "note": "只出事实：need = 上游有数据（真实县界）且我们无片的县；upstream_empty = 上游该县 0 条，属上游真无数据。",
     }
     txt = json.dumps(out, ensure_ascii=False, indent=1)
     if a.out:
         Path(a.out).parent.mkdir(parents=True, exist_ok=True)
         Path(a.out).write_text(txt, encoding="utf-8")
-    print(txt)
+    print(json.dumps({k: out[k] for k in ("state", "status", "counties_total", "have_n",
+                                          "need_n", "bbox_false_positive_n",
+                                          "upstream_empty_n", "query_failed_n")},
+                     ensure_ascii=False))
+    if not a.out:
+        print(txt)
     return 0
 
 
