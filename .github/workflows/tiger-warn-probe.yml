@@ -1,0 +1,47 @@
+name: tiger-warn-probe
+
+# AK/GA/ID TIGER warn-partial 归因：warn 的具体县 → 逐条 HEAD 上游 addrfeat。
+# 上游 200 = 我们漏抓（补抓即可）；404/410 = 上游真无文件（写进 docs 明账，不算缺陷）。
+# 必须跑在 runner 上：census.gov 对部分机房 IP 整站 403。
+on:
+  workflow_dispatch:
+    inputs:
+      states:
+        description: "州（空格分隔）"
+        default: "AK GA ID"
+
+permissions:
+  contents: write
+
+jobs:
+  probe:
+    runs-on: ubuntu-latest
+    timeout-minutes: 20
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-python@v5
+        with:
+          python-version: "3.11"
+      - name: 上游存在性核对
+        env:
+          GH_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+        run: |
+          python3 scripts/tiger_warn_probe.py --states ${{ inputs.states }} \
+            --out docs/TIGER-WARN-2026-10-30.md
+      - name: 提交回 main
+        env:
+          GH_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+        run: |
+          set -euo pipefail
+          git config user.name  "github-actions[bot]"
+          git config user.email "github-actions[bot]@users.noreply.github.com"
+          git add docs/TIGER-WARN-2026-10-30.md
+          if git diff --cached --quiet; then echo "无变化"; exit 0; fi
+          git commit -m "docs(tiger): AK/GA/ID warn-partial 逐县上游核对"
+          git pull --rebase --autostash origin main || true
+          git push
+      - uses: actions/upload-artifact@v4
+        with:
+          name: tiger-warn
+          path: docs/TIGER-WARN-2026-10-30.md
+          retention-days: 30
