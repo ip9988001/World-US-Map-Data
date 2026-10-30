@@ -1,0 +1,37 @@
+{
+ "changed": {
+  "raw-US-AK-v1": {
+   "status_sha": [
+    "8ef92487fac427dad1c93f19fce15d65feb1bd44f1421926dccfa544ad9367b9",
+    "648649167fbcf9c53df13ea7c627acf1785ee01f671fa0386940249c58e14a8f"
+   ],
+   "manifest_sha": [
+    "dd85db2b1d5a0e1aafb6c878645abb9c46307cfabe209fbafc3abc2255e63719",
+    "fa25d5074e70e017436e57d1d3e9579e36605d84863eee0b700c537c2e628de7"
+   ]
+  },
+  "raw-US-GA-v1": {
+   "status_sha": [
+    "fcf5b3a6885dd5c782d428594caaa6ffd337ae4627f4f4404d924f000b62e4b6",
+    "529bf9ffb7e38494978243ccc467a2ce7c92235665600e65c71817ae27e15cfc"
+   ],
+   "manifest_sha": [
+    "a2272ca2cde314311e764eb535c81850e6b4f1d26a9e6b0f7599a1c022ee1ba0",
+    "858a33fb3289c87ceeebd8da5fa5eb3d2b6b806aa70c161faf358f16f7f2a100"
+   ]
+  },
+  "raw-US-ID-v1": {
+   "status_sha": [
+    "5b1eff62f8c8a7ccbadf885b48b7dac025024c153c37f0fd15a98e8b451da9cd",
+    "ad588b3b306f597f7c965c1558be76c807270b51aff3a6e569d0b9ad770d9e6c"
+   ],
+   "manifest_sha": [
+    "0f9c7381e1aa400f177a645f5cf09c914ea0b5fd6fd412ad2b3ee385cb4fc851",
+    "2aeac99abc55452e71185558a7edb3099617c3ad3ca22c7f8b7caf02bc7716a3"
+   ]
+  }
+ },
+ "added": [],
+ "removed": [],
+ "unchanged_n": 49
+}

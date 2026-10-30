@@ -1,0 +1,314 @@
+{
+ "raw-US-AK-v1": {
+  "assets_n": 129,
+  "data_n": 126,
+  "manifest_sha": "dd85db2b1d5a0e1aafb6c878645abb9c46307cfabe209fbafc3abc2255e63719",
+  "status_sha": "8ef92487fac427dad1c93f19fce15d65feb1bd44f1421926dccfa544ad9367b9"
+ },
+ "raw-US-AL-v1": {
+  "assets_n": 243,
+  "data_n": 240,
+  "manifest_sha": "36d0319ec647b65f5a61f537c81df86655d29b73d7b568993c33d3439484581e",
+  "status_sha": "5919d8f06cb3dbb25d034459129540220efa3054a1235d7e263c2cf481a70d88"
+ },
+ "raw-US-AR-v1": {
+  "assets_n": 239,
+  "data_n": 236,
+  "manifest_sha": "6ce5b2730d87e766e499cd7537abb6ff1015b543238a3ddbb272b36a6404991b",
+  "status_sha": "9de9411873125824a602ea6ac77f592f36194e1e79f00b8c9357e8d339f8f9f1"
+ },
+ "raw-US-AZ-v1": {
+  "assets_n": 84,
+  "data_n": 81,
+  "manifest_sha": "4bae9c98606f6fd404fbce7e178e0ed86d78c4fc9156a97ec81d2f5a999ad4b6",
+  "status_sha": "4dc38de5f67e4fe402649d24a04b40cf81c1e055cbce3c390fe62948ff7c7d43"
+ },
+ "raw-US-CA-v1": {
+  "assets_n": 306,
+  "data_n": 303,
+  "manifest_sha": "a474cf044921490f9050b1269e9bb38ee0afb6effec34a99d9e16b94621d5f4d",
+  "status_sha": "5ae3871da9ff4155d92445b4e14d0c725376682bdba486d58495c2bdc48c8ace"
+ },
+ "raw-US-CO-v1": {
+  "assets_n": 235,
+  "data_n": 232,
+  "manifest_sha": "aaa23a5bd2de63a0fb104b96b00f6c271ac3e467b912f1ec8d0ebba4f5f648d9",
+  "status_sha": "0de301c1f6e0cf3e2b72732321b3ec16d86f8f1180889da409a842a856d0f121"
+ },
+ "raw-US-CT-v1": {
+  "assets_n": 59,
+  "data_n": 56,
+  "manifest_sha": "7c7587b7da763e969f94853456dac1a5b372a47a4899470927e312d5b8845056",
+  "status_sha": "e241bbfd520d99c7a86edb5e3ea24f212a91ae6a6d70988cee4c480894bdab10"
+ },
+ "raw-US-DC-v1": {
+  "assets_n": 13,
+  "data_n": 10,
+  "manifest_sha": "06afdcd9cabd692c1be1bf702abf0f96ab524f92ed720a4834b246cb88b8cd32",
+  "status_sha": "6f9362e2c6fb02145cfb59c0ab9321e2ac91665568ebf90a7cc1a3a97dc655e5"
+ },
+ "raw-US-DE-v1": {
+  "assets_n": 25,
+  "data_n": 22,
+  "manifest_sha": "e265f7a65da7c9721036aae00aaaac69b2f16def13b122d335640d679c096f3d",
+  "status_sha": "910471272c622679b5e5742b2686f8a67f4d095b03371300dd9debf74c47ae86"
+ },
+ "raw-US-FL-v1": {
+  "assets_n": 267,
+  "data_n": 264,
+  "manifest_sha": "71b5ed593076bdb15094cd67308046e84ac334ae4bfa14fc86a1402f4680c143",
+  "status_sha": "1dce241e51f09c7c9fb31749b0a7124378767c42b460e64e011aa8443f9cd611"
+ },
+ "raw-US-GA-v1": {
+  "assets_n": 479,
+  "data_n": 476,
+  "manifest_sha": "a2272ca2cde314311e764eb535c81850e6b4f1d26a9e6b0f7599a1c022ee1ba0",
+  "status_sha": "fcf5b3a6885dd5c782d428594caaa6ffd337ae4627f4f4404d924f000b62e4b6"
+ },
+ "raw-US-HI-v1": {
+  "assets_n": 23,
+  "data_n": 20,
+  "manifest_sha": "3d2883d8777e8d69f08dd3bb60f634f8811133c8e360385c8f994a265ae6d63d",
+  "status_sha": "c8915a29ddfc23d5ca783e27b380255c822541f3de1dabdb283c08de8dfdd15f"
+ },
+ "raw-US-IA-v1": {
+  "assets_n": 364,
+  "data_n": 361,
+  "manifest_sha": "2f48dbee8854c9b32428286a9b7d847dfe302ba86de2dac69a25b7fa3318028c",
+  "status_sha": "0a330e2ae17dcd8c9573adbd4dd9fb57019aabe8042f7943714dfec78549f9c6"
+ },
+ "raw-US-ID-v1": {
+  "assets_n": 128,
+  "data_n": 125,
+  "manifest_sha": "0f9c7381e1aa400f177a645f5cf09c914ea0b5fd6fd412ad2b3ee385cb4fc851",
+  "status_sha": "5b1eff62f8c8a7ccbadf885b48b7dac025024c153c37f0fd15a98e8b451da9cd"
+ },
+ "raw-US-IL-v1": {
+  "assets_n": 468,
+  "data_n": 465,
+  "manifest_sha": "92b1f3c327e9a5a3eceeb760334a9f704d48d7c94b08df97433510382efda103",
+  "status_sha": "1633620e0133b52317c5e1bd017a13f8a95132b427ad5d75c6285fb849c0de4c"
+ },
+ "raw-US-IN-v1": {
+  "assets_n": 390,
+  "data_n": 387,
+  "manifest_sha": "8144261f1a2afe920fd04dee55b82e8ee48a6a94c7661d65293a53792f4e8449",
+  "status_sha": "d08f34f53e324d2385072c3713bdb0257640ddc63d0675b681b152024a2557c7"
+ },
+ "raw-US-KS-v1": {
+  "assets_n": 353,
+  "data_n": 350,
+  "manifest_sha": "880387f922537e2ffb1c27f5250b614e78b4d7f8d1c3f034534e4af26e2bd2c0",
+  "status_sha": "d138620cf429e4295b5a507b6a8100ce41476c2442e98d1e2f4a875a20e4a3f8"
+ },
+ "raw-US-KY-v1": {
+  "assets_n": 507,
+  "data_n": 504,
+  "manifest_sha": "a600c13ea73c79f70c1027677c90ef06c73b97e5a4cbe4d7f008cbf7d77d89a9",
+  "status_sha": "66d8feb51d17009e5f7c7d04cd44f4b7a0e65d5d7a1ddd64647bc8aa13d7a579"
+ },
+ "raw-US-LA-v1": {
+  "assets_n": 180,
+  "data_n": 177,
+  "manifest_sha": "c39bdf136522309b04d6bcd747f2f661983300a230c15a9ee9d3da64f45bc7f0",
+  "status_sha": "cc6ab40cca74c29f89cd073306e1048c6d65a9e2f5ebb96fb4c1e4bca54423d0"
+ },
+ "raw-US-MA-v1": {
+  "assets_n": 70,
+  "data_n": 67,
+  "manifest_sha": "fbdd345a738c18f76a2090227da97d21a91e00cf20346208aa99b3ff463b43c0",
+  "status_sha": "83042948752ecce572683a7e9423480041181af815815788bf730d3ac4965181"
+ },
+ "raw-US-MD-v1": {
+  "assets_n": 116,
+  "data_n": 113,
+  "manifest_sha": "af8f16fde19c75d80afb55e9acba9efd0c0fc95dddfd77be3a1d81cb23e5634a",
+  "status_sha": "1e7762276dccd47036fcfe1ec62fb7878f095b7fe5715a97e0e72d6345893588"
+ },
+ "raw-US-ME-v1": {
+  "assets_n": 57,
+  "data_n": 54,
+  "manifest_sha": "ee11b7caf736cb9df4912491b2de40ef0750a096bad134aa22bdd0d8c5bc48e1",
+  "status_sha": "0451212810a1adb49325541049494da73e00ef22e81cda2183e6941b2188e275"
+ },
+ "raw-US-MI-v1": {
+  "assets_n": 234,
+  "data_n": 231,
+  "manifest_sha": "dcf0da73917d54190a272a72c2573f9c59144669906de8f211971a97cd59ab78",
+  "status_sha": "26af5853b9cad1c5ac92416951eeab9a237e7c89d2ed99ebcb56cf18d5aa11c0"
+ },
+ "raw-US-MN-v1": {
+  "assets_n": 304,
+  "data_n": 301,
+  "manifest_sha": "2f5564bec3191601e8f0309f9c06deffdd1c78db7a099864e4671898aaf23f95",
+  "status_sha": "fab6456c18d18959351699c77f3932fa88d18edf65d63ce70811f2bb85515afb"
+ },
+ "raw-US-MO-v1": {
+  "assets_n": 379,
+  "data_n": 376,
+  "manifest_sha": "087274f5a29c23e442c67b6cef53ad5d6d6e969f97c196c0301767fe50645272",
+  "status_sha": "61267ad7abe426bbae456baf722d0c7bd3d7951cdf0ee7a17753fb29e3800d37"
+ },
+ "raw-US-MS-v1": {
+  "assets_n": 196,
+  "data_n": 193,
+  "manifest_sha": "20f29ac469643d3c4c1816d7eb3aa57257638ae4c526db0be46d0916a2026e65",
+  "status_sha": "46a27635097fe201ef051803d7899012b9b6ba6664c8e7fb51598975fb6c46f6"
+ },
+ "raw-US-MT-v1": {
+  "assets_n": 179,
+  "data_n": 176,
+  "manifest_sha": "d547a88196ea986a2b44d8403810529a80f60cdf5c10d74e50c0ee51ef067ac4",
+  "status_sha": "4e8d584dfd7c8151f8dfebd5b21278ddd6a2ad67c1d82a22f718e8050135af3d"
+ },
+ "raw-US-NC-v1": {
+  "assets_n": 518,
+  "data_n": 515,
+  "manifest_sha": "6322dffa48aa0c1670122035bc5f38b5c64c4e760d65cdbd6327b809f41c3ee2",
+  "status_sha": "e9de2273c8fb95f8030c7c8dbe3eec579a8729f9e1df8a06db3eb778df46c2f0"
+ },
+ "raw-US-ND-v1": {
+  "assets_n": 186,
+  "data_n": 183,
+  "manifest_sha": "263499dc1e79779b0bd0bc08c7d300f9438245b81b66c58a25d6683e0e93bbe8",
+  "status_sha": "74d7a843c844609f203da6fde92c572acc02e3605709f080e0d612d8a8964c0b"
+ },
+ "raw-US-NE-v1": {
+  "assets_n": 460,
+  "data_n": 457,
+  "manifest_sha": "c5d8b6cbd3d172014c6ea1ae21b5a19b231495936ad0c5a24827faf19eea80d3",
+  "status_sha": "eea4c6f9f4fb8711a80e1e3cae7349bcc5bc7aed3447b3a2d1cd73dc70ac5a4e"
+ },
+ "raw-US-NH-v1": {
+  "assets_n": 35,
+  "data_n": 32,
+  "manifest_sha": "4ea7955ad14118e49a413cefd062158e2a0eff17b54b5079e2156f005a1afd94",
+  "status_sha": "cc30cd8a1c9a8b64a0f31dd8a414d76bbeba90a8bfe344db4db513db1b56ed9d"
+ },
+ "raw-US-NJ-v1": {
+  "assets_n": 97,
+  "data_n": 94,
+  "manifest_sha": "1b0ddfa770e74f16cc89879c16a2ec09d5ed4e0ec1a933f0cdc3f41c0d388611",
+  "status_sha": "d574375407b05fdf14bff8930ccbaf108f91955b27bfef540a09266f1c0c9af7"
+ },
+ "raw-US-NM-v1": {
+  "assets_n": 160,
+  "data_n": 157,
+  "manifest_sha": "42e5ca3b7e2635560988ba10e7dfde9a1bc5ed7b30eb720912068cbadd641fb5",
+  "status_sha": "3ec44be054796b9f2ec5abfc38fcdfbae8419c622692a4b5a6d0fa2af96de8e7"
+ },
+ "raw-US-NV-v1": {
+  "assets_n": 61,
+  "data_n": 58,
+  "manifest_sha": "8f5a9ad4b048b5ef28694fa3887862871a778737a9ed10392f71c715cdd09205",
+  "status_sha": "b141d980d062b92bd77054ad9f5596b548687cc0cd8e4675a0f802a93e9e50b6"
+ },
+ "raw-US-NY-v1": {
+  "assets_n": 268,
+  "data_n": 265,
+  "manifest_sha": "05bddce2c0538c4b9fe6e44cfecffc5dfa32379537d69a7294972048d1bc4a85",
+  "status_sha": "04d16a8572cdb2942d6f3dc975eebc357f35c3133f1a806ddccf9d2f8bf7b6ed"
+ },
+ "raw-US-OH-v1": {
+  "assets_n": 451,
+  "data_n": 448,
+  "manifest_sha": "2838dcfee37f01a47889cd470f5ed1c2bc1ac79075d6d16b6456d95e90aad777",
+  "status_sha": "44c63e75fa60c8d08dc793e4a17d98f81d723e588cab2040b28f3d012d661181"
+ },
+ "raw-US-OK-v1": {
+  "assets_n": 313,
+  "data_n": 310,
+  "manifest_sha": "e9d52b8602a7515e13e097f6eb2cb9a939ca909b0a464b187a1c23396d1ca0b6",
+  "status_sha": "fc2ad834c354a7cd7798038ec165c97381d55f873789c91936450a42cd1f0fc3"
+ },
+ "raw-US-OR-v1": {
+  "assets_n": 189,
+  "data_n": 186,
+  "manifest_sha": "ffcd17bf45d3ccaac13d725289213d9b04bf36a95cb9dd5c85e87b7420c9b15d",
+  "status_sha": "5a2c4ebbafb6dc79f9e3810b442104aa827f22e25170e5d8de28f446713d907f"
+ },
+ "raw-US-PA-v1": {
+  "assets_n": 284,
+  "data_n": 281,
+  "manifest_sha": "acbb19bef7c2b708eb53c8f027587645893886a44ead6e04f23eddf9ef86b0bc",
+  "status_sha": "796334456ec930f2d7d729131620086222c52f9e7c35f3a355dc5bfd3683ede1"
+ },
+ "raw-US-RI-v1": {
+  "assets_n": 31,
+  "data_n": 28,
+  "manifest_sha": "6bb5c8843ac436b34f474c9a48705f5107914ea72cf6ef30adaef92c7acb5f5f",
+  "status_sha": "d865c80072cbb4577efb55f0a195ebf5f8f795f614a3ef7e345640fda6da66f8"
+ },
+ "raw-US-SC-v1": {
+  "assets_n": 151,
+  "data_n": 148,
+  "manifest_sha": "4c1c3cfbb4c8f6609c223a71b54182cd4d95c969b836a07b61408b3fc3ad0ffa",
+  "status_sha": "75d7a65cb690781cb8894e4ffb43b62ae7fcf2657caee42cc286d41124112557"
+ },
+ "raw-US-SD-v1": {
+  "assets_n": 158,
+  "data_n": 155,
+  "manifest_sha": "c00e24e76331e7151634531abadbb79b96bdfed2c22a045e17aa7819fa9692e3",
+  "status_sha": "64ee1b188d9600fd945aed57dede46b0c299686dffc413b9352e81e9cbb493a7"
+ },
+ "raw-US-TN-v1": {
+  "assets_n": 408,
+  "data_n": 405,
+  "manifest_sha": "3421ebe4bd75ff4dae04cb047b608d9f91445cc0b075710cff2688b935ba83ba",
+  "status_sha": "fb9aabc69f54649f8dd0f7e14382c9ecf1acfc59f5e2628f28780879452ea7f9"
+ },
+ "raw-US-TX-v1-p1": {
+  "assets_n": 665,
+  "data_n": 662,
+  "manifest_sha": "78f3efe7e16eb9c16c875046a29d339c540bd3013927079c5f0dec60e3ebde0b",
+  "status_sha": "c7a6e0d4321e38018daf2bf1945d5f4a00e1b2907bb246f4285d8e805783793e"
+ },
+ "raw-US-TX-v1-p2": {
+  "assets_n": 667,
+  "data_n": 664,
+  "manifest_sha": "df9f5e0ee1e8c44d36c24b1594da0c177652437bcf361bad6a395245666e9e6d",
+  "status_sha": "a0b6de7a2040ce41d243e0836fc65c71e0d9599d831b2472ac9b800505e49d2c"
+ },
+ "raw-US-UT-v1": {
+  "assets_n": 130,
+  "data_n": 127,
+  "manifest_sha": "61212362042735d710228707f45f09629bb00a482190b59ff613b06f07d84945",
+  "status_sha": "43b339b5e2eb3bc1fa1ce69a13ae4b78421b49f842c281708f43c8d7bc4a8983"
+ },
+ "raw-US-VA-v1": {
+  "assets_n": 598,
+  "data_n": 595,
+  "manifest_sha": "5204ea780c0eee94f73201b357f224e89295783ce2af43c3c7f01e6c99d0fa82",
+  "status_sha": "e7186f8b0da7e1f71848636be8fbbb7cb096a240b01f77f9977fd740b334debd"
+ },
+ "raw-US-VT-v1": {
+  "assets_n": 53,
+  "data_n": 50,
+  "manifest_sha": "63db58103bd8c81c0aaaf37417cc0ae8ffeac77997cb3765f891ae01fba7bbf8",
+  "status_sha": "fe3fbde7b9eef2c3b7c9977cdda91abc410034c294d02a06ef9e4109343216e8"
+ },
+ "raw-US-WA-v1": {
+  "assets_n": 204,
+  "data_n": 201,
+  "manifest_sha": "f4399c0860aeba473d981f86f92fa5d23b0f1df6a1fb4f55cb4236840c015bcf",
+  "status_sha": "6a24abc1777a377f4809aa1bdd67a58dbed2e94b411ec19152244884fea05814"
+ },
+ "raw-US-WI-v1": {
+  "assets_n": 339,
+  "data_n": 336,
+  "manifest_sha": "3cc4bd60a046c4bf52b5e900de8321a96a75af9e1c10a03b13b6d0d6e301882c",
+  "status_sha": "5efccd8d025d625aa350ce118dc4df3233ef2b665fcd411fa3db14c585cadcd1"
+ },
+ "raw-US-WV-v1": {
+  "assets_n": 234,
+  "data_n": 231,
+  "manifest_sha": "b87b30807724824efc4a627a4e67fee6425fa3f6954ac358d0f4d2bfd1c54fa5",
+  "status_sha": "7eb9ed846270647a25c637b8aa27f51f007f17f9dff90a0103e43f8bf533a71b"
+ },
+ "raw-US-WY-v1": {
+  "assets_n": 93,
+  "data_n": 90,
+  "manifest_sha": "c62204829a0427c74a071bba870acc8c3abb77cec98e621e8319b8a6f19b59e1",
+  "status_sha": "35f7f25fd3f6180672ab08b5c5564289939573ba860166097adda44ca785dab1"
+ }
+}
