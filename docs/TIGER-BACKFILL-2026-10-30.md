@@ -1,6 +1,6 @@
 # TIGER addrfeat 补抓 · 三州重新封印（2026-10-30）
 
-- 生成时间（UTC）：2026-10-30T04:35:33Z
+- 生成时间（UTC）：2026-10-30T04:38:53Z
 - 判据：`sources[census_tiger].status == ok` 且 `missed == []`；资产名全过第七把锁；`MANIFEST.assets` 数量 == Release 数据资产数（−3 账本文件）；每个 TIGER zip 可下载且解压能读出 .dbf 表头。
 
 ## 二、自检（全部从 Release 重新读）
