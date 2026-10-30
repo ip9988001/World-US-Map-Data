@@ -462,9 +462,6 @@ def main() -> int:
     ap.add_argument("--snapshot", default="", help="写全仓快照（资产数 + MANIFEST sha）")
     ap.add_argument("--snapshot-diff", default="", help="与 before 快照对比，写 diff JSON")
     a = ap.parse_args()
-    if not (a.state or a.selfcheck_all):
-        raise SystemExit("需要 --state XX 或 --selfcheck-all")
-
     if a.snapshot:
         snap = snapshot()
         Path(a.snapshot).parent.mkdir(parents=True, exist_ok=True)
@@ -479,6 +476,9 @@ def main() -> int:
         log(f"对比：变化 {len(d['changed'])} 个 tag（{sorted(d['changed'])}）；"
             f"零变化 {d['unchanged_n']} 个")
         return 0 if set(d["changed"]) <= {f"raw-US-{s}-v1" for s in STATES} else 1
+
+    if not (a.state or a.selfcheck_all):
+        raise SystemExit("需要 --state XX / --selfcheck-all / --snapshot / --snapshot-diff")
 
     results = []
     if a.state:
