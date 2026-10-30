@@ -1,64 +1,14 @@
 {
- "ts": "2026-10-22T07:33:30+00:00",
- "releases": 44,
+ "ts": "2026-10-30T03:40:19+00:00",
+ "releases": 51,
  "rosted": 51,
- "running": [
-  "GA",
-  "IL",
-  "IN",
-  "MI",
-  "NY",
-  "OH",
-  "OR"
- ],
+ "running": [],
  "findings": [
   {
    "sev": "yellow",
    "code": "A6",
-   "msg": "MI 有 35 资产但无 STATUS.json",
+   "msg": "TX 有 665 资产但无 STATUS.json",
    "fix": "查上轮是否写 STATUS 前被 kill"
-  },
-  {
-   "sev": "yellow",
-   "code": "B1",
-   "msg": "CA 无 Release（未开工）",
-   "fix": "states=CA → 派跑"
-  },
-  {
-   "sev": "yellow",
-   "code": "B1",
-   "msg": "IL 无 Release（未开工）",
-   "fix": "states=IL → 派跑"
-  },
-  {
-   "sev": "yellow",
-   "code": "B1",
-   "msg": "MO 无 Release（未开工）",
-   "fix": "states=MO → 派跑"
-  },
-  {
-   "sev": "yellow",
-   "code": "B1",
-   "msg": "NC 无 Release（未开工）",
-   "fix": "states=NC → 派跑"
-  },
-  {
-   "sev": "yellow",
-   "code": "B1",
-   "msg": "TN 无 Release（未开工）",
-   "fix": "states=TN → 派跑"
-  },
-  {
-   "sev": "yellow",
-   "code": "B1",
-   "msg": "TX 无 Release（未开工）",
-   "fix": "states=TX → 派跑"
-  },
-  {
-   "sev": "yellow",
-   "code": "B1",
-   "msg": "VA 无 Release（未开工）",
-   "fix": "states=VA → 派跑"
   }
  ]
 }
