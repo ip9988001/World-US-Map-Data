@@ -32,11 +32,18 @@ REPO = os.environ.get("GITHUB_REPOSITORY") or "ip9988001/World-US-Map-Data"
 LABEL = "sentinel-alarm"
 
 # (workflow 文件, 容忍分钟数, 原定频率)
+#
+# ★ 2026-10-30 实测修正：本仓 schedule 被 GitHub 大幅限流，**原定频率不等于实际频率**：
+#   run-watch（原 cron 0 */3）      实测间隔 4.5 / 6.4 / 6.5 / 7.5 / 7.7 / 8.6 / 9.0 / 10.5 小时
+#   pipeline-audit（原 cron */30）  实测间隔 1.6 / 3.3 / 4.3 / 5.3 / 5.7 / 7.3 小时
+#   结论：靠 cron 频率救不了及时性。run-watch 已改为**事件驱动**（每个抓取 run 结束即触发，
+#   见 run-watch.yml 的 workflow_run），schedule 只做兜底；因此这里按「兜底 schedule 被限流后
+#   的真实节奏」给容忍窗口，文案也同步写清真触发方式，避免下一轮按旧值误报停摆。
 CHECKS = [
-    ("run-watch.yml", 420, "每 3 小时"),
-    ("pipeline-audit.yml", 420, "每 30 分钟"),
-    ("preflight-upstream.yml", 420, "每小时"),
-    ("content-audit.yml", 420, "每 2 小时"),
+    ("run-watch.yml", 300, "事件驱动（抓取 run 一结束即触发）+ 每小时兜底"),
+    ("pipeline-audit.yml", 600, "每 30 分钟（实测被限流至 1.6~7.3h）"),
+    ("preflight-upstream.yml", 600, "每小时（实测被限流）"),
+    ("content-audit.yml", 720, "每 2 小时（实测被限流）"),
 ]
 
 
@@ -143,7 +150,15 @@ def main() -> int:
         except Exception:  # noqa: BLE001
             num = None
         if num:
-            sh(["gh", "issue", "comment", str(num), "--repo", REPO, "--body", body])
+            import hashlib
+            sig = hashlib.sha256(body.encode("utf-8")).hexdigest()[:12]
+            last = sh(["gh", "issue", "view", str(num), "--repo", REPO,
+                       "--json", "comments", "-q", ".comments[-1].body"])
+            if sig in (last or ""):
+                print(f"[watchdog] 与上条评论内容相同 → 跳过（去重）")
+            else:
+                sh(["gh", "issue", "comment", str(num), "--repo", REPO,
+                    "--body", body + f"\n\n<!-- sig:{sig} -->"])
         else:
             sh(["gh", "issue", "create", "--repo", REPO, "--label", LABEL,
                 "--title", title, "--body", body])

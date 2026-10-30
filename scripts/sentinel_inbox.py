@@ -19,6 +19,8 @@
 """
 from __future__ import annotations
 
+import hashlib
+
 import json
 import os
 import subprocess
@@ -60,7 +62,14 @@ def emit(level: str, key: str, title: str, body: str, *, quiet: bool = False) ->
     head = f"{icon} [{key}]"
     body_full = (f"**等级**：{level}（{ORDER[level]}）\n"
                  f"**key**：`{key}`\n\n{body}\n\n"
-                 f"> 由哨兵自动投递，pi 处理完请 comment 并 close。")
+                 f"> 由哨兵自动投递，pi 处理完请 comment 并 close。\n\n{tag}")
+
+    # ★ 去重（2026-10-30）：同一条告警内容重复投递会让 issue 变评论垃圾场
+    #   （#5 曾被刷上百条一模一样的「复检仍异常」）。做法：正文带内容指纹，
+    #   已有 issue 的最后一条评论若指纹相同则跳过，内容变了才追加。
+    sig = hashlib.sha256(f"{key}|{body}".encode("utf-8")).hexdigest()[:12]
+    tag = f"<!-- sig:{sig} -->"
+    cbody = f"{icon} 复检仍异常（{body[:600]}）\n\n{tag}"
 
     existing = None
     for it in open_issues():
@@ -68,8 +77,13 @@ def emit(level: str, key: str, title: str, body: str, *, quiet: bool = False) ->
             existing = it
             break
     if existing:
+        last = _sh(["gh", "issue", "view", str(existing["number"]), "--repo", REPO,
+                    "--json", "comments", "-q", ".comments[-1].body"])
+        if sig in (last or ""):
+            print(f"[inbox] {key} 内容与上条评论完全相同 → 跳过（去重）")
+            return "skip"
         _sh(["gh", "issue", "comment", str(existing["number"]), "--repo", REPO,
-             "--body", f"{icon} 复检仍异常（{body[:200]}）"])
+             "--body", cbody])
         return "commented"
 
     ensure_label()

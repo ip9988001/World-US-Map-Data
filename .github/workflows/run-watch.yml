@@ -1,6 +1,11 @@
 name: run-watch
 
-# 运行态巡检（每 15 分钟）—— 盯「正在动但动坏了」的 job。
+# 运行态巡检 —— 盯「正在动但动坏了」的 job。
+#
+# 触发方式（2026-10-30 改，方案 c：事件驱动 + 每小时兜底）：
+#   主触发 = `workflow_run: completed`：任何抓取 run 一结束立刻跑，
+#            **不受 GitHub schedule 限流影响**（本仓 schedule 实测被限流到 1.4~10.5h）。
+#   兜底   = 每小时 schedule：没有抓取 run 的安静时段靠它盯着 R1/R2 卡死。
 # 与 pipeline-audit 互补：那边管停下来的死状态，这边管跑着的卡死/临限/失败无接管。
 #
 # 铁律：全部流程在仓库里完成，不依赖本机常驻服务器。
@@ -8,13 +13,25 @@ name: run-watch
 #   （GitHub 对长 step 不刷新 updatedAt，AZ 那轮因此误报 3 次）。
 on:
   schedule:
-    - cron: "0 */3 * * *"
+    - cron: "0 * * * *"          # 兜底：每小时（实测仍会被限流到 3~4h，别指望它准时）
+  workflow_run:
+    # 主触发：这些抓取 workflow 一结束就巡检一次（失败/取消立即被看见）
+    workflows:
+      - fetch-state-raw
+      - fetch-states-matrix
+      - nad-county-backfill
+      - tiger-backfill
+    types: [completed]
   workflow_dispatch:
 
 permissions:
   contents: read
   actions: read
   issues: write
+
+concurrency:
+  group: run-watch
+  cancel-in-progress: false
 
 jobs:
   watch:
