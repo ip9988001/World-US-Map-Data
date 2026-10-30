@@ -1,0 +1,151 @@
+{
+ "state": "OK",
+ "status": "ok",
+ "method": "polygon（TIGER rings）—— bbox 会系统性假阳性，勿用",
+ "counties_total": 77,
+ "have_fips": [
+  "40001",
+  "40003",
+  "40007",
+  "40011",
+  "40013",
+  "40015",
+  "40017",
+  "40019",
+  "40021",
+  "40023",
+  "40025",
+  "40027",
+  "40035",
+  "40037",
+  "40039",
+  "40041",
+  "40043",
+  "40045",
+  "40047",
+  "40049",
+  "40051",
+  "40053",
+  "40055",
+  "40057",
+  "40059",
+  "40061",
+  "40063",
+  "40065",
+  "40069",
+  "40071",
+  "40073",
+  "40075",
+  "40079",
+  "40081",
+  "40087",
+  "40089",
+  "40091",
+  "40093",
+  "40095",
+  "40097",
+  "40099",
+  "40101",
+  "40103",
+  "40105",
+  "40107",
+  "40109",
+  "40113",
+  "40115",
+  "40117",
+  "40119",
+  "40121",
+  "40125",
+  "40127",
+  "40129",
+  "40131",
+  "40133",
+  "40135",
+  "40139",
+  "40143",
+  "40145",
+  "40147",
+  "40149",
+  "40151",
+  "40153"
+ ],
+ "have_n": 64,
+ "probed_n": 13,
+ "need_fips": [],
+ "need_n": 0,
+ "need": [],
+ "upstream_hit_detail": [],
+ "bbox_false_positive": [
+  {
+   "fips": "40005",
+   "county": "Atoka",
+   "bbox_count": 946
+  },
+  {
+   "fips": "40009",
+   "county": "Beckham",
+   "bbox_count": 560
+  },
+  {
+   "fips": "40029",
+   "county": "Coal",
+   "bbox_count": 83
+  },
+  {
+   "fips": "40031",
+   "county": "Comanche",
+   "bbox_count": 73
+  },
+  {
+   "fips": "40033",
+   "county": "Cotton",
+   "bbox_count": 5482
+  },
+  {
+   "fips": "40067",
+   "county": "Jefferson",
+   "bbox_count": 1044
+  },
+  {
+   "fips": "40077",
+   "county": "Latimer",
+   "bbox_count": 1200
+  },
+  {
+   "fips": "40083",
+   "county": "Logan",
+   "bbox_count": 1806
+  },
+  {
+   "fips": "40085",
+   "county": "Love",
+   "bbox_count": 2181
+  },
+  {
+   "fips": "40111",
+   "county": "Okmulgee",
+   "bbox_count": 1658
+  },
+  {
+   "fips": "40123",
+   "county": "Pontotoc",
+   "bbox_count": 444
+  },
+  {
+   "fips": "40137",
+   "county": "Stephens",
+   "bbox_count": 100
+  },
+  {
+   "fips": "40141",
+   "county": "Tillman",
+   "bbox_count": 584
+  }
+ ],
+ "bbox_false_positive_n": 13,
+ "upstream_empty_n": 0,
+ "upstream_empty": [],
+ "query_failed": [],
+ "query_failed_n": 0,
+ "note": "只出事实：need = 上游有数据（真实县界）且我们无片的县；upstream_empty = 上游该县 0 条，属上游真无数据。"
+}

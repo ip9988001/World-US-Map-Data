@@ -1,0 +1,685 @@
+{
+ "state": "GA",
+ "status": "ok",
+ "method": "polygon（TIGER rings）—— bbox 会系统性假阳性，勿用",
+ "counties_total": 159,
+ "have_fips": [
+  "13089",
+  "13121"
+ ],
+ "have_n": 2,
+ "probed_n": 157,
+ "need_fips": [],
+ "need_n": 0,
+ "need": [],
+ "upstream_hit_detail": [],
+ "bbox_false_positive": [
+  {
+   "fips": "13045",
+   "county": "Carroll",
+   "bbox_count": 773
+  },
+  {
+   "fips": "13047",
+   "county": "Catoosa",
+   "bbox_count": 3166
+  },
+  {
+   "fips": "13053",
+   "county": "Chattahoochee",
+   "bbox_count": 6994
+  },
+  {
+   "fips": "13055",
+   "county": "Chattooga",
+   "bbox_count": 747
+  },
+  {
+   "fips": "13061",
+   "county": "Clay",
+   "bbox_count": 1860
+  },
+  {
+   "fips": "13063",
+   "county": "Clayton",
+   "bbox_count": 235
+  },
+  {
+   "fips": "13067",
+   "county": "Cobb",
+   "bbox_count": 94074
+  },
+  {
+   "fips": "13083",
+   "county": "Dade",
+   "bbox_count": 1865
+  },
+  {
+   "fips": "13087",
+   "county": "Decatur",
+   "bbox_count": 8
+  },
+  {
+   "fips": "13099",
+   "county": "Early",
+   "bbox_count": 1221
+  },
+  {
+   "fips": "13111",
+   "county": "Fannin",
+   "bbox_count": 367
+  },
+  {
+   "fips": "13115",
+   "county": "Floyd",
+   "bbox_count": 477
+  },
+  {
+   "fips": "13119",
+   "county": "Franklin",
+   "bbox_count": 808
+  },
+  {
+   "fips": "13137",
+   "county": "Habersham",
+   "bbox_count": 25
+  },
+  {
+   "fips": "13143",
+   "county": "Haralson",
+   "bbox_count": 532
+  },
+  {
+   "fips": "13145",
+   "county": "Harris",
+   "bbox_count": 8145
+  },
+  {
+   "fips": "13147",
+   "county": "Hart",
+   "bbox_count": 233
+  },
+  {
+   "fips": "13149",
+   "county": "Heard",
+   "bbox_count": 854
+  },
+  {
+   "fips": "13151",
+   "county": "Henry",
+   "bbox_count": 7
+  },
+  {
+   "fips": "13213",
+   "county": "Murray",
+   "bbox_count": 93
+  },
+  {
+   "fips": "13215",
+   "county": "Muscogee",
+   "bbox_count": 24248
+  },
+  {
+   "fips": "13233",
+   "county": "Polk",
+   "bbox_count": 77
+  },
+  {
+   "fips": "13239",
+   "county": "Quitman",
+   "bbox_count": 1483
+  },
+  {
+   "fips": "13241",
+   "county": "Rabun",
+   "bbox_count": 3732
+  },
+  {
+   "fips": "13253",
+   "county": "Seminole",
+   "bbox_count": 2752
+  },
+  {
+   "fips": "13257",
+   "county": "Stephens",
+   "bbox_count": 3480
+  },
+  {
+   "fips": "13259",
+   "county": "Stewart",
+   "bbox_count": 603
+  },
+  {
+   "fips": "13281",
+   "county": "Towns",
+   "bbox_count": 548
+  },
+  {
+   "fips": "13285",
+   "county": "Troup",
+   "bbox_count": 2742
+  },
+  {
+   "fips": "13291",
+   "county": "Union",
+   "bbox_count": 209
+  },
+  {
+   "fips": "13295",
+   "county": "Walker",
+   "bbox_count": 2041
+  },
+  {
+   "fips": "13313",
+   "county": "Whitfield",
+   "bbox_count": 1444
+  }
+ ],
+ "bbox_false_positive_n": 32,
+ "upstream_empty_n": 125,
+ "upstream_empty": [
+  {
+   "fips": "13001",
+   "county": "Appling"
+  },
+  {
+   "fips": "13003",
+   "county": "Atkinson"
+  },
+  {
+   "fips": "13005",
+   "county": "Bacon"
+  },
+  {
+   "fips": "13007",
+   "county": "Baker"
+  },
+  {
+   "fips": "13009",
+   "county": "Baldwin"
+  },
+  {
+   "fips": "13011",
+   "county": "Banks"
+  },
+  {
+   "fips": "13013",
+   "county": "Barrow"
+  },
+  {
+   "fips": "13015",
+   "county": "Bartow"
+  },
+  {
+   "fips": "13017",
+   "county": "Ben Hill"
+  },
+  {
+   "fips": "13019",
+   "county": "Berrien"
+  },
+  {
+   "fips": "13021",
+   "county": "Bibb"
+  },
+  {
+   "fips": "13023",
+   "county": "Bleckley"
+  },
+  {
+   "fips": "13025",
+   "county": "Brantley"
+  },
+  {
+   "fips": "13027",
+   "county": "Brooks"
+  },
+  {
+   "fips": "13029",
+   "county": "Bryan"
+  },
+  {
+   "fips": "13031",
+   "county": "Bulloch"
+  },
+  {
+   "fips": "13033",
+   "county": "Burke"
+  },
+  {
+   "fips": "13035",
+   "county": "Butts"
+  },
+  {
+   "fips": "13037",
+   "county": "Calhoun"
+  },
+  {
+   "fips": "13039",
+   "county": "Camden"
+  },
+  {
+   "fips": "13043",
+   "county": "Candler"
+  },
+  {
+   "fips": "13049",
+   "county": "Charlton"
+  },
+  {
+   "fips": "13051",
+   "county": "Chatham"
+  },
+  {
+   "fips": "13057",
+   "county": "Cherokee"
+  },
+  {
+   "fips": "13059",
+   "county": "Clarke"
+  },
+  {
+   "fips": "13065",
+   "county": "Clinch"
+  },
+  {
+   "fips": "13069",
+   "county": "Coffee"
+  },
+  {
+   "fips": "13071",
+   "county": "Colquitt"
+  },
+  {
+   "fips": "13073",
+   "county": "Columbia"
+  },
+  {
+   "fips": "13075",
+   "county": "Cook"
+  },
+  {
+   "fips": "13077",
+   "county": "Coweta"
+  },
+  {
+   "fips": "13079",
+   "county": "Crawford"
+  },
+  {
+   "fips": "13081",
+   "county": "Crisp"
+  },
+  {
+   "fips": "13085",
+   "county": "Dawson"
+  },
+  {
+   "fips": "13091",
+   "county": "Dodge"
+  },
+  {
+   "fips": "13093",
+   "county": "Dooly"
+  },
+  {
+   "fips": "13095",
+   "county": "Dougherty"
+  },
+  {
+   "fips": "13097",
+   "county": "Douglas"
+  },
+  {
+   "fips": "13101",
+   "county": "Echols"
+  },
+  {
+   "fips": "13103",
+   "county": "Effingham"
+  },
+  {
+   "fips": "13105",
+   "county": "Elbert"
+  },
+  {
+   "fips": "13107",
+   "county": "Emanuel"
+  },
+  {
+   "fips": "13109",
+   "county": "Evans"
+  },
+  {
+   "fips": "13113",
+   "county": "Fayette"
+  },
+  {
+   "fips": "13117",
+   "county": "Forsyth"
+  },
+  {
+   "fips": "13123",
+   "county": "Gilmer"
+  },
+  {
+   "fips": "13125",
+   "county": "Glascock"
+  },
+  {
+   "fips": "13127",
+   "county": "Glynn"
+  },
+  {
+   "fips": "13129",
+   "county": "Gordon"
+  },
+  {
+   "fips": "13131",
+   "county": "Grady"
+  },
+  {
+   "fips": "13133",
+   "county": "Greene"
+  },
+  {
+   "fips": "13135",
+   "county": "Gwinnett"
+  },
+  {
+   "fips": "13139",
+   "county": "Hall"
+  },
+  {
+   "fips": "13141",
+   "county": "Hancock"
+  },
+  {
+   "fips": "13153",
+   "county": "Houston"
+  },
+  {
+   "fips": "13155",
+   "county": "Irwin"
+  },
+  {
+   "fips": "13157",
+   "county": "Jackson"
+  },
+  {
+   "fips": "13159",
+   "county": "Jasper"
+  },
+  {
+   "fips": "13161",
+   "county": "Jeff Davis"
+  },
+  {
+   "fips": "13163",
+   "county": "Jefferson"
+  },
+  {
+   "fips": "13165",
+   "county": "Jenkins"
+  },
+  {
+   "fips": "13167",
+   "county": "Johnson"
+  },
+  {
+   "fips": "13169",
+   "county": "Jones"
+  },
+  {
+   "fips": "13171",
+   "county": "Lamar"
+  },
+  {
+   "fips": "13173",
+   "county": "Lanier"
+  },
+  {
+   "fips": "13175",
+   "county": "Laurens"
+  },
+  {
+   "fips": "13177",
+   "county": "Lee"
+  },
+  {
+   "fips": "13179",
+   "county": "Liberty"
+  },
+  {
+   "fips": "13181",
+   "county": "Lincoln"
+  },
+  {
+   "fips": "13183",
+   "county": "Long"
+  },
+  {
+   "fips": "13185",
+   "county": "Lowndes"
+  },
+  {
+   "fips": "13187",
+   "county": "Lumpkin"
+  },
+  {
+   "fips": "13189",
+   "county": "McDuffie"
+  },
+  {
+   "fips": "13191",
+   "county": "McIntosh"
+  },
+  {
+   "fips": "13193",
+   "county": "Macon"
+  },
+  {
+   "fips": "13195",
+   "county": "Madison"
+  },
+  {
+   "fips": "13197",
+   "county": "Marion"
+  },
+  {
+   "fips": "13199",
+   "county": "Meriwether"
+  },
+  {
+   "fips": "13201",
+   "county": "Miller"
+  },
+  {
+   "fips": "13205",
+   "county": "Mitchell"
+  },
+  {
+   "fips": "13207",
+   "county": "Monroe"
+  },
+  {
+   "fips": "13209",
+   "county": "Montgomery"
+  },
+  {
+   "fips": "13211",
+   "county": "Morgan"
+  },
+  {
+   "fips": "13217",
+   "county": "Newton"
+  },
+  {
+   "fips": "13219",
+   "county": "Oconee"
+  },
+  {
+   "fips": "13221",
+   "county": "Oglethorpe"
+  },
+  {
+   "fips": "13223",
+   "county": "Paulding"
+  },
+  {
+   "fips": "13225",
+   "county": "Peach"
+  },
+  {
+   "fips": "13227",
+   "county": "Pickens"
+  },
+  {
+   "fips": "13229",
+   "county": "Pierce"
+  },
+  {
+   "fips": "13231",
+   "county": "Pike"
+  },
+  {
+   "fips": "13235",
+   "county": "Pulaski"
+  },
+  {
+   "fips": "13237",
+   "county": "Putnam"
+  },
+  {
+   "fips": "13243",
+   "county": "Randolph"
+  },
+  {
+   "fips": "13245",
+   "county": "Richmond"
+  },
+  {
+   "fips": "13247",
+   "county": "Rockdale"
+  },
+  {
+   "fips": "13249",
+   "county": "Schley"
+  },
+  {
+   "fips": "13251",
+   "county": "Screven"
+  },
+  {
+   "fips": "13255",
+   "county": "Spalding"
+  },
+  {
+   "fips": "13261",
+   "county": "Sumter"
+  },
+  {
+   "fips": "13263",
+   "county": "Talbot"
+  },
+  {
+   "fips": "13265",
+   "county": "Taliaferro"
+  },
+  {
+   "fips": "13267",
+   "county": "Tattnall"
+  },
+  {
+   "fips": "13269",
+   "county": "Taylor"
+  },
+  {
+   "fips": "13271",
+   "county": "Telfair"
+  },
+  {
+   "fips": "13273",
+   "county": "Terrell"
+  },
+  {
+   "fips": "13275",
+   "county": "Thomas"
+  },
+  {
+   "fips": "13277",
+   "county": "Tift"
+  },
+  {
+   "fips": "13279",
+   "county": "Toombs"
+  },
+  {
+   "fips": "13283",
+   "county": "Treutlen"
+  },
+  {
+   "fips": "13287",
+   "county": "Turner"
+  },
+  {
+   "fips": "13289",
+   "county": "Twiggs"
+  },
+  {
+   "fips": "13293",
+   "county": "Upson"
+  },
+  {
+   "fips": "13297",
+   "county": "Walton"
+  },
+  {
+   "fips": "13299",
+   "county": "Ware"
+  },
+  {
+   "fips": "13301",
+   "county": "Warren"
+  },
+  {
+   "fips": "13303",
+   "county": "Washington"
+  },
+  {
+   "fips": "13305",
+   "county": "Wayne"
+  },
+  {
+   "fips": "13307",
+   "county": "Webster"
+  },
+  {
+   "fips": "13309",
+   "county": "Wheeler"
+  },
+  {
+   "fips": "13311",
+   "county": "White"
+  },
+  {
+   "fips": "13315",
+   "county": "Wilcox"
+  },
+  {
+   "fips": "13317",
+   "county": "Wilkes"
+  },
+  {
+   "fips": "13319",
+   "county": "Wilkinson"
+  },
+  {
+   "fips": "13321",
+   "county": "Worth"
+  }
+ ],
+ "query_failed": [],
+ "query_failed_n": 0,
+ "note": "只出事实：need = 上游有数据（真实县界）且我们无片的县；upstream_empty = 上游该县 0 条，属上游真无数据。"
+}

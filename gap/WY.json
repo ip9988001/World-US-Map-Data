@@ -1,0 +1,65 @@
+{
+ "state": "WY",
+ "status": "ok",
+ "method": "polygon（TIGER rings）—— bbox 会系统性假阳性，勿用",
+ "counties_total": 23,
+ "have_fips": [
+  "56001",
+  "56003",
+  "56005",
+  "56007",
+  "56009",
+  "56011",
+  "56013",
+  "56021",
+  "56023",
+  "56025",
+  "56029",
+  "56031",
+  "56035",
+  "56037",
+  "56039",
+  "56041",
+  "56043",
+  "56045"
+ ],
+ "have_n": 18,
+ "probed_n": 5,
+ "need_fips": [],
+ "need_n": 0,
+ "need": [],
+ "upstream_hit_detail": [],
+ "bbox_false_positive": [
+  {
+   "fips": "56015",
+   "county": "Goshen",
+   "bbox_count": 23
+  },
+  {
+   "fips": "56017",
+   "county": "Hot Springs",
+   "bbox_count": 20
+  },
+  {
+   "fips": "56019",
+   "county": "Johnson",
+   "bbox_count": 75
+  },
+  {
+   "fips": "56027",
+   "county": "Niobrara",
+   "bbox_count": 1
+  },
+  {
+   "fips": "56033",
+   "county": "Sheridan",
+   "bbox_count": 106
+  }
+ ],
+ "bbox_false_positive_n": 5,
+ "upstream_empty_n": 0,
+ "upstream_empty": [],
+ "query_failed": [],
+ "query_failed_n": 0,
+ "note": "只出事实：need = 上游有数据（真实县界）且我们无片的县；upstream_empty = 上游该县 0 条，属上游真无数据。"
+}

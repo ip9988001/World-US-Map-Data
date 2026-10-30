@@ -1,0 +1,209 @@
+{
+ "state": "SC",
+ "status": "ok",
+ "method": "polygon（TIGER rings）—— bbox 会系统性假阳性，勿用",
+ "counties_total": 46,
+ "have_fips": [
+  "45007",
+  "45073",
+  "45091"
+ ],
+ "have_n": 3,
+ "probed_n": 43,
+ "need_fips": [],
+ "need_n": 0,
+ "need": [],
+ "upstream_hit_detail": [],
+ "bbox_false_positive": [
+  {
+   "fips": "45021",
+   "county": "Cherokee",
+   "bbox_count": 4393
+  },
+  {
+   "fips": "45023",
+   "county": "Chester",
+   "bbox_count": 179
+  },
+  {
+   "fips": "45025",
+   "county": "Chesterfield",
+   "bbox_count": 397
+  },
+  {
+   "fips": "45033",
+   "county": "Dillon",
+   "bbox_count": 5237
+  },
+  {
+   "fips": "45045",
+   "county": "Greenville",
+   "bbox_count": 9197
+  },
+  {
+   "fips": "45051",
+   "county": "Horry",
+   "bbox_count": 43714
+  },
+  {
+   "fips": "45057",
+   "county": "Lancaster",
+   "bbox_count": 128058
+  },
+  {
+   "fips": "45069",
+   "county": "Marlboro",
+   "bbox_count": 10876
+  },
+  {
+   "fips": "45077",
+   "county": "Pickens",
+   "bbox_count": 16518
+  },
+  {
+   "fips": "45083",
+   "county": "Spartanburg",
+   "bbox_count": 1069
+  },
+  {
+   "fips": "45087",
+   "county": "Union",
+   "bbox_count": 117
+  }
+ ],
+ "bbox_false_positive_n": 11,
+ "upstream_empty_n": 32,
+ "upstream_empty": [
+  {
+   "fips": "45001",
+   "county": "Abbeville"
+  },
+  {
+   "fips": "45003",
+   "county": "Aiken"
+  },
+  {
+   "fips": "45005",
+   "county": "Allendale"
+  },
+  {
+   "fips": "45009",
+   "county": "Bamberg"
+  },
+  {
+   "fips": "45011",
+   "county": "Barnwell"
+  },
+  {
+   "fips": "45013",
+   "county": "Beaufort"
+  },
+  {
+   "fips": "45015",
+   "county": "Berkeley"
+  },
+  {
+   "fips": "45017",
+   "county": "Calhoun"
+  },
+  {
+   "fips": "45019",
+   "county": "Charleston"
+  },
+  {
+   "fips": "45027",
+   "county": "Clarendon"
+  },
+  {
+   "fips": "45029",
+   "county": "Colleton"
+  },
+  {
+   "fips": "45031",
+   "county": "Darlington"
+  },
+  {
+   "fips": "45035",
+   "county": "Dorchester"
+  },
+  {
+   "fips": "45037",
+   "county": "Edgefield"
+  },
+  {
+   "fips": "45039",
+   "county": "Fairfield"
+  },
+  {
+   "fips": "45041",
+   "county": "Florence"
+  },
+  {
+   "fips": "45043",
+   "county": "Georgetown"
+  },
+  {
+   "fips": "45047",
+   "county": "Greenwood"
+  },
+  {
+   "fips": "45049",
+   "county": "Hampton"
+  },
+  {
+   "fips": "45053",
+   "county": "Jasper"
+  },
+  {
+   "fips": "45055",
+   "county": "Kershaw"
+  },
+  {
+   "fips": "45059",
+   "county": "Laurens"
+  },
+  {
+   "fips": "45061",
+   "county": "Lee"
+  },
+  {
+   "fips": "45063",
+   "county": "Lexington"
+  },
+  {
+   "fips": "45065",
+   "county": "McCormick"
+  },
+  {
+   "fips": "45067",
+   "county": "Marion"
+  },
+  {
+   "fips": "45071",
+   "county": "Newberry"
+  },
+  {
+   "fips": "45075",
+   "county": "Orangeburg"
+  },
+  {
+   "fips": "45079",
+   "county": "Richland"
+  },
+  {
+   "fips": "45081",
+   "county": "Saluda"
+  },
+  {
+   "fips": "45085",
+   "county": "Sumter"
+  },
+  {
+   "fips": "45089",
+   "county": "Williamsburg"
+  }
+ ],
+ "query_failed": [],
+ "query_failed_n": 0,
+ "note": "只出事实：need = 上游有数据（真实县界）且我们无片的县；upstream_empty = 上游该县 0 条，属上游真无数据。"
+}

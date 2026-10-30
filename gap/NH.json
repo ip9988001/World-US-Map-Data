@@ -1,0 +1,70 @@
+{
+ "state": "NH",
+ "status": "ok",
+ "method": "polygon（TIGER rings）—— bbox 会系统性假阳性，勿用",
+ "counties_total": 10,
+ "have_fips": [],
+ "have_n": 0,
+ "probed_n": 10,
+ "need_fips": [],
+ "need_n": 0,
+ "need": [],
+ "upstream_hit_detail": [],
+ "bbox_false_positive": [
+  {
+   "fips": "33003",
+   "county": "Carroll",
+   "bbox_count": 3097
+  },
+  {
+   "fips": "33005",
+   "county": "Cheshire",
+   "bbox_count": 7585
+  },
+  {
+   "fips": "33007",
+   "county": "Coos",
+   "bbox_count": 3561
+  },
+  {
+   "fips": "33009",
+   "county": "Grafton",
+   "bbox_count": 17017
+  },
+  {
+   "fips": "33011",
+   "county": "Hillsborough",
+   "bbox_count": 3104
+  },
+  {
+   "fips": "33015",
+   "county": "Rockingham",
+   "bbox_count": 112351
+  },
+  {
+   "fips": "33017",
+   "county": "Strafford",
+   "bbox_count": 12252
+  },
+  {
+   "fips": "33019",
+   "county": "Sullivan",
+   "bbox_count": 4932
+  }
+ ],
+ "bbox_false_positive_n": 8,
+ "upstream_empty_n": 2,
+ "upstream_empty": [
+  {
+   "fips": "33001",
+   "county": "Belknap"
+  },
+  {
+   "fips": "33013",
+   "county": "Merrimack"
+  }
+ ],
+ "query_failed": [],
+ "query_failed_n": 0,
+ "note": "只出事实：need = 上游有数据（真实县界）且我们无片的县；upstream_empty = 上游该县 0 条，属上游真无数据。"
+}

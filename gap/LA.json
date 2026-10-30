@@ -1,0 +1,285 @@
+{
+ "state": "LA",
+ "status": "ok",
+ "method": "polygon（TIGER rings）—— bbox 会系统性假阳性，勿用",
+ "counties_total": 64,
+ "have_fips": [
+  "22007",
+  "22033",
+  "22057",
+  "22109",
+  "22111"
+ ],
+ "have_n": 5,
+ "probed_n": 59,
+ "need_fips": [],
+ "need_n": 0,
+ "need": [],
+ "upstream_hit_detail": [],
+ "bbox_false_positive": [
+  {
+   "fips": "22005",
+   "county": "Ascension",
+   "bbox_count": 3589
+  },
+  {
+   "fips": "22011",
+   "county": "Beauregard",
+   "bbox_count": 1375
+  },
+  {
+   "fips": "22015",
+   "county": "Bossier",
+   "bbox_count": 42
+  },
+  {
+   "fips": "22017",
+   "county": "Caddo",
+   "bbox_count": 301
+  },
+  {
+   "fips": "22019",
+   "county": "Calcasieu",
+   "bbox_count": 10474
+  },
+  {
+   "fips": "22023",
+   "county": "Cameron",
+   "bbox_count": 21859
+  },
+  {
+   "fips": "22027",
+   "county": "Claiborne",
+   "bbox_count": 212
+  },
+  {
+   "fips": "22031",
+   "county": "De Soto",
+   "bbox_count": 1079
+  },
+  {
+   "fips": "22035",
+   "county": "East Carroll",
+   "bbox_count": 14
+  },
+  {
+   "fips": "22037",
+   "county": "East Feliciana",
+   "bbox_count": 11790
+  },
+  {
+   "fips": "22047",
+   "county": "Iberville",
+   "bbox_count": 127522
+  },
+  {
+   "fips": "22063",
+   "county": "Livingston",
+   "bbox_count": 7542
+  },
+  {
+   "fips": "22067",
+   "county": "Morehouse",
+   "bbox_count": 22
+  },
+  {
+   "fips": "22085",
+   "county": "Sabine",
+   "bbox_count": 10293
+  },
+  {
+   "fips": "22091",
+   "county": "St. Helena",
+   "bbox_count": 266
+  },
+  {
+   "fips": "22099",
+   "county": "St. Martin",
+   "bbox_count": 80095
+  },
+  {
+   "fips": "22115",
+   "county": "Vernon",
+   "bbox_count": 243
+  },
+  {
+   "fips": "22119",
+   "county": "Webster",
+   "bbox_count": 37
+  },
+  {
+   "fips": "22121",
+   "county": "West Baton Rouge",
+   "bbox_count": 65282
+  },
+  {
+   "fips": "22123",
+   "county": "West Carroll",
+   "bbox_count": 18
+  },
+  {
+   "fips": "22125",
+   "county": "West Feliciana",
+   "bbox_count": 4112
+  }
+ ],
+ "bbox_false_positive_n": 21,
+ "upstream_empty_n": 38,
+ "upstream_empty": [
+  {
+   "fips": "22001",
+   "county": "Acadia"
+  },
+  {
+   "fips": "22003",
+   "county": "Allen"
+  },
+  {
+   "fips": "22009",
+   "county": "Avoyelles"
+  },
+  {
+   "fips": "22013",
+   "county": "Bienville"
+  },
+  {
+   "fips": "22021",
+   "county": "Caldwell"
+  },
+  {
+   "fips": "22025",
+   "county": "Catahoula"
+  },
+  {
+   "fips": "22029",
+   "county": "Concordia"
+  },
+  {
+   "fips": "22039",
+   "county": "Evangeline"
+  },
+  {
+   "fips": "22041",
+   "county": "Franklin"
+  },
+  {
+   "fips": "22043",
+   "county": "Grant"
+  },
+  {
+   "fips": "22045",
+   "county": "Iberia"
+  },
+  {
+   "fips": "22049",
+   "county": "Jackson"
+  },
+  {
+   "fips": "22051",
+   "county": "Jefferson"
+  },
+  {
+   "fips": "22053",
+   "county": "Jefferson Davis"
+  },
+  {
+   "fips": "22055",
+   "county": "Lafayette"
+  },
+  {
+   "fips": "22059",
+   "county": "LaSalle"
+  },
+  {
+   "fips": "22061",
+   "county": "Lincoln"
+  },
+  {
+   "fips": "22065",
+   "county": "Madison"
+  },
+  {
+   "fips": "22069",
+   "county": "Natchitoches"
+  },
+  {
+   "fips": "22071",
+   "county": "Orleans"
+  },
+  {
+   "fips": "22073",
+   "county": "Ouachita"
+  },
+  {
+   "fips": "22075",
+   "county": "Plaquemines"
+  },
+  {
+   "fips": "22077",
+   "county": "Pointe Coupee"
+  },
+  {
+   "fips": "22079",
+   "county": "Rapides"
+  },
+  {
+   "fips": "22081",
+   "county": "Red River"
+  },
+  {
+   "fips": "22083",
+   "county": "Richland"
+  },
+  {
+   "fips": "22087",
+   "county": "St. Bernard"
+  },
+  {
+   "fips": "22089",
+   "county": "St. Charles"
+  },
+  {
+   "fips": "22093",
+   "county": "St. James"
+  },
+  {
+   "fips": "22095",
+   "county": "St. John the Baptist"
+  },
+  {
+   "fips": "22097",
+   "county": "St. Landry"
+  },
+  {
+   "fips": "22101",
+   "county": "St. Mary"
+  },
+  {
+   "fips": "22103",
+   "county": "St. Tammany"
+  },
+  {
+   "fips": "22105",
+   "county": "Tangipahoa"
+  },
+  {
+   "fips": "22107",
+   "county": "Tensas"
+  },
+  {
+   "fips": "22113",
+   "county": "Vermilion"
+  },
+  {
+   "fips": "22117",
+   "county": "Washington"
+  },
+  {
+   "fips": "22127",
+   "county": "Winn"
+  }
+ ],
+ "query_failed": [],
+ "query_failed_n": 0,
+ "note": "只出事实：need = 上游有数据（真实县界）且我们无片的县；upstream_empty = 上游该县 0 条，属上游真无数据。"
+}

@@ -1,0 +1,278 @@
+{
+ "state": "FL",
+ "status": "ok",
+ "method": "polygon（TIGER rings）—— bbox 会系统性假阳性，勿用",
+ "counties_total": 67,
+ "have_fips": [
+  "12011",
+  "12021",
+  "12043",
+  "12051",
+  "12059",
+  "12063",
+  "12105",
+  "12111"
+ ],
+ "have_n": 8,
+ "probed_n": 59,
+ "need_fips": [],
+ "need_n": 0,
+ "need": [],
+ "upstream_hit_detail": [],
+ "bbox_false_positive": [
+  {
+   "fips": "12005",
+   "county": "Bay",
+   "bbox_count": 9
+  },
+  {
+   "fips": "12013",
+   "county": "Calhoun",
+   "bbox_count": 973
+  },
+  {
+   "fips": "12033",
+   "county": "Escambia",
+   "bbox_count": 33666
+  },
+  {
+   "fips": "12039",
+   "county": "Gadsden",
+   "bbox_count": 1038
+  },
+  {
+   "fips": "12055",
+   "county": "Highlands",
+   "bbox_count": 400
+  },
+  {
+   "fips": "12077",
+   "county": "Liberty",
+   "bbox_count": 23
+  },
+  {
+   "fips": "12091",
+   "county": "Okaloosa",
+   "bbox_count": 55
+  },
+  {
+   "fips": "12093",
+   "county": "Okeechobee",
+   "bbox_count": 402
+  },
+  {
+   "fips": "12113",
+   "county": "Santa Rosa",
+   "bbox_count": 275
+  },
+  {
+   "fips": "12131",
+   "county": "Walton",
+   "bbox_count": 3944
+  },
+  {
+   "fips": "12133",
+   "county": "Washington",
+   "bbox_count": 5209
+  }
+ ],
+ "bbox_false_positive_n": 11,
+ "upstream_empty_n": 48,
+ "upstream_empty": [
+  {
+   "fips": "12001",
+   "county": "Alachua"
+  },
+  {
+   "fips": "12003",
+   "county": "Baker"
+  },
+  {
+   "fips": "12007",
+   "county": "Bradford"
+  },
+  {
+   "fips": "12009",
+   "county": "Brevard"
+  },
+  {
+   "fips": "12015",
+   "county": "Charlotte"
+  },
+  {
+   "fips": "12017",
+   "county": "Citrus"
+  },
+  {
+   "fips": "12019",
+   "county": "Clay"
+  },
+  {
+   "fips": "12023",
+   "county": "Columbia"
+  },
+  {
+   "fips": "12027",
+   "county": "DeSoto"
+  },
+  {
+   "fips": "12029",
+   "county": "Dixie"
+  },
+  {
+   "fips": "12031",
+   "county": "Duval"
+  },
+  {
+   "fips": "12035",
+   "county": "Flagler"
+  },
+  {
+   "fips": "12037",
+   "county": "Franklin"
+  },
+  {
+   "fips": "12041",
+   "county": "Gilchrist"
+  },
+  {
+   "fips": "12045",
+   "county": "Gulf"
+  },
+  {
+   "fips": "12047",
+   "county": "Hamilton"
+  },
+  {
+   "fips": "12049",
+   "county": "Hardee"
+  },
+  {
+   "fips": "12053",
+   "county": "Hernando"
+  },
+  {
+   "fips": "12057",
+   "county": "Hillsborough"
+  },
+  {
+   "fips": "12061",
+   "county": "Indian River"
+  },
+  {
+   "fips": "12065",
+   "county": "Jefferson"
+  },
+  {
+   "fips": "12067",
+   "county": "Lafayette"
+  },
+  {
+   "fips": "12069",
+   "county": "Lake"
+  },
+  {
+   "fips": "12071",
+   "county": "Lee"
+  },
+  {
+   "fips": "12073",
+   "county": "Leon"
+  },
+  {
+   "fips": "12075",
+   "county": "Levy"
+  },
+  {
+   "fips": "12079",
+   "county": "Madison"
+  },
+  {
+   "fips": "12081",
+   "county": "Manatee"
+  },
+  {
+   "fips": "12083",
+   "county": "Marion"
+  },
+  {
+   "fips": "12085",
+   "county": "Martin"
+  },
+  {
+   "fips": "12086",
+   "county": "Miami-Dade"
+  },
+  {
+   "fips": "12087",
+   "county": "Monroe"
+  },
+  {
+   "fips": "12089",
+   "county": "Nassau"
+  },
+  {
+   "fips": "12095",
+   "county": "Orange"
+  },
+  {
+   "fips": "12097",
+   "county": "Osceola"
+  },
+  {
+   "fips": "12099",
+   "county": "Palm Beach"
+  },
+  {
+   "fips": "12101",
+   "county": "Pasco"
+  },
+  {
+   "fips": "12103",
+   "county": "Pinellas"
+  },
+  {
+   "fips": "12107",
+   "county": "Putnam"
+  },
+  {
+   "fips": "12109",
+   "county": "St. Johns"
+  },
+  {
+   "fips": "12115",
+   "county": "Sarasota"
+  },
+  {
+   "fips": "12117",
+   "county": "Seminole"
+  },
+  {
+   "fips": "12119",
+   "county": "Sumter"
+  },
+  {
+   "fips": "12121",
+   "county": "Suwannee"
+  },
+  {
+   "fips": "12123",
+   "county": "Taylor"
+  },
+  {
+   "fips": "12125",
+   "county": "Union"
+  },
+  {
+   "fips": "12127",
+   "county": "Volusia"
+  },
+  {
+   "fips": "12129",
+   "county": "Wakulla"
+  }
+ ],
+ "query_failed": [],
+ "query_failed_n": 0,
+ "note": "只出事实：need = 上游有数据（真实县界）且我们无片的县；upstream_empty = 上游该县 0 条，属上游真无数据。"
+}

@@ -1,0 +1,41 @@
+{
+ "state": "HI",
+ "status": "ok",
+ "method": "polygon（TIGER rings）—— bbox 会系统性假阳性，勿用",
+ "counties_total": 5,
+ "have_fips": [],
+ "have_n": 0,
+ "probed_n": 5,
+ "need_fips": [],
+ "need_n": 0,
+ "need": [],
+ "upstream_hit_detail": [],
+ "bbox_false_positive": [],
+ "bbox_false_positive_n": 0,
+ "upstream_empty_n": 5,
+ "upstream_empty": [
+  {
+   "fips": "15001",
+   "county": "Hawaii"
+  },
+  {
+   "fips": "15003",
+   "county": "Honolulu"
+  },
+  {
+   "fips": "15005",
+   "county": "Kalawao"
+  },
+  {
+   "fips": "15007",
+   "county": "Kauai"
+  },
+  {
+   "fips": "15009",
+   "county": "Maui"
+  }
+ ],
+ "query_failed": [],
+ "query_failed_n": 0,
+ "note": "只出事实：need = 上游有数据（真实县界）且我们无片的县；upstream_empty = 上游该县 0 条，属上游真无数据。"
+}

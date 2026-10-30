@@ -1,0 +1,251 @@
+{
+ "state": "PA",
+ "status": "ok",
+ "method": "polygon（TIGER rings）—— bbox 会系统性假阳性，勿用",
+ "counties_total": 67,
+ "have_fips": [
+  "42001",
+  "42003",
+  "42005",
+  "42011",
+  "42013",
+  "42017",
+  "42027",
+  "42029",
+  "42041",
+  "42045",
+  "42051",
+  "42055",
+  "42059",
+  "42063",
+  "42073",
+  "42091",
+  "42099",
+  "42101",
+  "42111",
+  "42117",
+  "42125",
+  "42129",
+  "42133"
+ ],
+ "have_n": 23,
+ "probed_n": 44,
+ "need_fips": [],
+ "need_n": 0,
+ "need": [],
+ "upstream_hit_detail": [],
+ "bbox_false_positive": [
+  {
+   "fips": "42007",
+   "county": "Beaver",
+   "bbox_count": 1532
+  },
+  {
+   "fips": "42009",
+   "county": "Bedford",
+   "bbox_count": 5095
+  },
+  {
+   "fips": "42015",
+   "county": "Bradford",
+   "bbox_count": 2130
+  },
+  {
+   "fips": "42019",
+   "county": "Butler",
+   "bbox_count": 532
+  },
+  {
+   "fips": "42021",
+   "county": "Cambria",
+   "bbox_count": 61012
+  },
+  {
+   "fips": "42033",
+   "county": "Clearfield",
+   "bbox_count": 5847
+  },
+  {
+   "fips": "42035",
+   "county": "Clinton",
+   "bbox_count": 6588
+  },
+  {
+   "fips": "42039",
+   "county": "Crawford",
+   "bbox_count": 94
+  },
+  {
+   "fips": "42043",
+   "county": "Dauphin",
+   "bbox_count": 60743
+  },
+  {
+   "fips": "42049",
+   "county": "Erie",
+   "bbox_count": 4199
+  },
+  {
+   "fips": "42057",
+   "county": "Fulton",
+   "bbox_count": 89
+  },
+  {
+   "fips": "42061",
+   "county": "Huntingdon",
+   "bbox_count": 7910
+  },
+  {
+   "fips": "42065",
+   "county": "Jefferson",
+   "bbox_count": 148
+  },
+  {
+   "fips": "42067",
+   "county": "Juniata",
+   "bbox_count": 12326
+  },
+  {
+   "fips": "42071",
+   "county": "Lancaster",
+   "bbox_count": 487
+  },
+  {
+   "fips": "42077",
+   "county": "Lehigh",
+   "bbox_count": 466
+  },
+  {
+   "fips": "42081",
+   "county": "Lycoming",
+   "bbox_count": 1674
+  },
+  {
+   "fips": "42083",
+   "county": "McKean",
+   "bbox_count": 130
+  },
+  {
+   "fips": "42085",
+   "county": "Mercer",
+   "bbox_count": 5054
+  },
+  {
+   "fips": "42087",
+   "county": "Mifflin",
+   "bbox_count": 26358
+  },
+  {
+   "fips": "42089",
+   "county": "Monroe",
+   "bbox_count": 7732
+  },
+  {
+   "fips": "42095",
+   "county": "Northampton",
+   "bbox_count": 24772
+  },
+  {
+   "fips": "42103",
+   "county": "Pike",
+   "bbox_count": 19838
+  },
+  {
+   "fips": "42105",
+   "county": "Potter",
+   "bbox_count": 258
+  },
+  {
+   "fips": "42109",
+   "county": "Snyder",
+   "bbox_count": 12
+  },
+  {
+   "fips": "42115",
+   "county": "Susquehanna",
+   "bbox_count": 307
+  },
+  {
+   "fips": "42119",
+   "county": "Union",
+   "bbox_count": 425
+  },
+  {
+   "fips": "42123",
+   "county": "Warren",
+   "bbox_count": 94
+  },
+  {
+   "fips": "42127",
+   "county": "Wayne",
+   "bbox_count": 5246
+  }
+ ],
+ "bbox_false_positive_n": 29,
+ "upstream_empty_n": 15,
+ "upstream_empty": [
+  {
+   "fips": "42023",
+   "county": "Cameron"
+  },
+  {
+   "fips": "42025",
+   "county": "Carbon"
+  },
+  {
+   "fips": "42031",
+   "county": "Clarion"
+  },
+  {
+   "fips": "42037",
+   "county": "Columbia"
+  },
+  {
+   "fips": "42047",
+   "county": "Elk"
+  },
+  {
+   "fips": "42053",
+   "county": "Forest"
+  },
+  {
+   "fips": "42069",
+   "county": "Lackawanna"
+  },
+  {
+   "fips": "42075",
+   "county": "Lebanon"
+  },
+  {
+   "fips": "42079",
+   "county": "Luzerne"
+  },
+  {
+   "fips": "42093",
+   "county": "Montour"
+  },
+  {
+   "fips": "42097",
+   "county": "Northumberland"
+  },
+  {
+   "fips": "42107",
+   "county": "Schuylkill"
+  },
+  {
+   "fips": "42113",
+   "county": "Sullivan"
+  },
+  {
+   "fips": "42121",
+   "county": "Venango"
+  },
+  {
+   "fips": "42131",
+   "county": "Wyoming"
+  }
+ ],
+ "query_failed": [],
+ "query_failed_n": 0,
+ "note": "只出事实：need = 上游有数据（真实县界）且我们无片的县；upstream_empty = 上游该县 0 条，属上游真无数据。"
+}

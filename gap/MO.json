@@ -1,0 +1,431 @@
+{
+ "state": "MO",
+ "status": "ok",
+ "method": "polygon（TIGER rings）—— bbox 会系统性假阳性，勿用",
+ "counties_total": 114,
+ "have_fips": [
+  "29009",
+  "29013",
+  "29019",
+  "29027",
+  "29029",
+  "29037",
+  "29043",
+  "29047",
+  "29051",
+  "29071",
+  "29077",
+  "29085",
+  "29095",
+  "29097",
+  "29099",
+  "29103",
+  "29111",
+  "29113",
+  "29127",
+  "29135",
+  "29137",
+  "29151",
+  "29153",
+  "29163",
+  "29165",
+  "29173",
+  "29183",
+  "29189",
+  "29205",
+  "29209",
+  "29213",
+  "29219",
+  "29225",
+  "29510"
+ ],
+ "have_n": 34,
+ "probed_n": 81,
+ "need_fips": [],
+ "need_n": 0,
+ "need": [],
+ "upstream_hit_detail": [],
+ "bbox_false_positive": [
+  {
+   "fips": "29005",
+   "county": "Atchison",
+   "bbox_count": 897
+  },
+  {
+   "fips": "29007",
+   "county": "Audrain",
+   "bbox_count": 6407
+  },
+  {
+   "fips": "29011",
+   "county": "Barton",
+   "bbox_count": 176
+  },
+  {
+   "fips": "29015",
+   "county": "Benton",
+   "bbox_count": 218
+  },
+  {
+   "fips": "29021",
+   "county": "Buchanan",
+   "bbox_count": 310
+  },
+  {
+   "fips": "29023",
+   "county": "Butler",
+   "bbox_count": 29
+  },
+  {
+   "fips": "29031",
+   "county": "Cape Girardeau",
+   "bbox_count": 1020
+  },
+  {
+   "fips": "29045",
+   "county": "Clark",
+   "bbox_count": 2814
+  },
+  {
+   "fips": "29053",
+   "county": "Cooper",
+   "bbox_count": 932
+  },
+  {
+   "fips": "29057",
+   "county": "Dade",
+   "bbox_count": 72
+  },
+  {
+   "fips": "29059",
+   "county": "Dallas",
+   "bbox_count": 1203
+  },
+  {
+   "fips": "29067",
+   "county": "Douglas",
+   "bbox_count": 137
+  },
+  {
+   "fips": "29069",
+   "county": "Dunklin",
+   "bbox_count": 5752
+  },
+  {
+   "fips": "29073",
+   "county": "Gasconade",
+   "bbox_count": 37
+  },
+  {
+   "fips": "29081",
+   "county": "Harrison",
+   "bbox_count": 16
+  },
+  {
+   "fips": "29083",
+   "county": "Henry",
+   "bbox_count": 21
+  },
+  {
+   "fips": "29087",
+   "county": "Holt",
+   "bbox_count": 986
+  },
+  {
+   "fips": "29089",
+   "county": "Howard",
+   "bbox_count": 1921
+  },
+  {
+   "fips": "29091",
+   "county": "Howell",
+   "bbox_count": 23
+  },
+  {
+   "fips": "29105",
+   "county": "Laclede",
+   "bbox_count": 945
+  },
+  {
+   "fips": "29109",
+   "county": "Lawrence",
+   "bbox_count": 2063
+  },
+  {
+   "fips": "29119",
+   "county": "McDonald",
+   "bbox_count": 496
+  },
+  {
+   "fips": "29121",
+   "county": "Macon",
+   "bbox_count": 3
+  },
+  {
+   "fips": "29125",
+   "county": "Maries",
+   "bbox_count": 223
+  },
+  {
+   "fips": "29129",
+   "county": "Mercer",
+   "bbox_count": 94
+  },
+  {
+   "fips": "29131",
+   "county": "Miller",
+   "bbox_count": 14211
+  },
+  {
+   "fips": "29133",
+   "county": "Mississippi",
+   "bbox_count": 2473
+  },
+  {
+   "fips": "29139",
+   "county": "Montgomery",
+   "bbox_count": 64
+  },
+  {
+   "fips": "29141",
+   "county": "Morgan",
+   "bbox_count": 11509
+  },
+  {
+   "fips": "29143",
+   "county": "New Madrid",
+   "bbox_count": 2582
+  },
+  {
+   "fips": "29145",
+   "county": "Newton",
+   "bbox_count": 706
+  },
+  {
+   "fips": "29147",
+   "county": "Nodaway",
+   "bbox_count": 135
+  },
+  {
+   "fips": "29149",
+   "county": "Oregon",
+   "bbox_count": 294
+  },
+  {
+   "fips": "29155",
+   "county": "Pemiscot",
+   "bbox_count": 142
+  },
+  {
+   "fips": "29157",
+   "county": "Perry",
+   "bbox_count": 2410
+  },
+  {
+   "fips": "29167",
+   "county": "Polk",
+   "bbox_count": 917
+  },
+  {
+   "fips": "29169",
+   "county": "Pulaski",
+   "bbox_count": 92
+  },
+  {
+   "fips": "29171",
+   "county": "Putnam",
+   "bbox_count": 40
+  },
+  {
+   "fips": "29175",
+   "county": "Randolph",
+   "bbox_count": 15
+  },
+  {
+   "fips": "29181",
+   "county": "Ripley",
+   "bbox_count": 42
+  },
+  {
+   "fips": "29185",
+   "county": "St. Clair",
+   "bbox_count": 460
+  },
+  {
+   "fips": "29186",
+   "county": "Ste. Genevieve",
+   "bbox_count": 2796
+  },
+  {
+   "fips": "29187",
+   "county": "St. Francois",
+   "bbox_count": 1537
+  },
+  {
+   "fips": "29197",
+   "county": "Schuyler",
+   "bbox_count": 34
+  },
+  {
+   "fips": "29199",
+   "county": "Scotland",
+   "bbox_count": 16
+  },
+  {
+   "fips": "29201",
+   "county": "Scott",
+   "bbox_count": 1201
+  },
+  {
+   "fips": "29217",
+   "county": "Vernon",
+   "bbox_count": 55
+  },
+  {
+   "fips": "29221",
+   "county": "Washington",
+   "bbox_count": 818
+  },
+  {
+   "fips": "29227",
+   "county": "Worth",
+   "bbox_count": 42
+  },
+  {
+   "fips": "29229",
+   "county": "Wright",
+   "bbox_count": 96
+  }
+ ],
+ "bbox_false_positive_n": 50,
+ "upstream_empty_n": 31,
+ "upstream_empty": [
+  {
+   "fips": "29001",
+   "county": "Adair"
+  },
+  {
+   "fips": "29003",
+   "county": "Andrew"
+  },
+  {
+   "fips": "29017",
+   "county": "Bollinger"
+  },
+  {
+   "fips": "29025",
+   "county": "Caldwell"
+  },
+  {
+   "fips": "29033",
+   "county": "Carroll"
+  },
+  {
+   "fips": "29035",
+   "county": "Carter"
+  },
+  {
+   "fips": "29039",
+   "county": "Cedar"
+  },
+  {
+   "fips": "29041",
+   "county": "Chariton"
+  },
+  {
+   "fips": "29049",
+   "county": "Clinton"
+  },
+  {
+   "fips": "29055",
+   "county": "Crawford"
+  },
+  {
+   "fips": "29061",
+   "county": "Daviess"
+  },
+  {
+   "fips": "29063",
+   "county": "DeKalb"
+  },
+  {
+   "fips": "29065",
+   "county": "Dent"
+  },
+  {
+   "fips": "29075",
+   "county": "Gentry"
+  },
+  {
+   "fips": "29079",
+   "county": "Grundy"
+  },
+  {
+   "fips": "29093",
+   "county": "Iron"
+  },
+  {
+   "fips": "29101",
+   "county": "Johnson"
+  },
+  {
+   "fips": "29107",
+   "county": "Lafayette"
+  },
+  {
+   "fips": "29115",
+   "county": "Linn"
+  },
+  {
+   "fips": "29117",
+   "county": "Livingston"
+  },
+  {
+   "fips": "29123",
+   "county": "Madison"
+  },
+  {
+   "fips": "29159",
+   "county": "Pettis"
+  },
+  {
+   "fips": "29161",
+   "county": "Phelps"
+  },
+  {
+   "fips": "29177",
+   "county": "Ray"
+  },
+  {
+   "fips": "29179",
+   "county": "Reynolds"
+  },
+  {
+   "fips": "29195",
+   "county": "Saline"
+  },
+  {
+   "fips": "29203",
+   "county": "Shannon"
+  },
+  {
+   "fips": "29207",
+   "county": "Stoddard"
+  },
+  {
+   "fips": "29211",
+   "county": "Sullivan"
+  },
+  {
+   "fips": "29215",
+   "county": "Texas"
+  },
+  {
+   "fips": "29223",
+   "county": "Wayne"
+  }
+ ],
+ "query_failed": [],
+ "query_failed_n": 0,
+ "note": "只出事实：need = 上游有数据（真实县界）且我们无片的县；upstream_empty = 上游该县 0 条，属上游真无数据。"
+}

@@ -1,0 +1,207 @@
+{
+ "state": "KS",
+ "status": "ok",
+ "method": "polygon（TIGER rings）—— bbox 会系统性假阳性，勿用",
+ "counties_total": 105,
+ "have_fips": [
+  "20001",
+  "20003",
+  "20005",
+  "20009",
+  "20013",
+  "20015",
+  "20017",
+  "20019",
+  "20021",
+  "20023",
+  "20025",
+  "20029",
+  "20031",
+  "20033",
+  "20035",
+  "20037",
+  "20041",
+  "20049",
+  "20051",
+  "20053",
+  "20055",
+  "20059",
+  "20061",
+  "20063",
+  "20065",
+  "20067",
+  "20069",
+  "20071",
+  "20073",
+  "20075",
+  "20079",
+  "20081",
+  "20083",
+  "20085",
+  "20087",
+  "20089",
+  "20093",
+  "20095",
+  "20099",
+  "20101",
+  "20103",
+  "20105",
+  "20107",
+  "20109",
+  "20111",
+  "20113",
+  "20115",
+  "20117",
+  "20121",
+  "20123",
+  "20125",
+  "20127",
+  "20129",
+  "20131",
+  "20133",
+  "20135",
+  "20137",
+  "20139",
+  "20141",
+  "20145",
+  "20147",
+  "20149",
+  "20155",
+  "20157",
+  "20159",
+  "20161",
+  "20163",
+  "20165",
+  "20167",
+  "20169",
+  "20171",
+  "20173",
+  "20177",
+  "20181",
+  "20185",
+  "20187",
+  "20193",
+  "20195",
+  "20197",
+  "20199",
+  "20201",
+  "20203",
+  "20205",
+  "20207",
+  "20209"
+ ],
+ "have_n": 85,
+ "probed_n": 20,
+ "need_fips": [],
+ "need_n": 0,
+ "need": [],
+ "upstream_hit_detail": [],
+ "bbox_false_positive": [
+  {
+   "fips": "20007",
+   "county": "Barber",
+   "bbox_count": 142
+  },
+  {
+   "fips": "20011",
+   "county": "Bourbon",
+   "bbox_count": 52
+  },
+  {
+   "fips": "20027",
+   "county": "Clay",
+   "bbox_count": 149
+  },
+  {
+   "fips": "20039",
+   "county": "Decatur",
+   "bbox_count": 57
+  },
+  {
+   "fips": "20043",
+   "county": "Doniphan",
+   "bbox_count": 151
+  },
+  {
+   "fips": "20045",
+   "county": "Douglas",
+   "bbox_count": 187
+  },
+  {
+   "fips": "20047",
+   "county": "Edwards",
+   "bbox_count": 268
+  },
+  {
+   "fips": "20057",
+   "county": "Ford",
+   "bbox_count": 38
+  },
+  {
+   "fips": "20077",
+   "county": "Harper",
+   "bbox_count": 50
+  },
+  {
+   "fips": "20091",
+   "county": "Johnson",
+   "bbox_count": 15522
+  },
+  {
+   "fips": "20097",
+   "county": "Kiowa",
+   "bbox_count": 3
+  },
+  {
+   "fips": "20119",
+   "county": "Meade",
+   "bbox_count": 8
+  },
+  {
+   "fips": "20143",
+   "county": "Ottawa",
+   "bbox_count": 27
+  },
+  {
+   "fips": "20151",
+   "county": "Pratt",
+   "bbox_count": 15
+  },
+  {
+   "fips": "20153",
+   "county": "Rawlins",
+   "bbox_count": 8
+  },
+  {
+   "fips": "20175",
+   "county": "Seward",
+   "bbox_count": 56
+  },
+  {
+   "fips": "20179",
+   "county": "Sheridan",
+   "bbox_count": 22
+  },
+  {
+   "fips": "20183",
+   "county": "Smith",
+   "bbox_count": 35
+  },
+  {
+   "fips": "20189",
+   "county": "Stevens",
+   "bbox_count": 9
+  },
+  {
+   "fips": "20191",
+   "county": "Sumner",
+   "bbox_count": 495
+  }
+ ],
+ "bbox_false_positive_n": 20,
+ "upstream_empty_n": 0,
+ "upstream_empty": [],
+ "query_failed": [],
+ "query_failed_n": 0,
+ "note": "只出事实：need = 上游有数据（真实县界）且我们无片的县；upstream_empty = 上游该县 0 条，属上游真无数据。"
+}

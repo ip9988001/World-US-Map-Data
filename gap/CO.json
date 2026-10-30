@@ -1,0 +1,162 @@
+{
+ "state": "CO",
+ "status": "ok",
+ "method": "polygon（TIGER rings）—— bbox 会系统性假阳性，勿用",
+ "counties_total": 64,
+ "have_fips": [
+  "08001",
+  "08003",
+  "08005",
+  "08007",
+  "08009",
+  "08011",
+  "08013",
+  "08014",
+  "08019",
+  "08021",
+  "08023",
+  "08027",
+  "08029",
+  "08031",
+  "08033",
+  "08035",
+  "08037",
+  "08039",
+  "08041",
+  "08045",
+  "08047",
+  "08049",
+  "08051",
+  "08053",
+  "08059",
+  "08065",
+  "08067",
+  "08069",
+  "08071",
+  "08075",
+  "08077",
+  "08079",
+  "08083",
+  "08085",
+  "08091",
+  "08093",
+  "08101",
+  "08105",
+  "08107",
+  "08109",
+  "08111",
+  "08113",
+  "08115",
+  "08119",
+  "08123"
+ ],
+ "have_n": 45,
+ "probed_n": 19,
+ "need_fips": [],
+ "need_n": 0,
+ "need": [],
+ "upstream_hit_detail": [],
+ "bbox_false_positive": [
+  {
+   "fips": "08015",
+   "county": "Chaffee",
+   "bbox_count": 2474
+  },
+  {
+   "fips": "08025",
+   "county": "Crowley",
+   "bbox_count": 11
+  },
+  {
+   "fips": "08043",
+   "county": "Fremont",
+   "bbox_count": 256
+  },
+  {
+   "fips": "08055",
+   "county": "Huerfano",
+   "bbox_count": 4329
+  },
+  {
+   "fips": "08057",
+   "county": "Jackson",
+   "bbox_count": 8515
+  },
+  {
+   "fips": "08061",
+   "county": "Kiowa",
+   "bbox_count": 2
+  },
+  {
+   "fips": "08063",
+   "county": "Kit Carson",
+   "bbox_count": 2
+  },
+  {
+   "fips": "08073",
+   "county": "Lincoln",
+   "bbox_count": 960
+  },
+  {
+   "fips": "08081",
+   "county": "Moffat",
+   "bbox_count": 106
+  },
+  {
+   "fips": "08087",
+   "county": "Morgan",
+   "bbox_count": 11
+  },
+  {
+   "fips": "08089",
+   "county": "Otero",
+   "bbox_count": 12
+  },
+  {
+   "fips": "08095",
+   "county": "Phillips",
+   "bbox_count": 17
+  },
+  {
+   "fips": "08097",
+   "county": "Pitkin",
+   "bbox_count": 950
+  },
+  {
+   "fips": "08099",
+   "county": "Prowers",
+   "bbox_count": 23
+  },
+  {
+   "fips": "08103",
+   "county": "Rio Blanco",
+   "bbox_count": 315
+  },
+  {
+   "fips": "08117",
+   "county": "Summit",
+   "bbox_count": 11586
+  },
+  {
+   "fips": "08121",
+   "county": "Washington",
+   "bbox_count": 8
+  },
+  {
+   "fips": "08125",
+   "county": "Yuma",
+   "bbox_count": 1
+  }
+ ],
+ "bbox_false_positive_n": 18,
+ "upstream_empty_n": 1,
+ "upstream_empty": [
+  {
+   "fips": "08017",
+   "county": "Cheyenne"
+  }
+ ],
+ "query_failed": [],
+ "query_failed_n": 0,
+ "note": "只出事实：need = 上游有数据（真实县界）且我们无片的县；upstream_empty = 上游该县 0 条，属上游真无数据。"
+}

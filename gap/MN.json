@@ -1,0 +1,237 @@
+{
+ "state": "MN",
+ "status": "ok",
+ "method": "polygon（TIGER rings）—— bbox 会系统性假阳性，勿用",
+ "counties_total": 87,
+ "have_fips": [
+  "27001",
+  "27003",
+  "27005",
+  "27009",
+  "27011",
+  "27017",
+  "27019",
+  "27021",
+  "27023",
+  "27025",
+  "27027",
+  "27029",
+  "27031",
+  "27035",
+  "27037",
+  "27041",
+  "27045",
+  "27049",
+  "27051",
+  "27053",
+  "27055",
+  "27059",
+  "27061",
+  "27063",
+  "27071",
+  "27073",
+  "27075",
+  "27077",
+  "27079",
+  "27083",
+  "27085",
+  "27089",
+  "27097",
+  "27099",
+  "27101",
+  "27105",
+  "27111",
+  "27117",
+  "27119",
+  "27121",
+  "27123",
+  "27129",
+  "27133",
+  "27137",
+  "27139",
+  "27141",
+  "27145",
+  "27149",
+  "27151",
+  "27157",
+  "27161",
+  "27163",
+  "27169",
+  "27171",
+  "27173"
+ ],
+ "have_n": 55,
+ "probed_n": 32,
+ "need_fips": [],
+ "need_n": 0,
+ "need": [],
+ "upstream_hit_detail": [],
+ "bbox_false_positive": [
+  {
+   "fips": "27007",
+   "county": "Beltrami",
+   "bbox_count": 4964
+  },
+  {
+   "fips": "27013",
+   "county": "Blue Earth",
+   "bbox_count": 840
+  },
+  {
+   "fips": "27015",
+   "county": "Brown",
+   "bbox_count": 95
+  },
+  {
+   "fips": "27033",
+   "county": "Cottonwood",
+   "bbox_count": 64
+  },
+  {
+   "fips": "27039",
+   "county": "Dodge",
+   "bbox_count": 12
+  },
+  {
+   "fips": "27043",
+   "county": "Faribault",
+   "bbox_count": 28
+  },
+  {
+   "fips": "27047",
+   "county": "Freeborn",
+   "bbox_count": 61
+  },
+  {
+   "fips": "27057",
+   "county": "Hubbard",
+   "bbox_count": 382
+  },
+  {
+   "fips": "27065",
+   "county": "Kanabec",
+   "bbox_count": 83
+  },
+  {
+   "fips": "27067",
+   "county": "Kandiyohi",
+   "bbox_count": 185
+  },
+  {
+   "fips": "27069",
+   "county": "Kittson",
+   "bbox_count": 497
+  },
+  {
+   "fips": "27081",
+   "county": "Lincoln",
+   "bbox_count": 67
+  },
+  {
+   "fips": "27087",
+   "county": "Mahnomen",
+   "bbox_count": 86
+  },
+  {
+   "fips": "27091",
+   "county": "Martin",
+   "bbox_count": 42
+  },
+  {
+   "fips": "27093",
+   "county": "Meeker",
+   "bbox_count": 4699
+  },
+  {
+   "fips": "27095",
+   "county": "Mille Lacs",
+   "bbox_count": 1521
+  },
+  {
+   "fips": "27103",
+   "county": "Nicollet",
+   "bbox_count": 789
+  },
+  {
+   "fips": "27107",
+   "county": "Norman",
+   "bbox_count": 92
+  },
+  {
+   "fips": "27109",
+   "county": "Olmsted",
+   "bbox_count": 3453
+  },
+  {
+   "fips": "27113",
+   "county": "Pennington",
+   "bbox_count": 35
+  },
+  {
+   "fips": "27115",
+   "county": "Pine",
+   "bbox_count": 10088
+  },
+  {
+   "fips": "27125",
+   "county": "Red Lake",
+   "bbox_count": 252
+  },
+  {
+   "fips": "27127",
+   "county": "Redwood",
+   "bbox_count": 1743
+  },
+  {
+   "fips": "27131",
+   "county": "Rice",
+   "bbox_count": 1578
+  },
+  {
+   "fips": "27135",
+   "county": "Roseau",
+   "bbox_count": 65
+  },
+  {
+   "fips": "27143",
+   "county": "Sibley",
+   "bbox_count": 4232
+  },
+  {
+   "fips": "27147",
+   "county": "Steele",
+   "bbox_count": 31
+  },
+  {
+   "fips": "27153",
+   "county": "Todd",
+   "bbox_count": 1460
+  },
+  {
+   "fips": "27155",
+   "county": "Traverse",
+   "bbox_count": 120
+  },
+  {
+   "fips": "27159",
+   "county": "Wadena",
+   "bbox_count": 391
+  },
+  {
+   "fips": "27167",
+   "county": "Wilkin",
+   "bbox_count": 4334
+  }
+ ],
+ "bbox_false_positive_n": 31,
+ "upstream_empty_n": 1,
+ "upstream_empty": [
+  {
+   "fips": "27165",
+   "county": "Watonwan"
+  }
+ ],
+ "query_failed": [],
+ "query_failed_n": 0,
+ "note": "只出事实：need = 上游有数据（真实县界）且我们无片的县；upstream_empty = 上游该县 0 条，属上游真无数据。"
+}

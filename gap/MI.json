@@ -1,0 +1,367 @@
+{
+ "state": "MI",
+ "status": "ok",
+ "method": "polygon（TIGER rings）—— bbox 会系统性假阳性，勿用",
+ "counties_total": 83,
+ "have_fips": [],
+ "have_n": 0,
+ "probed_n": 83,
+ "need_fips": [],
+ "need_n": 0,
+ "need": [],
+ "upstream_hit_detail": [],
+ "bbox_false_positive": [
+  {
+   "fips": "26021",
+   "county": "Berrien",
+   "bbox_count": 929
+  },
+  {
+   "fips": "26023",
+   "county": "Branch",
+   "bbox_count": 216
+  },
+  {
+   "fips": "26027",
+   "county": "Cass",
+   "bbox_count": 2223
+  },
+  {
+   "fips": "26041",
+   "county": "Delta",
+   "bbox_count": 1214
+  },
+  {
+   "fips": "26043",
+   "county": "Dickinson",
+   "bbox_count": 2268
+  },
+  {
+   "fips": "26053",
+   "county": "Gogebic",
+   "bbox_count": 5689
+  },
+  {
+   "fips": "26059",
+   "county": "Hillsdale",
+   "bbox_count": 591
+  },
+  {
+   "fips": "26071",
+   "county": "Iron",
+   "bbox_count": 1640
+  },
+  {
+   "fips": "26083",
+   "county": "Keweenaw",
+   "bbox_count": 108
+  },
+  {
+   "fips": "26091",
+   "county": "Lenawee",
+   "bbox_count": 1686
+  },
+  {
+   "fips": "26109",
+   "county": "Menominee",
+   "bbox_count": 12305
+  },
+  {
+   "fips": "26115",
+   "county": "Monroe",
+   "bbox_count": 7960
+  },
+  {
+   "fips": "26149",
+   "county": "St. Joseph",
+   "bbox_count": 204
+  }
+ ],
+ "bbox_false_positive_n": 13,
+ "upstream_empty_n": 70,
+ "upstream_empty": [
+  {
+   "fips": "26001",
+   "county": "Alcona"
+  },
+  {
+   "fips": "26003",
+   "county": "Alger"
+  },
+  {
+   "fips": "26005",
+   "county": "Allegan"
+  },
+  {
+   "fips": "26007",
+   "county": "Alpena"
+  },
+  {
+   "fips": "26009",
+   "county": "Antrim"
+  },
+  {
+   "fips": "26011",
+   "county": "Arenac"
+  },
+  {
+   "fips": "26013",
+   "county": "Baraga"
+  },
+  {
+   "fips": "26015",
+   "county": "Barry"
+  },
+  {
+   "fips": "26017",
+   "county": "Bay"
+  },
+  {
+   "fips": "26019",
+   "county": "Benzie"
+  },
+  {
+   "fips": "26025",
+   "county": "Calhoun"
+  },
+  {
+   "fips": "26029",
+   "county": "Charlevoix"
+  },
+  {
+   "fips": "26031",
+   "county": "Cheboygan"
+  },
+  {
+   "fips": "26033",
+   "county": "Chippewa"
+  },
+  {
+   "fips": "26035",
+   "county": "Clare"
+  },
+  {
+   "fips": "26037",
+   "county": "Clinton"
+  },
+  {
+   "fips": "26039",
+   "county": "Crawford"
+  },
+  {
+   "fips": "26045",
+   "county": "Eaton"
+  },
+  {
+   "fips": "26047",
+   "county": "Emmet"
+  },
+  {
+   "fips": "26049",
+   "county": "Genesee"
+  },
+  {
+   "fips": "26051",
+   "county": "Gladwin"
+  },
+  {
+   "fips": "26055",
+   "county": "Grand Traverse"
+  },
+  {
+   "fips": "26057",
+   "county": "Gratiot"
+  },
+  {
+   "fips": "26061",
+   "county": "Houghton"
+  },
+  {
+   "fips": "26063",
+   "county": "Huron"
+  },
+  {
+   "fips": "26065",
+   "county": "Ingham"
+  },
+  {
+   "fips": "26067",
+   "county": "Ionia"
+  },
+  {
+   "fips": "26069",
+   "county": "Iosco"
+  },
+  {
+   "fips": "26073",
+   "county": "Isabella"
+  },
+  {
+   "fips": "26075",
+   "county": "Jackson"
+  },
+  {
+   "fips": "26077",
+   "county": "Kalamazoo"
+  },
+  {
+   "fips": "26079",
+   "county": "Kalkaska"
+  },
+  {
+   "fips": "26081",
+   "county": "Kent"
+  },
+  {
+   "fips": "26085",
+   "county": "Lake"
+  },
+  {
+   "fips": "26087",
+   "county": "Lapeer"
+  },
+  {
+   "fips": "26089",
+   "county": "Leelanau"
+  },
+  {
+   "fips": "26093",
+   "county": "Livingston"
+  },
+  {
+   "fips": "26095",
+   "county": "Luce"
+  },
+  {
+   "fips": "26097",
+   "county": "Mackinac"
+  },
+  {
+   "fips": "26099",
+   "county": "Macomb"
+  },
+  {
+   "fips": "26101",
+   "county": "Manistee"
+  },
+  {
+   "fips": "26103",
+   "county": "Marquette"
+  },
+  {
+   "fips": "26105",
+   "county": "Mason"
+  },
+  {
+   "fips": "26107",
+   "county": "Mecosta"
+  },
+  {
+   "fips": "26111",
+   "county": "Midland"
+  },
+  {
+   "fips": "26113",
+   "county": "Missaukee"
+  },
+  {
+   "fips": "26117",
+   "county": "Montcalm"
+  },
+  {
+   "fips": "26119",
+   "county": "Montmorency"
+  },
+  {
+   "fips": "26121",
+   "county": "Muskegon"
+  },
+  {
+   "fips": "26123",
+   "county": "Newaygo"
+  },
+  {
+   "fips": "26125",
+   "county": "Oakland"
+  },
+  {
+   "fips": "26127",
+   "county": "Oceana"
+  },
+  {
+   "fips": "26129",
+   "county": "Ogemaw"
+  },
+  {
+   "fips": "26131",
+   "county": "Ontonagon"
+  },
+  {
+   "fips": "26133",
+   "county": "Osceola"
+  },
+  {
+   "fips": "26135",
+   "county": "Oscoda"
+  },
+  {
+   "fips": "26137",
+   "county": "Otsego"
+  },
+  {
+   "fips": "26139",
+   "county": "Ottawa"
+  },
+  {
+   "fips": "26141",
+   "county": "Presque Isle"
+  },
+  {
+   "fips": "26143",
+   "county": "Roscommon"
+  },
+  {
+   "fips": "26145",
+   "county": "Saginaw"
+  },
+  {
+   "fips": "26147",
+   "county": "St. Clair"
+  },
+  {
+   "fips": "26151",
+   "county": "Sanilac"
+  },
+  {
+   "fips": "26153",
+   "county": "Schoolcraft"
+  },
+  {
+   "fips": "26155",
+   "county": "Shiawassee"
+  },
+  {
+   "fips": "26157",
+   "county": "Tuscola"
+  },
+  {
+   "fips": "26159",
+   "county": "Van Buren"
+  },
+  {
+   "fips": "26161",
+   "county": "Washtenaw"
+  },
+  {
+   "fips": "26163",
+   "county": "Wayne"
+  },
+  {
+   "fips": "26165",
+   "county": "Wexford"
+  }
+ ],
+ "query_failed": [],
+ "query_failed_n": 0,
+ "note": "只出事实：need = 上游有数据（真实县界）且我们无片的县；upstream_empty = 上游该县 0 条，属上游真无数据。"
+}

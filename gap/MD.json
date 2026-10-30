@@ -1,0 +1,50 @@
+{
+ "state": "MD",
+ "status": "ok",
+ "method": "polygon（TIGER rings）—— bbox 会系统性假阳性，勿用",
+ "counties_total": 23,
+ "have_fips": [
+  "24003",
+  "24005",
+  "24009",
+  "24011",
+  "24013",
+  "24015",
+  "24017",
+  "24019",
+  "24021",
+  "24023",
+  "24025",
+  "24027",
+  "24029",
+  "24031",
+  "24033",
+  "24035",
+  "24037",
+  "24039",
+  "24041",
+  "24043",
+  "24045",
+  "24047",
+  "24510"
+ ],
+ "have_n": 23,
+ "probed_n": 1,
+ "need_fips": [],
+ "need_n": 0,
+ "need": [],
+ "upstream_hit_detail": [],
+ "bbox_false_positive": [
+  {
+   "fips": "24001",
+   "county": "Allegany",
+   "bbox_count": 14917
+  }
+ ],
+ "bbox_false_positive_n": 1,
+ "upstream_empty_n": 0,
+ "upstream_empty": [],
+ "query_failed": [],
+ "query_failed_n": 0,
+ "note": "只出事实：need = 上游有数据（真实县界）且我们无片的县；upstream_empty = 上游该县 0 条，属上游真无数据。"
+}

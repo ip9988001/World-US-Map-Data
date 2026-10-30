@@ -1,0 +1,368 @@
+{
+ "state": "MS",
+ "status": "ok",
+ "method": "polygon（TIGER rings）—— bbox 会系统性假阳性，勿用",
+ "counties_total": 82,
+ "have_fips": [
+  "28143"
+ ],
+ "have_n": 1,
+ "probed_n": 81,
+ "need_fips": [],
+ "need_n": 0,
+ "need": [],
+ "upstream_hit_detail": [],
+ "bbox_false_positive": [
+  {
+   "fips": "28003",
+   "county": "Alcorn",
+   "bbox_count": 110
+  },
+  {
+   "fips": "28009",
+   "county": "Benton",
+   "bbox_count": 40
+  },
+  {
+   "fips": "28011",
+   "county": "Bolivar",
+   "bbox_count": 545
+  },
+  {
+   "fips": "28023",
+   "county": "Clarke",
+   "bbox_count": 226
+  },
+  {
+   "fips": "28027",
+   "county": "Coahoma",
+   "bbox_count": 2790
+  },
+  {
+   "fips": "28033",
+   "county": "DeSoto",
+   "bbox_count": 1461
+  },
+  {
+   "fips": "28039",
+   "county": "George",
+   "bbox_count": 118
+  },
+  {
+   "fips": "28041",
+   "county": "Greene",
+   "bbox_count": 318
+  },
+  {
+   "fips": "28057",
+   "county": "Itawamba",
+   "bbox_count": 221
+  },
+  {
+   "fips": "28059",
+   "county": "Jackson",
+   "bbox_count": 967
+  },
+  {
+   "fips": "28069",
+   "county": "Kemper",
+   "bbox_count": 37
+  },
+  {
+   "fips": "28075",
+   "county": "Lauderdale",
+   "bbox_count": 190
+  },
+  {
+   "fips": "28087",
+   "county": "Lowndes",
+   "bbox_count": 501
+  },
+  {
+   "fips": "28093",
+   "county": "Marshall",
+   "bbox_count": 102
+  },
+  {
+   "fips": "28095",
+   "county": "Monroe",
+   "bbox_count": 517
+  },
+  {
+   "fips": "28103",
+   "county": "Noxubee",
+   "bbox_count": 165
+  },
+  {
+   "fips": "28139",
+   "county": "Tippah",
+   "bbox_count": 29
+  },
+  {
+   "fips": "28141",
+   "county": "Tishomingo",
+   "bbox_count": 630
+  },
+  {
+   "fips": "28151",
+   "county": "Washington",
+   "bbox_count": 797
+  },
+  {
+   "fips": "28153",
+   "county": "Wayne",
+   "bbox_count": 339
+  }
+ ],
+ "bbox_false_positive_n": 20,
+ "upstream_empty_n": 61,
+ "upstream_empty": [
+  {
+   "fips": "28001",
+   "county": "Adams"
+  },
+  {
+   "fips": "28005",
+   "county": "Amite"
+  },
+  {
+   "fips": "28007",
+   "county": "Attala"
+  },
+  {
+   "fips": "28013",
+   "county": "Calhoun"
+  },
+  {
+   "fips": "28015",
+   "county": "Carroll"
+  },
+  {
+   "fips": "28017",
+   "county": "Chickasaw"
+  },
+  {
+   "fips": "28019",
+   "county": "Choctaw"
+  },
+  {
+   "fips": "28021",
+   "county": "Claiborne"
+  },
+  {
+   "fips": "28025",
+   "county": "Clay"
+  },
+  {
+   "fips": "28029",
+   "county": "Copiah"
+  },
+  {
+   "fips": "28031",
+   "county": "Covington"
+  },
+  {
+   "fips": "28035",
+   "county": "Forrest"
+  },
+  {
+   "fips": "28037",
+   "county": "Franklin"
+  },
+  {
+   "fips": "28043",
+   "county": "Grenada"
+  },
+  {
+   "fips": "28045",
+   "county": "Hancock"
+  },
+  {
+   "fips": "28047",
+   "county": "Harrison"
+  },
+  {
+   "fips": "28049",
+   "county": "Hinds"
+  },
+  {
+   "fips": "28051",
+   "county": "Holmes"
+  },
+  {
+   "fips": "28053",
+   "county": "Humphreys"
+  },
+  {
+   "fips": "28055",
+   "county": "Issaquena"
+  },
+  {
+   "fips": "28061",
+   "county": "Jasper"
+  },
+  {
+   "fips": "28063",
+   "county": "Jefferson"
+  },
+  {
+   "fips": "28065",
+   "county": "Jefferson Davis"
+  },
+  {
+   "fips": "28067",
+   "county": "Jones"
+  },
+  {
+   "fips": "28071",
+   "county": "Lafayette"
+  },
+  {
+   "fips": "28073",
+   "county": "Lamar"
+  },
+  {
+   "fips": "28077",
+   "county": "Lawrence"
+  },
+  {
+   "fips": "28079",
+   "county": "Leake"
+  },
+  {
+   "fips": "28081",
+   "county": "Lee"
+  },
+  {
+   "fips": "28083",
+   "county": "Leflore"
+  },
+  {
+   "fips": "28085",
+   "county": "Lincoln"
+  },
+  {
+   "fips": "28089",
+   "county": "Madison"
+  },
+  {
+   "fips": "28091",
+   "county": "Marion"
+  },
+  {
+   "fips": "28097",
+   "county": "Montgomery"
+  },
+  {
+   "fips": "28099",
+   "county": "Neshoba"
+  },
+  {
+   "fips": "28101",
+   "county": "Newton"
+  },
+  {
+   "fips": "28105",
+   "county": "Oktibbeha"
+  },
+  {
+   "fips": "28107",
+   "county": "Panola"
+  },
+  {
+   "fips": "28109",
+   "county": "Pearl River"
+  },
+  {
+   "fips": "28111",
+   "county": "Perry"
+  },
+  {
+   "fips": "28113",
+   "county": "Pike"
+  },
+  {
+   "fips": "28115",
+   "county": "Pontotoc"
+  },
+  {
+   "fips": "28117",
+   "county": "Prentiss"
+  },
+  {
+   "fips": "28119",
+   "county": "Quitman"
+  },
+  {
+   "fips": "28121",
+   "county": "Rankin"
+  },
+  {
+   "fips": "28123",
+   "county": "Scott"
+  },
+  {
+   "fips": "28125",
+   "county": "Sharkey"
+  },
+  {
+   "fips": "28127",
+   "county": "Simpson"
+  },
+  {
+   "fips": "28129",
+   "county": "Smith"
+  },
+  {
+   "fips": "28131",
+   "county": "Stone"
+  },
+  {
+   "fips": "28133",
+   "county": "Sunflower"
+  },
+  {
+   "fips": "28135",
+   "county": "Tallahatchie"
+  },
+  {
+   "fips": "28137",
+   "county": "Tate"
+  },
+  {
+   "fips": "28145",
+   "county": "Union"
+  },
+  {
+   "fips": "28147",
+   "county": "Walthall"
+  },
+  {
+   "fips": "28149",
+   "county": "Warren"
+  },
+  {
+   "fips": "28155",
+   "county": "Webster"
+  },
+  {
+   "fips": "28157",
+   "county": "Wilkinson"
+  },
+  {
+   "fips": "28159",
+   "county": "Winston"
+  },
+  {
+   "fips": "28161",
+   "county": "Yalobusha"
+  },
+  {
+   "fips": "28163",
+   "county": "Yazoo"
+  }
+ ],
+ "query_failed": [],
+ "query_failed_n": 0,
+ "note": "只出事实：need = 上游有数据（真实县界）且我们无片的县；upstream_empty = 上游该县 0 条，属上游真无数据。"
+}

@@ -1,0 +1,289 @@
+{
+ "state": "SD",
+ "status": "ok",
+ "method": "polygon（TIGER rings）—— bbox 会系统性假阳性，勿用",
+ "counties_total": 66,
+ "have_fips": [
+  "46053",
+  "46083",
+  "46095",
+  "46099",
+  "46121",
+  "46123",
+  "46127"
+ ],
+ "have_n": 7,
+ "probed_n": 59,
+ "need_fips": [],
+ "need_n": 0,
+ "need": [],
+ "upstream_hit_detail": [],
+ "bbox_false_positive": [
+  {
+   "fips": "46007",
+   "county": "Bennett",
+   "bbox_count": 2
+  },
+  {
+   "fips": "46009",
+   "county": "Bon Homme",
+   "bbox_count": 472
+  },
+  {
+   "fips": "46013",
+   "county": "Brown",
+   "bbox_count": 10
+  },
+  {
+   "fips": "46019",
+   "county": "Butte",
+   "bbox_count": 3
+  },
+  {
+   "fips": "46021",
+   "county": "Campbell",
+   "bbox_count": 7
+  },
+  {
+   "fips": "46023",
+   "county": "Charles Mix",
+   "bbox_count": 1535
+  },
+  {
+   "fips": "46027",
+   "county": "Clay",
+   "bbox_count": 395
+  },
+  {
+   "fips": "46031",
+   "county": "Corson",
+   "bbox_count": 6
+  },
+  {
+   "fips": "46039",
+   "county": "Deuel",
+   "bbox_count": 19
+  },
+  {
+   "fips": "46047",
+   "county": "Fall River",
+   "bbox_count": 4
+  },
+  {
+   "fips": "46051",
+   "county": "Grant",
+   "bbox_count": 185
+  },
+  {
+   "fips": "46063",
+   "county": "Harding",
+   "bbox_count": 5
+  },
+  {
+   "fips": "46071",
+   "county": "Jackson",
+   "bbox_count": 108
+  },
+  {
+   "fips": "46075",
+   "county": "Jones",
+   "bbox_count": 11
+  },
+  {
+   "fips": "46081",
+   "county": "Lawrence",
+   "bbox_count": 2
+  },
+  {
+   "fips": "46085",
+   "county": "Lyman",
+   "bbox_count": 26
+  },
+  {
+   "fips": "46089",
+   "county": "McPherson",
+   "bbox_count": 22
+  },
+  {
+   "fips": "46091",
+   "county": "Marshall",
+   "bbox_count": 7
+  },
+  {
+   "fips": "46101",
+   "county": "Moody",
+   "bbox_count": 4
+  },
+  {
+   "fips": "46102",
+   "county": "Oglala Lakota",
+   "bbox_count": 17
+  },
+  {
+   "fips": "46105",
+   "county": "Perkins",
+   "bbox_count": 14
+  },
+  {
+   "fips": "46109",
+   "county": "Roberts",
+   "bbox_count": 966
+  },
+  {
+   "fips": "46135",
+   "county": "Yankton",
+   "bbox_count": 1064
+  }
+ ],
+ "bbox_false_positive_n": 23,
+ "upstream_empty_n": 36,
+ "upstream_empty": [
+  {
+   "fips": "46003",
+   "county": "Aurora"
+  },
+  {
+   "fips": "46005",
+   "county": "Beadle"
+  },
+  {
+   "fips": "46011",
+   "county": "Brookings"
+  },
+  {
+   "fips": "46015",
+   "county": "Brule"
+  },
+  {
+   "fips": "46017",
+   "county": "Buffalo"
+  },
+  {
+   "fips": "46025",
+   "county": "Clark"
+  },
+  {
+   "fips": "46029",
+   "county": "Codington"
+  },
+  {
+   "fips": "46033",
+   "county": "Custer"
+  },
+  {
+   "fips": "46035",
+   "county": "Davison"
+  },
+  {
+   "fips": "46037",
+   "county": "Day"
+  },
+  {
+   "fips": "46041",
+   "county": "Dewey"
+  },
+  {
+   "fips": "46043",
+   "county": "Douglas"
+  },
+  {
+   "fips": "46045",
+   "county": "Edmunds"
+  },
+  {
+   "fips": "46049",
+   "county": "Faulk"
+  },
+  {
+   "fips": "46055",
+   "county": "Haakon"
+  },
+  {
+   "fips": "46057",
+   "county": "Hamlin"
+  },
+  {
+   "fips": "46059",
+   "county": "Hand"
+  },
+  {
+   "fips": "46061",
+   "county": "Hanson"
+  },
+  {
+   "fips": "46065",
+   "county": "Hughes"
+  },
+  {
+   "fips": "46067",
+   "county": "Hutchinson"
+  },
+  {
+   "fips": "46069",
+   "county": "Hyde"
+  },
+  {
+   "fips": "46073",
+   "county": "Jerauld"
+  },
+  {
+   "fips": "46077",
+   "county": "Kingsbury"
+  },
+  {
+   "fips": "46079",
+   "county": "Lake"
+  },
+  {
+   "fips": "46087",
+   "county": "McCook"
+  },
+  {
+   "fips": "46093",
+   "county": "Meade"
+  },
+  {
+   "fips": "46097",
+   "county": "Miner"
+  },
+  {
+   "fips": "46103",
+   "county": "Pennington"
+  },
+  {
+   "fips": "46107",
+   "county": "Potter"
+  },
+  {
+   "fips": "46111",
+   "county": "Sanborn"
+  },
+  {
+   "fips": "46115",
+   "county": "Spink"
+  },
+  {
+   "fips": "46117",
+   "county": "Stanley"
+  },
+  {
+   "fips": "46119",
+   "county": "Sully"
+  },
+  {
+   "fips": "46125",
+   "county": "Turner"
+  },
+  {
+   "fips": "46129",
+   "county": "Walworth"
+  },
+  {
+   "fips": "46137",
+   "county": "Ziebach"
+  }
+ ],
+ "query_failed": [],
+ "query_failed_n": 0,
+ "note": "只出事实：need = 上游有数据（真实县界）且我们无片的县；upstream_empty = 上游该县 0 条，属上游真无数据。"
+}
