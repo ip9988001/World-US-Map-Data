@@ -44,8 +44,19 @@ def run_audit(nodes: list[dict], statuses: dict[str, dict | None],
     manifests = manifests or set()
     running = running or set()
 
-    def fake_gql(_q: str) -> dict:
+    def fake_gql(_q: str, **_kw) -> dict:
+        # 2026-11-22 muse-000156 一：main() 改走 fetch_releases()（分页轻查询），
+        # 假数据不带 pageInfo → 命中 hasNextPage 缺失即停，等价旧的一次拉完。
         return {"releases": {"nodes": nodes}}
+
+    def fake_release_asset_names(tag: str) -> list[str]:
+        # 资产名现在按需走 REST（release_asset_names）而不是 GraphQL 一次带回来，
+        # 离线自检只需把这一层换成本地 names 表；判定逻辑与断言一字未改。
+        for n in nodes:
+            if n.get("tagName") == tag:
+                return [x.get("name") or "" for x in
+                        ((n.get("releaseAssets") or {}).get("nodes") or [])]
+        return []
 
     def fake_sh(args, timeout=120):  # noqa: ANN001, ANN003
         if args[:2] == ["gh", "run"]:
@@ -59,6 +70,7 @@ def run_audit(nodes: list[dict], statuses: dict[str, dict | None],
         return tag in manifests
 
     pa.gql, pa.sh = fake_gql, fake_sh
+    pa.release_asset_names = fake_release_asset_names
     pa.status_of, pa.has_manifest = fake_status_of, fake_has_manifest
     pa.hrs = lambda iso: -1.0            # 一律当作新鲜，避免时间相关抖动
 

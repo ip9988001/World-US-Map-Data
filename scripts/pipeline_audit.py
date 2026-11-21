@@ -27,6 +27,7 @@ import subprocess
 import sys
 from datetime import datetime, timezone
 from pathlib import Path
+from urllib.parse import quote
 
 import yaml
 
@@ -48,13 +49,55 @@ def sh(args: list[str], timeout: int = 120) -> str:
         return ""
 
 
-def gql(query: str) -> dict:
+class GqlError(RuntimeError):
+    """取数失败（rc≠0 / 非 JSON / 超时 / GraphQL errors / repository=null）。
+
+调用方不用捕获 —— 直接冒泡成 run 红。这是 muse-000156 一的全部要点：
+「取数失败」绝不能被降级成「空集合」，否则审计会把失败当结论。
+    """
+
+
+def _run_gh(args: list[str], what: str, *, timeout: int = 120) -> str:
+    """跑一条 gh 命令，失败 **一律 raise**（不返回空串）。
+
+返回 stdout；rc≠0 / 超时 都抛 GqlError，stderr 留前 200 字节便于定位。
+    """
     try:
-        r = subprocess.run(["gh", "api", "graphql", "-f", f"query={query}"],
-                           capture_output=True, text=True, timeout=180)
-        return json.loads(r.stdout)["data"]["repository"] if r.returncode == 0 else {}
-    except Exception:  # noqa: BLE001
-        return {}
+        r = subprocess.run(args, capture_output=True, text=True, timeout=timeout)
+    except subprocess.TimeoutExpired:
+        raise GqlError("%s 超时（timeout=%ds）：%s"
+                       % (what, timeout, " ".join(args)[:120])) from None
+    if r.returncode != 0:
+        raise GqlError("%s 失败（returncode=%d）：stderr 前 200 字节=%r"
+                       % (what, r.returncode, (r.stderr or "")[:200]))
+    return r.stdout
+
+
+def gql(query: str, *, timeout: int = 180) -> dict:
+    """跑一次 GraphQL，返回 **repository 节点 dict**。
+
+2026-11-22 muse-000156 一：以前这里是
+`return json.loads(r.stdout)["data"]["repository"] if r.returncode == 0 else {}`
+外面包一层 `except Exception: return {}` —— 504 / 限流 / 非 JSON 全被静默吞成空 dict，
+上层于是把「取数失败」当成「所有州都没开工」（issue #5 的 51 条假 B1）。现在一律 raise。
+    """
+    out = _run_gh(["gh", "api", "graphql", "-f", f"query={query}"],
+                  "GraphQL 查询", timeout=timeout)
+    try:
+        doc = json.loads(out)
+    except json.JSONDecodeError as e:
+        raise GqlError("GraphQL 返回非 JSON（stdout 前 200 字节=%r）：%s"
+                       % (out[:200], e)) from None
+    errors = doc.get("errors")
+    if errors:
+        raise GqlError("GraphQL 返回 errors 数组（前 300 字节）：%s"
+                       % json.dumps(errors, ensure_ascii=False)[:300])
+    repo = (doc.get("data") or {}).get("repository")
+    if repo is None:
+        # 注意：这跟「仓库里确实 0 个 release」不是一回事 —— 后者是 nodes=[]（交给 A2 硬拦判）
+        raise GqlError("GraphQL data.repository 为 null（仓库不存在 / 无权限 / 被限流）："
+                       "query 前 120 字节=%r" % query[:120])
+    return repo
 
 
 # ★ A1（2026-10-30）：tag 不再是写死的 raw-US-{ST}-v1 —— TX 真实 tag 是 -p1/-p2，
@@ -62,11 +105,106 @@ def gql(query: str) -> dict:
 #   正则解析卷号，同州多卷合并计资产数，MANIFEST / STATUS 一律按**实际 tag** 逐个查。
 TAG_RE = re.compile(r"^raw-US-([A-Z]{2})-v1(-p\d+)?$")
 
+# ---------------------------------------------------------------- 取数（轻查询 + 分页）
+# ★ 2026-11-22 muse-000156 一（504 根因）：以前是
+#     releases(first:80){nodes{tagName releaseAssets(first:100){totalCount nodes{name}}}}
+#   —— 一次拉 80 release × 每个 100 个 asset、现库 52 release / 12,780 asset，
+#   GraphQL 服务端算不动 → 稳定 HTTP 504（本机 11.6s、runner 11.9–12.0s，用 first:5 只要 0.6s）。
+#   现拆成：① GraphQL 每页 100 个 release 只取 tagName + releaseAssets(first:1).totalCount
+#          （不取 asset 名 → 一页几百字节，不再 504）；② asset 名按需走 REST（独立限额）。
+RELEASES_PAGE = 100          # GraphQL releases 每页上限（GitHub 硬限 100）
+RELEASES_MAX_PAGES = 40      # 安全阀：≤ 4000 个 release，防分页游标死循环
+ASSETS_PER_PAGE = 100        # REST assets 每页上限
+ASSETS_MAX_PAGES = 40        # 安全阀：≤ 4000 个资产/卷（A5 上限是 1000，远未到）
+
+_ASSET_NAMES: dict[str, list[str]] = {}     # tag → 全量资产名（同轮内复用，避免重复 REST）
+_HAS_MANIFEST: dict[str, bool] = {}         # tag → 是否含 MANIFEST*（找到即停，不一定要翻到底）
+
+
+def fetch_releases() -> dict:
+    """分页取全部 release：**只取 tagName + 资产总数**，不取资产名。
+
+返回结构故意做成跟旧 GraphQL 响应同形（{"releases": {"nodes": [...]}}），
+好让下方 A2 硬拦、TAG_RE 归并与输出字段**一字不用改**。
+    """
+    owner, name = REPO.split("/")
+    nodes: list[dict] = []
+    total = 0
+    cursor = ""
+    for page in range(1, RELEASES_MAX_PAGES + 1):
+        argv = [f"first:{RELEASES_PAGE}"]
+        if cursor:
+            argv.append('after:"%s"' % cursor.replace('"', ""))
+        q = (f'query{{repository(owner:"{owner}",name:"{name}"){{'
+             f'releases({",".join(argv)}){{'
+             f'pageInfo{{hasNextPage endCursor}}totalCount '
+             f'nodes{{tagName releaseAssets(first:1){{totalCount}}}}}}}}}}')
+        block = gql(q).get("releases") or {}
+        total = int(block.get("totalCount") or 0)
+        nodes.extend(block.get("nodes") or [])
+        pi = block.get("pageInfo") or {}
+        cursor = pi.get("endCursor") or ""
+        if not pi.get("hasNextPage") or not cursor:
+            return {"releases": {"nodes": nodes, "totalCount": total,
+                                 "pageInfo": {"hasNextPage": False, "endCursor": cursor}}}
+    raise GqlError("releases 分页超过上限（%d 页 × %d 个）—— 分页游标疑似不前进"
+                   % (RELEASES_MAX_PAGES, RELEASES_PAGE))
+
+
+def _asset_pages(tag: str):
+    """逐页产出某 tag 的资产名（REST，100/页）。**每次请求都走 _run_gh，失败即 raise。**
+
+    先 `releases/tags/{tag}` 拿 id（1 次），再 `/releases/{id}/assets?per_page=100&page=N` 翻页。
+    REST 有独立限额，不会像 GraphQL 那样一次拖死；某页失败也 raise，不降级成空集合。
+    """
+    safe_tag = quote(tag, safe="")
+    rid_txt = _run_gh(["gh", "api", f"repos/{REPO}/releases/tags/{safe_tag}",
+                       "--jq", ".id"], f"REST releases/tags/{tag}")
+    try:
+        rid = int(rid_txt.strip())
+    except ValueError:
+        raise GqlError("REST releases/tags/%s 返回的 id 不是整数（前 80 字节=%r）"
+                       % (tag, rid_txt[:80])) from None
+    for page in range(1, ASSETS_MAX_PAGES + 1):
+        out = _run_gh(["gh", "api",
+                       f"repos/{REPO}/releases/{rid}/assets?per_page={ASSETS_PER_PAGE}&page={page}",
+                       "--jq", ".[].name"], f"REST releases/{rid}/assets page={page}")
+        got = [x for x in out.splitlines() if x.strip()]
+        yield got
+        if len(got) < ASSETS_PER_PAGE:
+            return
+    raise GqlError("tag %s 的资产分页超过上限（%d 页 × %d 个）"
+                   % (tag, ASSETS_MAX_PAGES, ASSETS_PER_PAGE))
+
+
+def release_asset_names(tag: str) -> list[str]:
+    """该 tag 的**全部**资产名（REST 分页拉到底）。同轮内缓存。"""
+    if tag in _ASSET_NAMES:
+        return _ASSET_NAMES[tag]
+    names: list[str] = []
+    for got in _asset_pages(tag):
+        names.extend(got)
+    _ASSET_NAMES[tag] = names
+    return names
+
 
 def has_manifest(tag: str) -> bool:
-    raw = sh(["gh", "release", "view", tag, "--repo", REPO,
-              "--json", "assets", "-q", ".assets[].name"])
-    return any(x.startswith("MANIFEST") for x in raw.split())
+    """该 tag 下是否存在 MANIFEST* 资产（REST 按需分页；**找到即停**，不必翻到底）。
+
+    以前靠 GraphQL 的 releaseAssets(first:100).nodes —— 资产 >100 的卷（VA 598 个）里
+    MANIFEST 一旦不在前 100 就漏判，才需要 `or has_manifest(tag)` 二次兜底；现在没有 100 截断。
+    """
+    if tag in _HAS_MANIFEST:
+        return _HAS_MANIFEST[tag]
+    if tag in _ASSET_NAMES:
+        _HAS_MANIFEST[tag] = any(x.startswith("MANIFEST") for x in _ASSET_NAMES[tag])
+        return _HAS_MANIFEST[tag]
+    for got in _asset_pages(tag):
+        if any(x.startswith("MANIFEST") for x in got):
+            _HAS_MANIFEST[tag] = True
+            return True
+    _HAS_MANIFEST[tag] = False
+    return False
 
 
 def status_of(tag: str) -> dict | None:
@@ -93,9 +231,7 @@ def main() -> int:
     states = {k: len(v.get("counties") or [])
               for k, v in yaml.safe_load(ROSTER.read_text(encoding="utf-8"))["states"].items()}
 
-    repos = gql('query{repository(owner:"%s",name:"%s"){releases(first:80){nodes{'
-                'tagName releaseAssets(first:100){totalCount nodes{name}}}}}}'
-                % tuple(REPO.split("/")))
+    repos = fetch_releases()          # 分页轻查询：只取 tagName + 资产总数（不取资产名）
 
     # ★ A2（2026-10-30）：取数失败必须显式失败，绝不被静默吞成「所有州都没开工」。
     #   历史事故：gql 偶发返回 {} → rel 空 → 51 条假 B1（issue #5 的 41 条评论就在
@@ -115,12 +251,12 @@ def main() -> int:
             continue                      # 非 raw-US-XX-v1[-pN] 的 release 不参与账本巡检
         st = m.group(1)
         ra = n.get("releaseAssets") or {}
-        names = [x.get("name") or "" for x in (ra.get("nodes") or [])]
+        has_man = has_manifest(tag)          # REST 按需：找到 MANIFEST 即停（无 100 截断）
         cnt = int(ra.get("totalCount") or 0)
         e = rel.setdefault(st, {"n": 0, "tags": []})
         e["n"] += cnt                    # 同州多卷（TX p1/p2）合并计资产
         e["tags"].append({"tag": tag, "n": cnt,
-                          "man": any(x.startswith("MANIFEST") for x in names)})
+                          "man": has_man})
 
     if not rel and states:
         print("::error::GraphQL 返回了 releases 但没有任何 raw-US-* 命中 —— 同上按取数失败处理",
