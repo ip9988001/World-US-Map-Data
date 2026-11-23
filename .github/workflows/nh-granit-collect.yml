@@ -1,0 +1,30 @@
+name: nh-granit-collect
+on:
+  workflow_dispatch:
+    inputs:
+      state:
+        description: 'state code'
+        required: false
+        default: 'NH'
+      page_size:
+        description: 'resultRecordCount'
+        required: false
+        default: '2000'
+jobs:
+  collect:
+    runs-on: ubuntu-latest
+    timeout-minutes: 120
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-python@v5
+        with: {python-version: '3.11'}
+      - run: pip install requests
+      - name: collect granit parcel points
+        env:
+          STATE: ${{ inputs.state }}
+          PAGE: ${{ inputs.page_size }}
+        run: python scripts/nh_granit_collect.py --out out/
+      - uses: actions/upload-artifact@v4
+        with:
+          name: granit-nh
+          path: out/
